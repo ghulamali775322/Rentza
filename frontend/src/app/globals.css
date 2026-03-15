@@ -1,0 +1,293 @@
+@import "tailwindcss";
+
+html,
+body {
+  background-color: #f9fafb !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+/* -------------------------
+   Root Theme Colors & Fonts
+-------------------------- */
+:root {
+  --color-primary: #2563eb;
+  --color-secondary: #1e40af;
+  --color-accent: #fbbf24;
+  --color-lightblue: #f2f7ff;
+  --color-background: #f9fafb;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-text-light: #6b7280;
+  --color-border: #e5e7eb;
+  --color-footer: #111827;
+  --color-footer-text: #d1d5db;
+  --radius-lg: 1rem;
+  --radius-md: 0.5rem;
+  --transition: all 0.3s ease;
+
+  /* Navbar height variables */
+  --navbar-top-height: 72px;
+  --navbar-search-height: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #3b82f6;
+    --color-secondary: #1e3a8a;
+    --color-accent: #facc15;
+    --color-lightblue: #0f172a;
+    --color-background: #0f172a;
+    --color-surface: #1e293b;
+    --color-text: #f1f5f9;
+    --color-text-light: #94a3b8;
+    --color-border: #334155;
+    --color-footer: #0f172a;
+    --color-footer-text: #94a3b8;
+  }
+}
+
+/* -------------------------
+   Base Styles
+-------------------------- */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  margin: 0;
+  padding: 0;
+  transition: var(--transition);
+}
+
+/* Makes sure page content starts below the fixed navbar */
+.main-navbar-offset {
+  padding-top: calc(var(--navbar-top-height) + var(--navbar-search-height));
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+  :root {
+    --navbar-top-height: 56px;
+    --navbar-search-height: 56px;
+  }
+  .main-navbar-offset {
+    padding-top: calc(var(--navbar-top-height) + var(--navbar-search-height));
+  }
+}
+
+/* -------------------------
+   Navbar Styling
+-------------------------- */
+.navbar {
+  background-color: var(--color-lightblue);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.5rem 2rem;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Navbar items */
+.nav-item {
+  position: relative;
+  font-weight: 600;
+  color: #002f34;
+  padding: 0.75rem 1.25rem;
+  border-radius: 1rem 1rem 0 0;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Hover & Active States */
+.nav-item:hover {
+  color: var(--color-primary);
+}
+.nav-item.active {
+  color: var(--color-primary);
+  z-index: 2;
+}
+
+/* --- OLX-style curved highlight (puffed down) --- */
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -18px; /* adjust for perfect connection with white area */
+  width: 110%; /* make curve thicker horizontally */
+  height: 65px; /* increase for wider curved effect */
+  background: #ffffff;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px; /* border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; */
+  box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.08);
+  z-index: -1;
+}
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .navbar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav-item {
+    padding: 0.5rem 1rem;
+  }
+  .nav-item.active::after {
+    bottom: -32px;
+    width: 160%;
+    height: 80px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* ===== Icon Hover Circle Effect ===== */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.icon-btn:hover {
+  background-color: rgba(37, 99, 235, 0.1); /* soft blue circle */
+}
+
+.icon-btn:active {
+  background-color: rgba(37, 99, 235, 0.2); /* darker blue on click */
+}
+
+.icon-btn svg {
+  transition: color 0.3s ease;
+}
+
+.icon-btn:hover svg {
+  color: #2563eb; /* Rentza blue */
+}
+
+/* -------------------------
+   Search Bar Section
+-------------------------- */
+.search-bar {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 0.75rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.search-input,
+.location-input {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  background-color: #ffffff;
+  transition: var(--transition);
+}
+
+.search-input:focus,
+.location-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  outline: none;
+}
+
+.search-btn {
+  background-color: #002f34;
+  color: #fff;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 1.25rem;
+  margin-left: 0.5rem;
+  transition: var(--transition);
+}
+
+.search-btn:hover {
+  background-color: #004247;
+}
+
+/* -------------------------
+   Sell Button Gradient
+-------------------------- */
+.sell-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  background-image: linear-gradient(to right, #facc15, #34d399, #3b82f6);
+  border-radius: 9999px;
+  padding: 2px;
+}
+
+.sell-btn-inner {
+  background-color: white;
+  color: #002f34;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 0.3rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sell-btn:hover {
+  opacity: 0.9;
+}
+
+/* -------------------------
+   Footer Styling
+-------------------------- */
+.footer {
+  background-color: var(--color-footer);
+  color: var(--color-footer-text);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.footer a {
+  color: var(--color-footer-text);
+  margin: 0 0.5rem;
+  transition: var(--transition);
+}
+
+.footer a:hover {
+  color: var(--color-accent);
+}
+
+/* -------------------------
+   Utility Classes
+-------------------------- */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.shadow-card {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
