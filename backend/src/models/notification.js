@@ -10,7 +10,13 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["welcome", "listing_status", "report_update"],
+      // WE ADDED "listing_update" RIGHT HERE:
+      enum: [
+        "listing_status",
+        "listing_update",
+        "report_update",
+        "account_update",
+      ],
     },
     title: {
       type: String,

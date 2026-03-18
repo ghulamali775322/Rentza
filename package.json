@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@react-oauth/google": "^0.12.2",
-    "next-auth": "^4.24.13",
-    "nodemailer": "^7.0.13"
-  }
-}

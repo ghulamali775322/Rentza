@@ -18,11 +18,20 @@ export default function GoogleLoginButton({
     console.log("GoogleLoginButton mounted");
   }, []);
 
-  const handleSuccess = (credentialResponse: any) => {
+  const handleSuccess = async (credentialResponse: any) => {
     console.log("Credential Response:", credentialResponse);
 
-    // ✅ 3. Use the passed callbackUrl instead of hardcoding
-    signIn("google", { callbackUrl: callbackUrl || "/" }); // <-- updated
+    const token = credentialResponse.credential; // Google ID token
+
+    // 1️⃣ Call backend to store user
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/google-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+
+    // 2️⃣ Sign in via NextAuth for session management
+    signIn("google", { callbackUrl: callbackUrl || "/" });
   };
 
   const handleError = () => {

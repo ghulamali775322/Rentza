@@ -7,41 +7,41 @@ const listingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
     title: {
       type: String,
       required: true,
       trim: true,
     },
-
     description: {
       type: String,
       required: true,
     },
-
     category: {
       type: String,
       required: true,
     },
-
     price: {
       type: Number,
       required: true,
       min: 0,
     },
-
     images: [
       {
         url: { type: String, required: true },
         status: {
           type: String,
-          enum: ["approved", "pending"],
+          enum: ["approved", "pending", "rejected"],
           default: "pending",
         },
       },
     ],
-
-    // FIXED LOCATION FOR SEARCH & DISCOVERY
+    // --- NEW ADMIN CONTROL STATUS ---
+    status: {
+      type: String,
+      enum: ["pending", "active", "inactive"],
+      default: "pending", // All new listings wait in the "waiting room"
+    },
+    // --- LOCATION DATA ---
     address: { type: String, required: true },
     location: {
       type: {
@@ -51,14 +51,14 @@ const listingSchema = new mongoose.Schema(
         required: true,
       },
       coordinates: {
-        type: [Number], // [Longitude, Latitude] - REQUIRED for Radar Search
+        type: [Number], // [Longitude, Latitude]
         required: true,
       },
     },
   },
   { timestamps: true },
 );
-// CRITICAL: This line allows the "Near Me" search to work!
+
 listingSchema.index({ location: "2dsphere" });
 
 export default mongoose.model("Listing", listingSchema);
