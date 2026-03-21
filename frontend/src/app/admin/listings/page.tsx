@@ -1,5 +1,5 @@
 "use client";
-
+import { useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { FiSearch, FiEye } from 'react-icons/fi';
@@ -12,8 +12,6 @@ interface Listing {
   category: string; // Used for Active/Inactive
   owner: string;
   price: string;    // Used for Active/Inactive
-  status: 'Active' | 'Inactive' | 'Pending';
-  
   // Specific fields for Pending View (from your image)
   imageCount?: number;
   cloudReason?: string;
@@ -21,39 +19,45 @@ interface Listing {
 }
 
 // --- MOCK DATA ---
-const LISTINGS_DATA: Listing[] = [
-  // Active & Inactive Items
-  { id: 'L001', title: 'Professional DSLR Camera', category: 'Electronics', owner: 'John Smith', price: '1500/day', status: 'Active' },
-  { id: 'L002', title: 'Mountain Bike - Trek', category: 'Sports', owner: 'Sarah Johnson', price: '3000/day', status: 'Active' },
-  { id: 'L004', title: 'Gaming Laptop', category: 'Electronics', owner: 'Emily Davis', price: '2000/day', status: 'Inactive' },
-  
-  // Pending Items (Matches your uploaded image)
-  { 
-    id: 'P001', title: 'Gaming Console Bundle', category: 'Electronics', owner: 'Alex Turner', price: '-', status: 'Pending',
-    imageCount: 2, date: '2024-11-20', cloudReason: 'Possible violence in game imagery'
-  },
-  { 
-    id: 'P002', title: 'Luxury Yacht Rental', category: 'Vehicles', owner: 'David Martinez', price: '-', status: 'Pending',
-    imageCount: 1, date: '2024-11-22', cloudReason: 'Adult content detection - swimwear'
-  },
-  { 
-    id: 'P003', title: 'Camping Gear Package', category: 'Outdoors', owner: 'Lisa Chen', price: '-', status: 'Pending',
-    imageCount: 2, date: '2024-11-23', cloudReason: 'Unsafe content - knives/weapons visible'
-  },
+const ACTIVE_LISTINGS: Listing[] = [
+  { id: 'L001', title: 'Professional DSLR Camera', category: 'Electronics', owner: 'John Smith', price: '1500/day' },
+  { id: 'L004', title: 'Gaming Laptop', category: 'Electronics', owner: 'Emily Davis', price: '2000/day' }
+];
+
+const INACTIVE_LISTINGS: Listing[] = [
+  { id: 'L002', title: 'Mountain Bike - Trek', category: 'Sports', owner: 'Sarah Johnson', price: '3000/day' }
+];
+
+const PENDING_LISTINGS: Listing[] = [
+  {
+    id: 'P001',
+    title: 'Gaming Console Bundle',
+    category: 'Electronics',
+    owner: 'Alex Turner',
+    price: '-',
+    imageCount: 2,
+    date: '2024-11-20',
+    cloudReason: 'Possible violence in game imagery'
+  }
 ];
 
 export default function ListingsPage() {
-  const [activeTab, setActiveTab] = useState<'Active' | 'Inactive' | 'Pending'>('Active');
+  const searchParams = useSearchParams();
+const initialTab = (searchParams.get('tab') as 'Active' | 'Inactive' | 'Pending') || 'Active';
+const [activeTab, setActiveTab] = useState(initialTab);
   const [searchTerm, setSearchTerm] = useState('');
+  let listings: Listing[] = [];
 
-  const filteredListings = LISTINGS_DATA.filter(listing => {
-    const matchesTab = listing.status === activeTab;
-    const matchesSearch = 
-      listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      listing.owner.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+if (activeTab === 'Active') listings = ACTIVE_LISTINGS;
+if (activeTab === 'Inactive') listings = INACTIVE_LISTINGS;
+if (activeTab === 'Pending') listings = PENDING_LISTINGS;
 
+  const filteredListings = listings.filter(listing => {
+  return (
+    listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    listing.owner.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+});
   return (
     <div className="w-full">
       
@@ -157,7 +161,7 @@ export default function ListingsPage() {
 
                  {/* Actions Button Logic */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/admin/listings/${listing.id}`}>
+                    <Link href={`/admin/listings/${listing.id}?tab=${activeTab}`}>
                       <button className="bg-[#1d4ed8] hover:bg-[#1e40af] text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm ml-auto w-[140px]">
                         <FiEye size={16} />
                         

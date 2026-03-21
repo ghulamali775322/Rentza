@@ -11,6 +11,7 @@ import { IoMdArrowBack } from "react-icons/io";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { login, signup, forgotPassword } from "@/lib/authApi";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 type ModalView =
   | "loginOptions"
@@ -42,6 +43,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordMatchError, setPasswordMatchError] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const router = useRouter();
 
   const isLoginFormValid = email.length > 0 && password.length > 0;
   const isSignUpPasswordFormValid =
@@ -70,8 +72,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
       const res = await login({ email, password });
 
       if (res.token) {
-        authLogin(res.token, res.user.name); // updates AuthContext
-        window.location.href = callbackUrl || "/";
+        authLogin(res.token, res.user.name, res.user.role || "user");
+        // Redirect based on role
+        // After login
+        if (res.user.role === "admin") {
+          router.push("/admin"); // ✅ SPA navigation
+        } else {
+          router.push(callbackUrl || "/");
+        }
       }
     } catch (err: any) {
       alert(err.message);
