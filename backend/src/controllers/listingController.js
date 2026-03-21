@@ -28,6 +28,7 @@ export const createListing = async (req, res) => {
     }
 
     const listingData = req.body;
+    listingData.lenderId = req.user._id;
     const listing = await createListingService(listingData);
 
     res.status(201).json({

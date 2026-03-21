@@ -13,6 +13,7 @@
     "@react-oauth/google": "^0.13.4",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.548.0",
     "mongodb": "^7.1.0",
     "next": "15.5.4",
@@ -21,12 +22,14 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-icons": "^5.5.0",
+    "react-leaflet": "^5.0.0",
     "recharts": "^3.5.1",
     "styled-components": "^6.1.19"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

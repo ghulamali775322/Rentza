@@ -8,10 +8,11 @@ import { deleteListing } from "../controllers/listingController.js";
 import upload from "../middlewares/uploadMiddleware.js";
 import { uploadListingImages } from "../controllers/listingController.js";
 import { deleteListingImage } from "../controllers/listingController.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createListing);
+router.post("/", protect, createListing);
 router.get("/", getListings);
 router.get("/lender/:lenderId", getLenderListings);
 router.get("/:id", getSingleListing);
