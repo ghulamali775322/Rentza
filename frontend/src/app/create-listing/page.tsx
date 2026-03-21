@@ -220,7 +220,7 @@ export default function CreateListingPage() {
     e.target.value = "";
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -265,6 +265,9 @@ export default function CreateListingPage() {
       };
       if (localToken) {
         headers["Authorization"] = `Bearer ${localToken}`;
+      } else if (session?.user?.email) {
+        // THE VIP PASS FOR GOOGLE USERS
+        headers["x-google-email"] = session.user.email; 
       }
 
       // Send Text Data
@@ -291,8 +294,10 @@ export default function CreateListingPage() {
         });
 
         const imageHeaders: HeadersInit = {};
-        if (localToken) {
+       if (localToken) {
           imageHeaders["Authorization"] = `Bearer ${localToken}`;
+        } else if (session?.user?.email) {
+          imageHeaders["x-google-email"] = session.user.email;
         }
 
         const imageResponse = await fetch(`http://localhost:5000/api/listings/${newListingId}/images`, {

@@ -5,7 +5,7 @@ export const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check Authorization header
+    // 1. STANDARD LOGIN: Check Authorization header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -14,13 +14,29 @@ export const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Attach user to request
+      // Attach user to request (Keeping your -passwordHash exact)
       req.user = await User.findById(decoded.id).select("-passwordHash");
 
-      next();
-    } else {
-      return res.status(401).json({ message: "Not authorized, token missing" });
+      return next();
+    } 
+    
+    // 2. GOOGLE LOGIN: Check for the VIP Pass
+    if (req.headers["x-google-email"]) {
+      const userEmail = req.headers["x-google-email"];
+      
+      // Find the user by their Google email
+      req.user = await User.findOne({ email: userEmail }).select("-passwordHash");
+
+      if (req.user) {
+        return next();
+      } else {
+        return res.status(401).json({ message: "Not authorized, Google user not found" });
+      }
     }
+
+    // 3. If they have neither, reject them
+    return res.status(401).json({ message: "Not authorized, token missing" });
+    
   } catch (error) {
     return res.status(401).json({ message: "Not authorized, invalid token" });
   }
