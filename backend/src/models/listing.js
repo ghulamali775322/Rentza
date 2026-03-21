@@ -25,6 +25,10 @@ const listingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    contactNumber: {
+      type: String,
+      required: true,
+    },
     images: [
       {
         url: { type: String, required: true },

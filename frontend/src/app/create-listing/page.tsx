@@ -2,6 +2,7 @@
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   FaCamera,
   FaMobileAlt,
@@ -140,25 +141,34 @@ const CATEGORIES = [
     subcategories: ["Miscellaneous", "Events"],
   },
 ];
+// Helper function to read cookies (for Google Auth)
+const getCookie = (name: string) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+  return null;
+};
 
 export default function CreateListingPage() {
+  const { data: session } = useSession();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedMainCatId, setSelectedMainCatId] = useState<string>("");
   const [finalCategory, setFinalCategory] = useState({ main: "", sub: "" });
-  const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]); // The raw files for the backend
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]); // The URLs for the screen
+  const [isSubmitting, setIsSubmitting] = useState(false); // To disable the button while loading
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     price: "",
-    location: "",
     contactNumber: "",
+    location: "",
   });
 
   // --- HANDLERS ---
   const handleImageDelete = (indexToDelete: number) => {
-    setImages((currentImages) =>
-      currentImages.filter((_, index) => index !== indexToDelete),
-    );
+    setImageFiles((current) => current.filter((_, index) => index !== indexToDelete));
+    setImagePreviews((current) => current.filter((_, index) => index !== indexToDelete));
   };
 
   const handleMainCatClick = (id: string) => {
@@ -191,24 +201,128 @@ export default function CreateListingPage() {
 
     if (files && files.length > 0) {
       const newFiles = Array.from(files);
-      const newImageUrls: string[] = [];
-      const remainingSlots = 10 - images.length;
+      const newPreviews: string[] = [];
+      const filesToKeep: File[] = [];
+      
+      // Enforce the backend's 5 image limit
+      const remainingSlots = 5 - imageFiles.length; 
 
       for (let i = 0; i < newFiles.length; i++) {
         if (i >= remainingSlots) break;
         const file = newFiles[i];
-        const imageUrl = URL.createObjectURL(file);
-        newImageUrls.push(imageUrl);
+        filesToKeep.push(file);
+        newPreviews.push(URL.createObjectURL(file));
       }
-      setImages((prevImages) => [...prevImages, ...newImageUrls]);
+      
+      setImageFiles((prev) => [...prev, ...filesToKeep]);
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
     }
     e.target.value = "";
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Listing Created:", { ...finalCategory, ...formData, images });
-    alert("Ad posted successfully!");
+    setIsSubmitting(true);
+
+    try {
+      // 1. Check for Email Login (LocalStorage)
+      const localToken = localStorage.getItem("token"); 
+      
+      // 2. THE FIX: Check for Google Login (Session)
+      if (!localToken && !session) {
+        throw new Error("You must be logged in to post an ad.");
+      }
+
+      // --- SILENT GEOCODING (Converts text to coordinates for your backend) ---
+      let coordinates = [74.3587, 31.5204]; // Default fallback coordinates (Lahore)
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.location)}`);
+        const geoData = await geoRes.json();
+        if (geoData && geoData.length > 0) {
+          coordinates = [parseFloat(geoData[0].lon), parseFloat(geoData[0].lat)];
+        }
+      } catch (geoError) {
+        console.warn("Could not geocode location, using default.", geoError);
+      }
+
+      // Format data perfectly for your backend schema
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        price: Number(formData.price),
+        category: finalCategory.sub, 
+        contactNumber: formData.contactNumber,
+        address: formData.location, 
+        location: {
+          type: "Point",
+          coordinates: coordinates 
+        }
+      };
+
+      // Set up headers (Send localToken if email user)
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (localToken) {
+        headers["Authorization"] = `Bearer ${localToken}`;
+      } else if (session?.user?.email) {
+        // THE VIP PASS FOR GOOGLE USERS
+        headers["x-google-email"] = session.user.email; 
+      }
+
+      // Send Text Data
+      const textResponse = await fetch("http://localhost:5000/api/listings", {
+        method: "POST",
+        headers: headers,
+        credentials: "include", // Crucial: This forces the browser to send the invisible Google cookie to the backend!
+        body: JSON.stringify(listingData),
+      });
+
+      const textResult = await textResponse.json();
+
+      if (!textResponse.ok) {
+        throw new Error(textResult.message || "Failed to save listing details.");
+      }
+
+      const newListingId = textResult.data._id; 
+
+      // Send Images (If any exist)
+      if (imageFiles.length > 0) {
+        const imageFormData = new FormData();
+        imageFiles.forEach((file) => {
+          imageFormData.append("images", file); 
+        });
+
+        const imageHeaders: HeadersInit = {};
+       if (localToken) {
+          imageHeaders["Authorization"] = `Bearer ${localToken}`;
+        } else if (session?.user?.email) {
+          imageHeaders["x-google-email"] = session.user.email;
+        }
+
+        const imageResponse = await fetch(`http://localhost:5000/api/listings/${newListingId}/images`, {
+          method: "POST",
+          headers: imageHeaders,
+          credentials: "include",
+          body: imageFormData,
+        });
+
+        const imageResult = await imageResponse.json();
+
+        if (!imageResponse.ok) {
+          throw new Error(imageResult.message || "Listing created, but image upload failed.");
+        }
+      }
+
+      alert("Ad posted successfully!");
+      window.location.href = "/"; 
+
+    } catch (error: any) {
+      console.error("Integration Error:", error);
+      alert(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const activeCategoryData = CATEGORIES.find((c) => c.id === selectedMainCatId);
@@ -355,11 +469,11 @@ export default function CreateListingPage() {
                   {/* ImageUploadContainer */}
                   <div className="flex gap-[15px] flex-wrap">
                     {/* Upload Picker Button */}
-                    {images.length < 10 && (
+                    {imagePreviews.length < 5 && (
                       <label className="w-[110px] h-[110px] border border-dashed border-[#c9cbcd] rounded flex flex-col justify-center items-center cursor-pointer text-[#007bff] bg-[#e6f7ff] transition-all duration-200 relative hover:border-[#007bff] hover:bg-[#d6efff]">
                         <FaCamera size={30} />
                         <span className="mt-2 text-sm">
-                          ({images.length}/10)
+                          ({imagePreviews.length}/5)
                         </span>
                         <input
                           type="file"
@@ -372,7 +486,7 @@ export default function CreateListingPage() {
                     )}
 
                     {/* PREVIEWS */}
-                    {images.map((img, index) => (
+                    {imagePreviews.map((img, index) => (
                       // ImageWrapper
                       <div
                         key={index}
@@ -439,7 +553,7 @@ export default function CreateListingPage() {
                 </div>
               </div>
 
-              {/* Location Section */}
+             {/* Location Section */}
               <div className="mb-[15px] pb-[15px]">
                 <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold">
                   Location
@@ -473,11 +587,12 @@ export default function CreateListingPage() {
 
               {/* SubmitButton */}
               <button
-                type="submit"
-                className="w-full p-[18px] bg-[#002f34] text-white text-[18px] font-bold border-none rounded cursor-pointer hover:bg-[#005861]"
-              >
-                Submit Listing
-              </button>
+               type="submit"
+                  disabled={isSubmitting}
+                   className={`w-full p-[18px] text-white text-[18px] font-bold border-none rounded transition-all duration-200 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] cursor-pointer hover:bg-[#005861]'}`}
+>
+                    {isSubmitting ? "Posting Ad..." : "Submit Listing"}
+            </button>
             </form>
           </div>
         )}
