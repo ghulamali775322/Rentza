@@ -1,0 +1,42 @@
+import express from "express";
+import { getDashboardStats } from "../controllers/adminController.js";
+import { getAdminListings } from "../controllers/adminController.js";
+import { getAdminListingDetails } from "../controllers/adminController.js";
+import { updateAdminListingStatus } from "../controllers/adminController.js";
+import { deleteAdminListing } from "../controllers/adminController.js";
+import { updateAdminListing } from "../controllers/adminController.js";
+import { getAdminReports } from "../controllers/adminController.js";
+import { getAdminReportDetails } from "../controllers/adminController.js";
+import { updateAdminReportStatus } from "../controllers/adminController.js";
+import { executeAdminReportAction } from "../controllers/adminController.js";
+import { deleteAdminReport } from "../controllers/adminController.js";
+import { getAdminUsers } from "../controllers/adminController.js";
+import { getAdminUserDetails } from "../controllers/adminController.js";
+import { getAdminUserListings } from "../controllers/adminController.js";
+import { updateAdminUserStatus } from "../controllers/adminController.js";
+import { deleteAdminUser } from "../controllers/adminController.js";
+import { getAnalyticsData } from "../controllers/adminController.js";
+import { getUserGrowthData } from "../controllers/adminController.js";
+
+const router = express.Router();
+
+router.get("/dashboard-stats", getDashboardStats);
+router.get("/listings", getAdminListings);
+router.get("/listings/:id", getAdminListingDetails);
+router.put("/listings/:id/status", updateAdminListingStatus);
+router.delete("/listings/:id", deleteAdminListing);
+router.put("/listings/:id", updateAdminListing);
+router.get("/reports", getAdminReports);
+router.get("/reports/:id", getAdminReportDetails);
+router.put("/reports/:id/status", updateAdminReportStatus); 
+router.post("/reports/:id/action", executeAdminReportAction); 
+router.delete("/reports/:id", deleteAdminReport);
+router.get("/users", getAdminUsers);
+router.get("/users/:id", getAdminUserDetails); 
+router.get("/users/:id/listings", getAdminUserListings); 
+router.put("/users/:id/status", updateAdminUserStatus); 
+router.delete("/users/:id", deleteAdminUser); 
+router.get("/analytics/listings-growth", getAnalyticsData); 
+router.get("/analytics/users-growth", getUserGrowthData);      
+
+export default router;
