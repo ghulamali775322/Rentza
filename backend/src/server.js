@@ -6,6 +6,10 @@ import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import connectDB from "./config/db.js";
 import { protect } from "./middlewares/authMiddleware.js";
+import listingRoutes from "./routes/listingRoutes.js";
+import reportRoutes from "./routes/reportRoute.js";
+import notificationRoutes from "./routes/notificationRoute.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +26,11 @@ app.use(
     credentials: true,
   }),
 );
+app.use("/api/listings", listingRoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Rate limiter (security)
 const limiter = rateLimit({

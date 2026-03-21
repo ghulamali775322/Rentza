@@ -1,5 +1,11 @@
+# Environment variables (secrets)
 .env
 
-
+# Dependency directories
 node_modules/
 
+# Google Cloud Key (CRITICAL to keep secret)
+google-credentials.json
+
+# User Uploaded Files (You don't want to push test images to GitHub)
+uploads/

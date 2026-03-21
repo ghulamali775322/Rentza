@@ -1,0 +1,129 @@
+import mongoose from "mongoose";
+import Listing from "../models/listing.js";
+import User from "../models/user.js";
+
+//create listing
+export const createListingService = async (data) => {
+  const listing = await Listing.create(data);
+  return listing;
+};
+
+//get all listing
+export const getAllListings = async () => {
+  const listings = await Listing.find().populate("lenderId", "name email");
+  return listings;
+};
+
+// Get a single listing by its ID
+export const getListingByIdService = async (id) => {
+  const listing = await Listing.findById(id).populate("lenderId", "name email phone");
+  return listing;
+};
+
+// Get all listings for a specific lender
+export const getListingsByLenderService = async (lenderId) => {
+  const listings = await Listing.find({ lenderId: lenderId }).populate("lenderId", "name email");
+  return listings;
+};
+
+// Update a listing
+export const updateListingService = async (id, updatedData) => {
+  const updatedListing = await Listing.findByIdAndUpdate(id, updatedData, { 
+    new: true 
+  });
+  return updatedListing;
+};
+
+// Delete a listing
+export const deleteListingService = async (id) => {
+  const deletedListing = await Listing.findByIdAndDelete(id);
+  return deletedListing;
+};
+
+// Remove a specific image from a listing's image array
+export const deleteListingImageService = async (listingId, imageUrl) => {
+  const updatedListing = await Listing.findByIdAndUpdate(
+    listingId,
+    { $pull: { images: { url: imageUrl } } }, 
+    { new: true }
+  );
+  return updatedListing;
+};
+
+// Admin Dashboard: Get total count of ALL listings
+export const getTotalListingsCountService = async () => {
+  const count = await Listing.countDocuments();
+  return count;
+};
+
+// Admin Dashboard: Get count of ACTIVE listings
+export const getActiveListingsCountService = async () => {
+  const count = await Listing.countDocuments({ status: 'active' });
+  return count;
+};
+
+// Admin Dashboard: Get count of PENDING listings
+export const getPendingListingsCountService = async () => {
+  const count = await Listing.countDocuments({ status: 'pending' });
+  return count;
+};
+
+// Admin Panel: Get listings filtered by status AND/OR search term
+export const getAdminListingsService = async (statusFilter, searchTerm) => {
+  let query = {};
+
+  if (statusFilter) {
+    query.status = statusFilter;
+  }
+
+  if (searchTerm) {
+  
+    const isMongoId = mongoose.Types.ObjectId.isValid(searchTerm);
+
+    const matchingUsers = await User.find({
+      name: { $regex: searchTerm, $options: "i" }
+    }).select('_id');
+    
+  
+    const userIds = matchingUsers.map(user => user._id);
+
+    let searchConditions = [
+      { title: { $regex: searchTerm, $options: "i" } },
+      { category: { $regex: searchTerm, $options: "i" } }
+    ];
+
+  
+    if (isMongoId) {
+      searchConditions.push({ _id: searchTerm });
+    }
+
+    if (userIds.length > 0) {
+      searchConditions.push({ lenderId: { $in: userIds } });
+    }
+
+    query.$or = searchConditions;
+  }
+  
+  const listings = await Listing.find(query)
+    .populate("lenderId", "name email") 
+    .sort({ createdAt: -1 });
+
+  return listings;
+};
+
+// Admin Panel: Get full, unredacted details of a single listing
+export const getAdminListingByIdService = async (listingId) => {
+  const listing = await Listing.findById(listingId)
+    .populate("lenderId", "name email phone profilePhotoPath"); 
+  return listing;
+};
+
+// Admin Panel: Update a listing's status (Approve, Activate, Suspend)
+export const updateListingStatusAdminService = async (listingId, newStatus) => {
+  const updatedListing = await Listing.findByIdAndUpdate(
+    listingId, 
+    { status: newStatus },
+    { new: true }
+  );
+  return updatedListing;
+};
