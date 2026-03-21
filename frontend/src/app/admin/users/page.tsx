@@ -1,51 +1,77 @@
 "use client";
 import Link from 'next/link';
 import React, { useState } from 'react';
-import { FiSearch, FiEye } from 'react-icons/fi'; // Added FiEye
+import { FiSearch, FiEye } from 'react-icons/fi';
 
 // --- TYPE DEFINITIONS ---
 interface User {
   id: string;
   name: string;
   email: string;
-  status: 'Active' | 'Suspended' | 'Banned';
   joinedDate: string;
   totalListings: number;
 }
 
 // --- MOCK DATA ---
 const USERS_DATA: User[] = [
-  { id: 'U001', name: 'John Smith', email: 'john.smith@email.com', status: 'Active', joinedDate: '2024-01-15', totalListings: 5 },
-  { id: 'U002', name: 'Sarah Johnson', email: 'sarah.j@email.com', status: 'Active', joinedDate: '2024-02-20', totalListings: 3 },
-  { id: 'U003', name: 'Michael Brown', email: 'mbrown@email.com', status: 'Suspended', joinedDate: '2024-03-10', totalListings: 8 },
-  { id: 'U004', name: 'Emily Davis', email: 'emily.davis@email.com', status: 'Active', joinedDate: '2024-04-05', totalListings: 12 },
-  { id: 'U005', name: 'Robert Wilson', email: 'rwilson@email.com', status: 'Banned', joinedDate: '2024-05-12', totalListings: 2 },
-  { id: 'U006', name: 'Linda Martinez', email: 'linda.m@email.com', status: 'Active', joinedDate: '2024-06-01', totalListings: 0 },
-  { id: 'U007', name: 'David Lee', email: 'david.lee@email.com', status: 'Active', joinedDate: '2024-06-15', totalListings: 4 },
+  { id: 'U001', name: 'John Smith', email: 'john.smith@email.com',  joinedDate: '2024-01-15', totalListings: 5 },
+  { id: 'U002', name: 'Sarah Johnson', email: 'sarah.j@email.com',  joinedDate: '2024-02-20', totalListings: 3 },
+  { id: 'U003', name: 'Michael Brown', email: 'mbrown@email.com',  joinedDate: '2024-03-10', totalListings: 8 },
+  { id: 'U004', name: 'Emily Davis', email: 'emily.davis@email.com', joinedDate: '2024-04-05', totalListings: 12 },
+  { id: 'U005', name: 'Robert Wilson', email: 'rwilson@email.com',  joinedDate: '2024-05-12', totalListings: 2 },
+  { id: 'U006', name: 'Linda Martinez', email: 'linda.m@email.com', joinedDate: '2024-06-01', totalListings: 0 },
+  { id: 'U007', name: 'David Lee', email: 'david.lee@email.com',    joinedDate: '2024-06-15', totalListings: 4 },
 ];
 
 export default function UsersPage() {
+  const [activeTab, setActiveTab] = useState('Active');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter users based on search
-  const filteredUsers = USERS_DATA.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 👇 CHANGE 1: Update the filter to check BOTH the search bar AND the active tab
+  const filteredUsers = USERS_DATA.filter((user) => {
+const inactiveIds = ['U003', 'U005']; 
+const matchesTab = activeTab === 'Active'
+  ? !inactiveIds.includes(user.id)
+  : inactiveIds.includes(user.id);
 
-  // Helper to get status badge styles
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-700';
-      case 'Suspended': return 'bg-orange-100 text-orange-700'; 
-      case 'Banned': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
+    // 2. Does the user match the search text?
+    const matchesSearch = 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.id.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Only show the user if they match BOTH rules
+    return matchesTab && matchesSearch;
+  });
 
   return (
     <div className="w-full">
+      
+      {/* 👇 CHANGE 2: Add the Tab Buttons right above the search bar 👇 */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => setActiveTab('Active')}
+          className={`px-6 py-2 rounded-full text-sm font-semibold transition-all border ${
+            activeTab === 'Active'
+              ? 'bg-[#1a56db] text-white border-[#1a56db]' 
+              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300' 
+          }`}
+        >
+          Active Users
+        </button>
+
+        <button
+          onClick={() => setActiveTab('Inactive')}
+          className={`px-6 py-2 rounded-full text-sm font-semibold transition-all border ${
+            activeTab === 'Inactive'
+              ? 'bg-[#1a56db] text-white border-[#1a56db]' 
+              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300' 
+          }`}
+        >
+          Inactive Users
+        </button>
+      </div>
+
       {/* --- SEARCH BAR --- */}
       <div className="mb-5">
         <div className="relative w-full max-w-xl">
@@ -72,7 +98,7 @@ export default function UsersPage() {
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">User ID</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Joined Date</th>
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Total Listings</th>
                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
@@ -99,13 +125,6 @@ export default function UsersPage() {
                     <div className="text-sm text-gray-600">{user.email}</div>
                   </td>
 
-                  {/* Status Badge */}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-
                   {/* Joined Date */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {user.joinedDate}
@@ -118,19 +137,14 @@ export default function UsersPage() {
 
                  {/* Actions (Blue Button) */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/admin/users/${user.id}`}>
-                    <button 
-                      // CHANGE 1: Added 'w-[150px]' to increase length.
-                      // 'flex' aligns items in a row by default.
-                      className="bg-[#1d4ed8] hover:bg-[#1e40af] text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm ml-auto w-[130px]"
-                      onClick={() => console.log(`View details for ${user.name}`)}
-                    >
-                      <FiEye size={18} />
-                      
-                      {/* CHANGE 2: Removed the 'flex-col' div. Used a simple span with 'whitespace-nowrap' to keep it on one line. */}
-                      <span className="font-semibold whitespace-nowrap">User Details</span>
-                    </button>
-                    </Link>
+                    <Link href={`/admin/users/${user.id}?type=${activeTab}`}>
+                               <button 
+                       className="bg-[#1d4ed8] hover:bg-[#1e40af] text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 shadow-sm ml-auto w-[130px]"
+                              >
+                           <FiEye size={18} />
+                         <span className="font-semibold whitespace-nowrap">User Details</span>
+                                   </button>
+                                       </Link>
                   </td>
                 </tr>
               ))}
@@ -138,8 +152,8 @@ export default function UsersPage() {
               {/* Empty State */}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
-                    No users found matching your search.
+                  <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                    No users found in this tab matching your search.
                   </td>
                 </tr>
               )}
@@ -151,7 +165,7 @@ export default function UsersPage() {
       {/* Pagination */}
       <div className="flex items-center justify-between mt-4 px-2">
         <div className="text-sm text-gray-500">
-          Showing <b>1</b> to <b>{filteredUsers.length}</b> of <b>{USERS_DATA.length}</b> users
+          Showing <b>{filteredUsers.length}</b> users
         </div>
       </div>
     </div>

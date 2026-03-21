@@ -24,7 +24,6 @@ import {
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  if (pathname.startsWith("/admin")) return null;
   const [active, setActive] = useState("home");
 
   const { data: session } = useSession();
@@ -117,6 +116,7 @@ export default function Navbar() {
     </span>
   );
 
+  if (pathname.startsWith("/admin")) return null;
   return (
     <nav className="w-full fixed top-0 left-0 z-50">
       {/* Top bar */}

@@ -11,7 +11,7 @@ const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
     { title: 'Active Users', value: '9,342', icon: FiUserCheck, color: '#00c851', bgColor: '#e6f9ec' }, // Green
     { title: 'Total Listings', value: '8,765', icon: FiPackage, color: '#8e44ad', bgColor: '#f3e5f5' }, // Purple
     { title: 'Active Listings', value: '6,543', icon: LuPackageCheck, color: '#6c5ce7', bgColor: '#ede7f6' }, // Deep Purple
-    { title: 'Pending Approvals', value: '24', icon: FiClock, color: '#ff8800', bgColor: '#fff3e0' }, // Orange
+    { title: 'Pending Listings', value: '24', icon: FiClock, color: '#ff8800', bgColor: '#fff3e0' }, // Orange
     { title: 'Pending Reports', value: '18', icon: FiAlertCircle, color: '#ff3547', bgColor: '#ffebee' }, // Red
   ];
 

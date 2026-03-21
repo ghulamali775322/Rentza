@@ -30,7 +30,11 @@ const userSchema = new mongoose.Schema(
     googleId: { type: String, unique: true, sparse: true },
 
     // role
-    role: { type: String, default: "user" },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
 
     isActive: { type: Boolean, default: true },
 

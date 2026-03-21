@@ -1,49 +1,68 @@
+// context/AuthContext.tsx
 "use client";
-
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface AuthContextType {
   token: string | null;
   name: string | null;
-  login: (token: string, name: string) => void;
+  role: string | null;
+  login: (token: string, name: string, role: string) => void;
   logout: () => void;
+  loadingAuth: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [token, setToken] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // Load token + name from localStorage
   useEffect(() => {
+    // Load from localStorage on mount
     const savedToken = localStorage.getItem("token");
     const savedName = localStorage.getItem("name");
-    if (savedToken) setToken(savedToken);
-    if (savedName) setName(savedName);
+    const savedRole = localStorage.getItem("role");
+
+    if (savedToken && savedRole) {
+      setToken(savedToken);
+      setName(savedName);
+      setRole(savedRole);
+    }
+    setLoadingAuth(false);
   }, []);
 
-  // Login stores both token + name
-  const login = (token: string, name: string) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("name", name);
-    setToken(token);
-    setName(name);
+  const login = (t: string, n: string, r: string) => {
+    setToken(t);
+    setName(n);
+    setRole(r);
+
+    // persist in localStorage
+    localStorage.setItem("token", t);
+    localStorage.setItem("name", n);
+    localStorage.setItem("role", r);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("name");
     setToken(null);
     setName(null);
+    setRole(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("name");
+    localStorage.removeItem("role");
   };
 
   return (
-    <AuthContext.Provider value={{ token, name, login, logout }}>
+    <AuthContext.Provider
+      value={{ token, name, role, login, logout, loadingAuth }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
