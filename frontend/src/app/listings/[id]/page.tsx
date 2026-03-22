@@ -207,19 +207,24 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-4">
+          {/* 1. SELLER PROFILE CARD */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition">
-              <div className="flex items-center gap-3">
-                <div className="w-16 h-16 bg-[#002f34] rounded-full flex items-center justify-center text-white text-2xl font-bold relative">
-                   {listing.lenderId?.name?.charAt(0).toUpperCase() || <FiUser size={32} />}
+            
+            {/* WRAPPED IN A LINK TO THE LENDER PROFILE */}
+            <Link href={`/lender/${listing.lenderId?._id}`} className="block">
+              <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 bg-[#002f34] rounded-full flex items-center justify-center text-white text-2xl font-bold relative">
+                     {listing.lenderId?.name?.charAt(0).toUpperCase() || <FiUser size={32} />}
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Posted by</p>
+                    <h3 className="font-bold text-lg text-gray-900 capitalize">{listing.lenderId?.name || "Rentza User"}</h3>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Posted by</p>
-                  <h3 className="font-bold text-lg text-gray-900 capitalize">{listing.lenderId?.name || "Rentza User"}</h3>
-                </div>
+                <FiChevronRight className="text-gray-400 text-xl" />
               </div>
-              <FiChevronRight className="text-gray-400 text-xl" />
-            </div>
+            </Link>
 
             <hr className="border-gray-100" />
 
