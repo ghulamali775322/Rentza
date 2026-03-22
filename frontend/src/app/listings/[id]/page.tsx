@@ -1,10 +1,10 @@
 "use client";
 import ReportModal from "@/components/modals/ReportModal";
-
-import React, { use, useState } from "react"; // Added useState
+import React, { use, useState, useEffect } from "react"; 
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { MOCK_LISTINGS } from "@/data/mockListings";
+import { notFound, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useAuth } from "@/context/AuthContext";
 import { 
   FiMapPin, 
   FiCalendar, 
@@ -15,35 +15,124 @@ import {
   FiFlag,
   FiUser,
   FiChevronRight,
-  FiFileText
+  FiFileText,
+  FiEdit2,
+  FiTrash2
 } from "react-icons/fi";
 
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const id = Number(resolvedParams.id);
-  const listing = MOCK_LISTINGS.find((item) => item.id === id);
+  const id = resolvedParams.id; 
+  const router = useRouter();
+
+  // --- AUTHENTICATION STATE ---
+  const { data: session } = useSession();
+  const { name } = useAuth();
+  const loggedInName = session?.user?.name || name;
+
+  // --- STATE FOR REAL DATA ---
+  const [listing, setListing] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // --- UI STATE ---
   const [isReportOpen, setIsReportOpen] = useState(false);
-
-
-  // State to toggle phone number visibility
   const [showPhone, setShowPhone] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0); 
 
-  if (!listing) {
-    notFound();
+  // --- FETCH DATA ---
+  useEffect(() => {
+    const fetchSingleListing = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/listings/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          setListing(result.data);
+        } else {
+          setError(result.message);
+        }
+      } catch (err) {
+        console.error("Error fetching listing:", err);
+        setError("Failed to load the listing.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSingleListing();
+  }, [id]);
+
+  // --- DELETE HANDLER ---
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete this ad?")) {
+      return;
+    }
+
+    try {
+      const localToken = localStorage.getItem("token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      
+      if (localToken) {
+        headers["Authorization"] = `Bearer ${localToken}`;
+      } else if (session?.user?.email) {
+        headers["x-google-email"] = session.user.email; 
+      }
+
+      const response = await fetch(`http://localhost:5000/api/listings/${id}`, {
+        method: "DELETE",
+        headers: headers,
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+     if (response.ok && result.success) {
+        alert("Ad deleted successfully!");
+        router.replace("/profile/my-ads"); // <--- Replaces the history entry!
+      } else {
+        alert(result.message || "Failed to delete ad.");
+      }
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      alert("An error occurred while deleting the ad.");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-[100px] flex justify-center">
+        <p className="text-xl font-bold text-gray-500 animate-pulse">Loading listing details...</p>
+      </div>
+    );
   }
 
-  // Mock data for seller (You can add these to your MOCK_LISTINGS later)
-  const sellerInfo = {
-    name: "Ghulam Ali",
-    memberSince: "Dec 2023",
-    activeAds: "3",
-    phone: "0300-6265873" // Example phone number
-  };
+  if (error || !listing) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-[100px] flex justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Ad not found</h2>
+          <p className="text-gray-500 mb-6">{error || "This listing may have been removed."}</p>
+          <Link href="/" className="bg-[#002f34] text-white px-6 py-3 rounded-md hover:bg-[#004d55]">
+            Go back Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const postedDate = new Date(listing.createdAt).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric'
+  });
+
+  // --- OWNER CHECK ---
+  const isOwner = listing.lenderId?.name === loggedInName;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[50px] pb-10">
       
-      {/* --- BREADCRUMB --- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
         <p className="text-base text-gray-500">
           <Link href="/" className="hover:text-blue-800">Home</Link> / 
@@ -56,77 +145,77 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* === LEFT COLUMN (Main Content) === */}
         <div className="lg:col-span-2 space-y-4">
-          
-          {/* 1. IMAGE GALLERY SECTION */}
-          <div className="bg-black rounded-lg overflow-hidden flex items-center justify-center h-[400px] relative group">
-            <img 
-              src={listing.image} 
-              alt={listing.title} 
-              className="h-full w-full object-contain"
-            />
-            {/* Overlay Buttons (Top Right) */}
-            <div className="absolute top-4 right-4 flex gap-3 z-10">
-              <button className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
-                <FiShare2 size={20} className="text-gray-700" />
-              </button>
-              <button className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
-                <FiHeart size={20} className="text-gray-700" />
-              </button>
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="bg-black rounded-lg overflow-hidden flex items-center justify-center h-[400px] relative group">
+              <img 
+                src={listing.images && listing.images.length > 0 ? `http://localhost:5000${listing.images[activeImageIndex].url}` : "https://via.placeholder.com/600?text=No+Image"} 
+                alt={listing.title} 
+                className="h-full w-full object-contain"
+              />
+              <div className="absolute top-4 right-4 flex gap-3 z-10">
+                <button className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
+                  <FiShare2 size={20} className="text-gray-700" />
+                </button>
+                <button className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
+                  <FiHeart size={20} className="text-gray-700" />
+                </button>
+              </div>
             </div>
+            
+            {listing.images && listing.images.length > 1 && (
+              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                {listing.images.map((img: any, idx: number) => (
+                  <img 
+                    key={idx}
+                    src={`http://localhost:5000${img.url}`}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`h-20 w-24 object-cover rounded cursor-pointer border-2 transition-all ${activeImageIndex === idx ? 'border-blue-600 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    alt={`Thumbnail ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* 2. PRICE & TITLE CARD */}
           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{listing.price}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  PKR {listing.price.toLocaleString()} <span className="text-xl font-medium text-gray-500">/ day</span>
+                </h1>
                 <h2 className="text-xl text-gray-700 mt-2">{listing.title}</h2>
               </div>
             </div>
             
             <div className="flex items-center gap-4 mt-4 text-gray-500 text-sm">
               <div className="flex items-center gap-1">
-                <FiMapPin /> {listing.location}
+                <FiMapPin /> {listing.address}
               </div>
               <div className="flex items-center gap-1">
-                <FiCalendar /> Posted 2 days ago
+                <FiCalendar /> Posted on {postedDate}
               </div>
             </div>
           </div>
 
-         
-          {/* 4. DESCRIPTION SECTION */}
           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Description</h3>
             <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-              Selling my {listing.title}. It is in excellent condition and has been used carefully. 
-              {listing.category === 'Cars' && " Driven mostly on highways, timely maintained, and fuel efficient."}
-              {"\n\n"}
-              Genuine buyers typically contact. Price is slightly negotiable. 
-              {"\n\n"}
-              Thank you.
+              {listing.description}
             </p>
           </div>
         </div>
 
-        {/* === RIGHT COLUMN (Sidebar / Seller Info) === */}
         <div className="space-y-4">
-          
-          {/* 1. SELLER PROFILE CARD (UPDATED DESIGN) */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-            
-            {/* Top Section: Avatar & Name */}
             <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition">
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white relative">
-                   {/* Simplified Avatar Icon */}
-                   <FiUser size={32} />
+                <div className="w-16 h-16 bg-[#002f34] rounded-full flex items-center justify-center text-white text-2xl font-bold relative">
+                   {listing.lenderId?.name?.charAt(0).toUpperCase() || <FiUser size={32} />}
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-0.5">Posted by</p>
-                  <h3 className="font-bold text-lg text-gray-900">{sellerInfo.name}</h3>
+                  <h3 className="font-bold text-lg text-gray-900 capitalize">{listing.lenderId?.name || "Rentza User"}</h3>
                 </div>
               </div>
               <FiChevronRight className="text-gray-400 text-xl" />
@@ -134,85 +223,93 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
             <hr className="border-gray-100" />
 
-            {/* Bottom Section: Member Since & Active Ads */}
-            <div className="p-4 grid grid-cols-2 gap-4">
-              <div className="flex items-start gap-2">
-                 <div className="mt-1 text-blue-600"><FiCalendar /></div>
-                 <div>
-                    <p className="text-xs text-gray-500">Member Since</p>
-                    <p className="font-bold text-gray-800 text-sm">{sellerInfo.memberSince}</p>
-                 </div>
-              </div>
-              <div className="flex items-start gap-2">
-                 <div className="mt-1 text-blue-600"><FiFileText /></div>
-                 <div>
-                    <p className="text-xs text-gray-500">Active Ads</p>
-                    <p className="font-bold text-gray-800 text-sm">{sellerInfo.activeAds}</p>
-                 </div>
-              </div>
+            <div className="p-4 flex items-start gap-2">
+               <div className="mt-1 text-blue-600"><FiFileText /></div>
+               <div>
+                  <p className="text-xs text-gray-500">Account Status</p>
+                  <p className="font-bold text-green-600 text-sm">Verified User</p>
+               </div>
             </div>
           </div>
 
-          {/* 2. ACTION BUTTONS */}
           <div className="space-y-3">
-            {/* Show Phone Number Button */}
-            <button 
-              onClick={() => setShowPhone(true)}
-              className={`w-full font-bold py-3 rounded flex items-center justify-center gap-2 transition ${
-                showPhone ? "bg-green-600 text-white" : "bg-[#002f34] text-white hover:bg-[#004247]"
-              }`}
-            >
-              <FiPhone size={20} />
-              {showPhone ? sellerInfo.phone : "Show Phone Number"}
-            </button>
+            {isOwner ? (
+              // OWNER VIEW: Edit and Delete Buttons
+              <>
+                <Link 
+                  href={`/edit-listing/${listing._id}`} 
+                  className="w-full bg-[#007bff] text-white font-bold py-3 rounded flex items-center justify-center gap-2 transition hover:bg-[#0056b3]"
+                >
+                  <FiEdit2 size={20} />
+                  Edit Ad
+                </Link>
+                <button 
+                  onClick={handleDelete}
+                  className="w-full border-2 border-red-500 text-red-600 font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-red-50 transition"
+                >
+                  <FiTrash2 size={20} />
+                  Delete Ad
+                </button>
+              </>
+            ) : (
+              // RENTER VIEW: Phone and Chat Buttons
+              <>
+                <button 
+                  onClick={() => setShowPhone(true)}
+                  className={`w-full font-bold py-3 rounded flex items-center justify-center gap-2 transition ${
+                    showPhone ? "bg-green-600 text-white" : "bg-[#002f34] text-white hover:bg-[#004247]"
+                  }`}
+                >
+                  <FiPhone size={20} />
+                  {showPhone ? listing.contactNumber : "Show Phone Number"}
+                </button>
 
-             {/* === CHANGED: CHAT BUTTON IS NOW A LINK === */}
-             
-            <Link 
-              // We pass the seller name in the URL query
-              href={`/chat?user=${encodeURIComponent(sellerInfo.name)}`} 
-              className="w-full border-2 border-[#002f34] text-[#002f34] font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition"
-            >
-              <FiMessageCircle size={20} />
-              Chat
-            </Link>
-            </div>
+                <Link 
+                  href={`/chat?user=${encodeURIComponent(listing.lenderId?.name || "user")}`} 
+                  className="w-full border-2 border-[#002f34] text-[#002f34] font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                >
+                  <FiMessageCircle size={20} />
+                  Chat
+                </Link>
+              </>
+            )}
+          </div>
 
-          {/* 3. LOCATION MAP PLACEHOLDER */}
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-2">Location</h3>
             <div className="flex items-center gap-2 text-gray-700 text-sm mb-3">
               <FiMapPin size={18} />
-              {listing.location}
+              {listing.address}
             </div>
-            {/* Fake Map Image */}
             <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
-              Map Preview Placeholder
+              [ Map Coordinates: {listing.location?.coordinates[1] || 0}, {listing.location?.coordinates[0] || 0} ]
             </div>
           </div>
 
-          {/* 4. REPORT AD (UPDATED:  Button Only) */}
-          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-             <div className="flex justify-center">
-                <button 
-                     onClick={() => setIsReportOpen(true)}
-                        className="flex items-center gap-2 text-red-600 font-bold hover:underline text-sm"
-                            >
-                     <FiFlag size={18} /> 
-                   Report this ad
-                  </button>
-             </div>
-          </div>
+          {/* Hide the report button from the owner */}
+          {!isOwner && (
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+               <div className="flex justify-center">
+                  <button 
+                       onClick={() => setIsReportOpen(true)}
+                          className="flex items-center gap-2 text-red-600 font-bold hover:underline text-sm"
+                              >
+                       <FiFlag size={18} /> 
+                     Report this ad
+                   </button>
+               </div>
+            </div>
+          )}
 
         </div>
-
       </div>
-       <ReportModal 
-      isOpen={isReportOpen}
-      onClose={() => setIsReportOpen(false)}
-      type="ad"
-      id={listing.id}
-    />
+      
+      <ReportModal 
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        type="ad"
+        id={listing._id}
+      />
     </div>
   );
 }

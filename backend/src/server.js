@@ -10,12 +10,14 @@ import listingRoutes from "./routes/listingRoutes.js";
 import reportRoutes from "./routes/reportRoute.js";
 import notificationRoutes from "./routes/notificationRoute.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import path from "path";
 
 dotenv.config();
 
 connectDB();
 
 const app = express();
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Middlewares
 app.use(express.json());

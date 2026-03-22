@@ -16,8 +16,8 @@ router.post("/", protect, createListing);
 router.get("/", getListings);
 router.get("/lender/:lenderId", getLenderListings);
 router.get("/:id", getSingleListing);
-router.put("/:id", updateListing);
-router.delete("/:id", deleteListing);
+router.put("/:id", protect, updateListing);
+router.delete("/:id", protect, deleteListing);
 router.delete("/:id/images", deleteListingImage);
 router.post("/:id/images", upload.array("images", 5), uploadListingImages);
 

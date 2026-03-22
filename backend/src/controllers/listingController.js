@@ -123,6 +123,22 @@ export const updateListing = async (req, res) => {
     const listingId = req.params.id; 
     const newData = req.body; 
 
+    // --- THE FIX: ADD TEXT VALIDATION HERE ---
+    if (newData.title && !validateText(newData.title)) {
+      return res.status(400).json({
+        success: false,
+        message: "Your updated title contains inappropriate language or forbidden words.",
+      });
+    }
+
+    if (newData.description && !validateText(newData.description)) {
+      return res.status(400).json({
+        success: false,
+        message: "Your updated description contains inappropriate language or forbidden words.",
+      });
+    }
+    // ------------------------------------------
+
     const updatedListing = await updateListingService(listingId, newData);
 
     if (!updatedListing) {
@@ -143,7 +159,6 @@ export const updateListing = async (req, res) => {
     });
   }
 };
-
 export const deleteListing = async (req, res) => {
   try {
     const listingId = req.params.id; 

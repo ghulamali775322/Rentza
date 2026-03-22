@@ -4,159 +4,38 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import {
-  FaCamera,
-  FaMobileAlt,
-  FaCar,
-  FaKey,
-  FaTv,
-  FaMotorcycle,
-  FaTractor,
-  FaCouch,
-  FaTshirt,
-  FaBookOpen,
-  FaHiking,
-  FaEllipsisH,
-} from "react-icons/fa";
-import { IoIosArrowForward } from "react-icons/io";
+  FiSmartphone,
+  FiHome,
+  FiChevronRight
+} from "react-icons/fi";
+import { FaCarSide, FaCouch, FaFootballBall, FaEllipsisH, FaCamera } from "react-icons/fa";
+import { GiHammerNails, GiClothes } from "react-icons/gi";
+import { TbBike } from "react-icons/tb";
+import { MdOutlineDevices } from "react-icons/md";
 
-// --- DATA ---
+// --- MASTER DICTIONARY (Synced with Homepage/Search) ---
 const CATEGORIES = [
-  {
-    id: "mobiles",
-    name: "Mobiles",
-    icon: <FaMobileAlt />,
-    color: "#ffce32",
-    subcategories: [
-      "Mobile Phones",
-      "Power Bank",
-      "Tablets",
-      "Mobile Charger ",
-    ],
-  },
-  {
-    id: "vehicles",
-    name: "Vehicles",
-    icon: <FaCar />,
-    color: "#23e5db",
-    subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"],
-  },
-  {
-    id: "property-rent",
-    name: "Property for Rent",
-    icon: <FaKey />,
-    color: "#3d96ff",
-    subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"],
-  },
-  {
-    id: "electronics",
-    name: "Electronics & Home Appliances",
-    icon: <FaTv />,
-    color: "#ffce32",
-    subcategories: [
-      "Computers",
-      "TVs",
-      "Kitchen Appliances",
-      "Cameras",
-      "AC & Coolers",
-      "Smart Home Device",
-      "Genrator & Ups",
-    ],
-  },
-  {
-    id: "bikes",
-    name: "Bikes",
-    icon: <FaMotorcycle />,
-    color: "#23e5db",
-    subcategories: [
-      "Motorcycles",
-      "Scooters",
-      "Spare Parts",
-      "Bicycles",
-      "Bike Acessories",
-    ],
-  },
-  {
-    id: "business",
-    name: "Business, Industrial & Agriculture",
-    icon: <FaTractor />,
-    color: "#3d96ff",
-    subcategories: [
-      "Machinery",
-      "Tractors",
-      "Medical & Lab Equipment",
-      "Agriculture Tools",
-    ],
-  },
-  {
-    id: "furniture",
-    name: "Furniture & Home Decor",
-    icon: <FaCouch />,
-    color: "#ff563f",
-    subcategories: [
-      "Sofa & Chairs",
-      "Beds & Wardrobes",
-      "Tables",
-      "Office Furniture",
-      "Decor",
-    ],
-  },
-  {
-    id: "fashion",
-    name: "Fashion & Beauty",
-    icon: <FaTshirt />,
-    color: "#23e5db",
-    subcategories: [
-      "Men",
-      "Women",
-      "Kids Clothing",
-      "Accessories",
-      "Watches",
-      "Beauty Products",
-    ],
-  },
-  {
-    id: "books-sports",
-    name: "Books, Sports & Hobbies",
-    icon: <FaBookOpen />,
-    color: "#ffce32",
-    subcategories: [
-      "Books",
-      "Musical Instruments",
-      "Sports Equipment",
-      "Gym & Fitness",
-    ],
-  },
-  {
-    id: "outdoor",
-    name: "Outdoor Equipment",
-    icon: <FaHiking />,
-    color: "#ff563f",
-    subcategories: ["Camping", "Hiking", "Fishing", "Skiing"],
-  },
-  {
-    id: "other",
-    name: "Other",
-    icon: <FaEllipsisH />,
-    color: "#3d96ff",
-    subcategories: ["Miscellaneous", "Events"],
-  },
+  { id: "mobiles", name: "Mobiles", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
+  { id: "vehicles", name: "Vehicles", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
+  { id: "property", name: "Property for Rent", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
+  { id: "electronics", name: "Electronics & Home Appliances", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
+  { id: "bikes", name: "Bikes", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
+  { id: "business", name: "Business, Industrial & Agriculture", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
+  { id: "furniture", name: "Furniture & Home Decor", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
+  { id: "fashion", name: "Fashion & Beauty", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
+  { id: "sports", name: "Books, Sports & Hobbies", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
+  { id: "outdoor", name: "Outdoor Equipment", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
+  { id: "other", name: "Other", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous", "Events"] },
 ];
-// Helper function to read cookies (for Google Auth)
-const getCookie = (name: string) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift();
-  return null;
-};
 
 export default function CreateListingPage() {
   const { data: session } = useSession();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedMainCatId, setSelectedMainCatId] = useState<string>("");
   const [finalCategory, setFinalCategory] = useState({ main: "", sub: "" });
-  const [imageFiles, setImageFiles] = useState<File[]>([]); // The raw files for the backend
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]); // The URLs for the screen
-  const [isSubmitting, setIsSubmitting] = useState(false); // To disable the button while loading
+  const [imageFiles, setImageFiles] = useState<File[]>([]); 
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]); 
+  const [isSubmitting, setIsSubmitting] = useState(false); 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -165,7 +44,6 @@ export default function CreateListingPage() {
     location: "",
   });
 
-  // --- HANDLERS ---
   const handleImageDelete = (indexToDelete: number) => {
     setImageFiles((current) => current.filter((_, index) => index !== indexToDelete));
     setImagePreviews((current) => current.filter((_, index) => index !== indexToDelete));
@@ -182,29 +60,24 @@ export default function CreateListingPage() {
   };
 
   const handleSubCatClick = (sub: string) => {
-    const mainCatName =
-      CATEGORIES.find((c) => c.id === selectedMainCatId)?.name || "";
+    const mainCatName = CATEGORIES.find((c) => c.id === selectedMainCatId)?.name || "";
     setFinalCategory({ main: mainCatName, sub: sub });
     setStep(3);
     window.scrollTo(0, 0);
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-
     if (files && files.length > 0) {
       const newFiles = Array.from(files);
       const newPreviews: string[] = [];
       const filesToKeep: File[] = [];
       
-      // Enforce the backend's 5 image limit
       const remainingSlots = 5 - imageFiles.length; 
 
       for (let i = 0; i < newFiles.length; i++) {
@@ -220,21 +93,18 @@ export default function CreateListingPage() {
     e.target.value = "";
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // 1. Check for Email Login (LocalStorage)
       const localToken = localStorage.getItem("token"); 
       
-      // 2. THE FIX: Check for Google Login (Session)
       if (!localToken && !session) {
         throw new Error("You must be logged in to post an ad.");
       }
 
-      // --- SILENT GEOCODING (Converts text to coordinates for your backend) ---
-      let coordinates = [74.3587, 31.5204]; // Default fallback coordinates (Lahore)
+      let coordinates = [74.3587, 31.5204]; 
       try {
         const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.location)}`);
         const geoData = await geoRes.json();
@@ -245,7 +115,6 @@ export default function CreateListingPage() {
         console.warn("Could not geocode location, using default.", geoError);
       }
 
-      // Format data perfectly for your backend schema
       const listingData = {
         title: formData.title,
         description: formData.description,
@@ -259,22 +128,20 @@ export default function CreateListingPage() {
         }
       };
 
-      // Set up headers (Send localToken if email user)
       const headers: HeadersInit = {
         "Content-Type": "application/json",
       };
       if (localToken) {
         headers["Authorization"] = `Bearer ${localToken}`;
       } else if (session?.user?.email) {
-        // THE VIP PASS FOR GOOGLE USERS
         headers["x-google-email"] = session.user.email; 
       }
 
-      // Send Text Data
+      // 1. POST TEXT DATA
       const textResponse = await fetch("http://localhost:5000/api/listings", {
         method: "POST",
         headers: headers,
-        credentials: "include", // Crucial: This forces the browser to send the invisible Google cookie to the backend!
+        credentials: "include", 
         body: JSON.stringify(listingData),
       });
 
@@ -285,8 +152,9 @@ export default function CreateListingPage() {
       }
 
       const newListingId = textResult.data._id; 
+      let moderationMessage = "Ad posted successfully!";
 
-      // Send Images (If any exist)
+      // 2. POST IMAGES & RUN AI MODERATION
       if (imageFiles.length > 0) {
         const imageFormData = new FormData();
         imageFiles.forEach((file) => {
@@ -294,11 +162,8 @@ export default function CreateListingPage() {
         });
 
         const imageHeaders: HeadersInit = {};
-       if (localToken) {
-          imageHeaders["Authorization"] = `Bearer ${localToken}`;
-        } else if (session?.user?.email) {
-          imageHeaders["x-google-email"] = session.user.email;
-        }
+        if (localToken) imageHeaders["Authorization"] = `Bearer ${localToken}`;
+        else if (session?.user?.email) imageHeaders["x-google-email"] = session.user.email;
 
         const imageResponse = await fetch(`http://localhost:5000/api/listings/${newListingId}/images`, {
           method: "POST",
@@ -312,9 +177,14 @@ export default function CreateListingPage() {
         if (!imageResponse.ok) {
           throw new Error(imageResult.message || "Listing created, but image upload failed.");
         }
+        
+        // Grab the detailed AI moderation message from the backend!
+        if (imageResult.message) {
+          moderationMessage = `Ad Created!\n\nAI Moderation Results:\n${imageResult.message}`;
+        }
       }
 
-      alert("Ad posted successfully!");
+      alert(moderationMessage);
       window.location.href = "/"; 
 
     } catch (error: any) {
@@ -326,46 +196,30 @@ export default function CreateListingPage() {
   };
 
   const activeCategoryData = CATEGORIES.find((c) => c.id === selectedMainCatId);
-
-  // Reusable styles for inputs to handle the specific focus behavior (border width change + padding adjustment)
-  const inputClasses =
-    "w-full p-[14px] border border-[#c9cbcd] rounded text-base box-border focus:outline-none focus:border-[#002f34] focus:border-2 focus:p-[13px]";
+  const inputClasses = "w-full p-[14px] border border-[#c9cbcd] rounded text-base box-border focus:outline-none focus:border-[#002f34] focus:border-2 focus:p-[13px]";
 
   return (
     <ProtectedRoute>
-      {/* Container */}
-      <div className="max-w-[1100px] mx-auto p-5 font-['Helvetica_Neue',_Arial,_sans-serif]">
-        {/* PageTitle */}
-        <h1 className="text-[28px] font-bold text-[#002f34] text-center mt-0 mb-2.5 capitalize">
+      <div className="max-w-[1100px] mx-auto p-5 font-['Helvetica_Neue',_Arial,_sans-serif] min-h-screen pt-[50px]">
+        <h1 className="text-[28px] font-bold text-[#002f34] text-center mt-0 mb-8 capitalize">
           Post Your Ad
         </h1>
 
         {/* --- STEP 1: MAIN CATEGORY GRID --- */}
         {step === 1 && (
           <>
-            {/* StepTitle */}
-            <h3 className="text-[22px] font-bold text-[#002f34] mb-2.5 text-left">
-              Choose a Category
-            </h3>
-
-            {/* CategoryGrid */}
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-[25px]">
+            <h3 className="text-[22px] font-bold text-[#002f34] mb-4 text-left">Choose a Category</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {CATEGORIES.map((cat) => (
-                // CategoryCard
                 <div
                   key={cat.id}
                   onClick={() => handleMainCatClick(cat.id)}
-                  className="bg-white border border-[#ebebeb] rounded-lg p-5 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 text-center h-[180px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:border-[#002f34] hover:-translate-y-1"
+                  className="bg-white border border-[#ebebeb] rounded-lg p-5 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 text-center h-[160px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:border-[#002f34] hover:-translate-y-1"
                 >
-                  <div
-                    className="text-[50px] mb-5"
-                    style={{ color: cat.color ? cat.color : "#002f34" }}
-                  >
+                  <div className="text-[40px] mb-4" style={{ color: cat.color ? cat.color : "#002f34" }}>
                     {cat.icon}
                   </div>
-                  <div className="text-[18px] font-bold text-[#002f34]">
-                    {cat.name}
-                  </div>
+                  <div className="text-[16px] font-bold text-[#002f34]">{cat.name}</div>
                 </div>
               ))}
             </div>
@@ -375,51 +229,41 @@ export default function CreateListingPage() {
         {/* --- STEP 2: SPLIT VIEW --- */}
         {step === 2 && activeCategoryData && (
           <>
-            <h3 className="text-[22px] font-bold text-[#002f34] mb-2.5 text-left">
-              Choose a category
-            </h3>
-
-            {/* SplitContainer */}
-            <div className="flex border border-[#ebebeb] rounded bg-white min-h-[500px] overflow-hidden">
-              {/* LEFT SIDEBAR (LeftSidebar) */}
-              <div className="w-[40%] border-r border-[#ebebeb] bg-[#f8f9fa] overflow-y-auto max-h-[400px] [&::-webkit-scrollbar]:w-[10px] [&::-webkit-scrollbar-thumb]:bg-[#ccc] [&::-webkit-scrollbar-thumb]:rounded-[5px]">
+            <div className="flex items-center gap-2 mb-4">
+              <button onClick={() => setStep(1)} className="text-[#007bff] hover:underline font-semibold text-sm">Back</button>
+              <span className="text-gray-400">/</span>
+              <h3 className="text-[22px] font-bold text-[#002f34]">Choose a Subcategory</h3>
+            </div>
+            
+            <div className="flex border border-[#ebebeb] rounded bg-white min-h-[500px] overflow-hidden shadow-sm">
+              <div className="w-[40%] border-r border-[#ebebeb] bg-[#f8f9fa] overflow-y-auto max-h-[600px] custom-scrollbar">
                 {CATEGORIES.map((cat) => {
                   const isActive = selectedMainCatId === cat.id;
                   return (
                     <div
                       key={cat.id}
                       onClick={() => handleSidebarClick(cat.id)}
-                      className={`
-                        flex items-center px-5 py-[15px] cursor-pointer border-b border-[#eee] transition-all duration-100 border-l-[5px] hover:bg-white hover:text-[#002f34]
-                        ${
-                          isActive
-                            ? "bg-white text-[#002f34] font-bold border-l-[#002f34]"
-                            : "bg-transparent text-[#555] font-normal border-l-transparent"
-                        }
-                      `}
+                      className={`flex items-center px-5 py-[15px] cursor-pointer border-b border-[#eee] transition-all duration-100 border-l-[5px] hover:bg-white hover:text-[#002f34] ${isActive ? "bg-white text-[#002f34] font-bold border-l-[#002f34]" : "bg-transparent text-[#555] font-normal border-l-transparent"}`}
                     >
-                      <div className="mr-2.5 text-[20px] w-6 flex justify-center">
+                      <div className="mr-3 text-[20px] w-6 flex justify-center" style={{ color: cat.color }}>
                         {cat.icon}
                       </div>
-                      {cat.name}
-                      {isActive && (
-                        <IoIosArrowForward className="ml-auto text-[#002f34]" />
-                      )}
+                      <span className="flex-grow">{cat.name}</span>
+                      {isActive && <FiChevronRight className="text-[#002f34]" />}
                     </div>
                   );
                 })}
               </div>
 
-              {/* RIGHT PANEL (RightPanel) */}
-              <div className="w-[65%] bg-white overflow-y-auto max-h-[600px] [&::-webkit-scrollbar]:w-[15px] [&::-webkit-scrollbar-thumb]:bg-[#ccc] [&::-webkit-scrollbar-thumb]:rounded-[3px]">
+              <div className="w-[60%] bg-white overflow-y-auto max-h-[600px] custom-scrollbar">
                 {activeCategoryData.subcategories.map((sub, index) => (
-                  // SubCategoryItem
                   <div
                     key={index}
                     onClick={() => handleSubCatClick(sub)}
-                    className="px-[25px] py-[18px] border-b border-[#f2f4f5] cursor-pointer text-base text-[#002f34] flex justify-between items-center last:border-b-0 hover:bg-[#ebeeef] hover:font-semibold hover:text-[#007bff]"
+                    className="px-[25px] py-[18px] border-b border-[#f2f4f5] cursor-pointer text-base text-[#002f34] flex justify-between items-center last:border-b-0 hover:bg-[#e6f7ff] hover:font-semibold hover:text-[#007bff] transition-colors"
                   >
                     <span>{sub}</span>
+                    <FiChevronRight className="text-gray-400" />
                   </div>
                 ))}
               </div>
@@ -429,170 +273,88 @@ export default function CreateListingPage() {
 
         {/* --- STEP 3: DETAILS FORM --- */}
         {step === 3 && (
-          // FormContainer
-          <div className="bg-white rounded p-10 border border-[#ced4d6] max-w-[800px] mx-auto shadow-[0_4px_10px_rgba(0,0,0,0.05)]">
-            {/* LOCKED CATEGORY DISPLAY */}
-            <div className="mb-[30px] pb-[15px]">
-              <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold mt-[15px]">
-                Category
-              </label>
-              {/* FinalCategoryDisplay */}
-              <div className="w-full p-[14px_15px] border border-[#c9cbcd] rounded text-base font-bold text-black bg-[#f8f8f8] mb-[5px] box-border">
-                {finalCategory.sub}
+          <div className="bg-white rounded p-8 border border-[#ced4d6] max-w-[800px] mx-auto shadow-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <button onClick={() => setStep(2)} className="text-[#007bff] hover:underline font-semibold text-sm">Back to Categories</button>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Selected Category</label>
+              <div className="w-full p-3 border border-[#c9cbcd] rounded text-base font-bold text-black bg-[#f8f8f8]">
+                {finalCategory.main} / {finalCategory.sub}
               </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              {/* FormSection */}
-              <div className="mb-[15px] pb-[15px]">
-                <div className="mb-[25px]">
-                  <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold">
-                    Ad Title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    placeholder="e.g. Canon EOS DSLR Camera for rent"
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                    className={inputClasses}
-                  />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Ad Title</label>
+                <input type="text" name="title" placeholder="e.g. Canon EOS DSLR Camera for rent" value={formData.title} onChange={handleChange} required className={inputClasses} />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <label className="block text-[15px] text-[#002f34] font-semibold">Upload Images</label>
+                  <span className="text-xs text-gray-500 font-medium">({imagePreviews.length}/5 uploaded)</span>
                 </div>
+                
+                <div className="flex gap-4 flex-wrap">
+                  {imagePreviews.length < 5 && (
+                    <label className="w-28 h-28 border-2 border-dashed border-[#c9cbcd] rounded-lg flex flex-col justify-center items-center cursor-pointer text-[#007bff] bg-[#f8f9fa] transition-all hover:border-[#007bff] hover:bg-[#e6f7ff]">
+                      <FaCamera size={28} className="mb-2" />
+                      <span className="text-xs font-semibold">Add Photo</span>
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  )}
 
-                {/* FormSection nested */}
-                <div className="mb-[15px] pb-[15px]">
-                  <h3 className="text-[20px] font-bold text-[#002f34] mb-5">
-                    Upload Images
-                  </h3>
-
-                  {/* ImageUploadContainer */}
-                  <div className="flex gap-[15px] flex-wrap">
-                    {/* Upload Picker Button */}
-                    {imagePreviews.length < 5 && (
-                      <label className="w-[110px] h-[110px] border border-dashed border-[#c9cbcd] rounded flex flex-col justify-center items-center cursor-pointer text-[#007bff] bg-[#e6f7ff] transition-all duration-200 relative hover:border-[#007bff] hover:bg-[#d6efff]">
-                        <FaCamera size={30} />
-                        <span className="mt-2 text-sm">
-                          ({imagePreviews.length}/5)
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple={true}
-                          onChange={handleImageUpload}
-                          className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                      </label>
-                    )}
-
-                    {/* PREVIEWS */}
-                    {imagePreviews.map((img, index) => (
-                      // ImageWrapper
-                      <div
-                        key={index}
-                        className="relative inline-block cursor-pointer w-[110px] h-[110px] rounded group"
+                  {imagePreviews.map((img, index) => (
+                    <div key={index} className="relative w-28 h-28 rounded-lg group shadow-sm border border-gray-200">
+                      <img src={img} alt={`Preview ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+                      <button 
+                        type="button" 
+                        onClick={() => handleImageDelete(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold cursor-pointer opacity-0 transition-all group-hover:opacity-100 hover:scale-110 shadow-md"
                       >
-                        <img
-                          src={img}
-                          alt={`Preview ${index + 1}`}
-                          className="w-[110px] h-[110px] object-cover rounded border border-[#ddd]"
-                        />
-
-                        {/* DeleteButton */}
-                        <button
-                          type="button"
-                          onClick={() => handleImageDelete(index)}
-                          className="absolute -top-2 -right-2 bg-white text-black border border-[#ccc] rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold cursor-pointer z-10 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:scale-110 hover:bg-[#eee]"
-                        >
-                          &times;
-                        </button>
-
-                        {/* Cover Label */}
-                        {index === 0 && (
-                          <div className="absolute bottom-0 left-0 bg-black/60 text-white text-[10px] px-[5px] py-[2px] rounded-tr font-bold tracking-[0.5px]">
-                            Cover
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        ✕
+                      </button>
+                      {index === 0 && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] py-1 text-center rounded-b-lg font-semibold tracking-wider">
+                          COVER
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
+                <p className="text-xs text-gray-500 mt-2">Images must pass AI moderation. Weapons, violence, and inappropriate content will be rejected.</p>
               </div>
 
-              {/* Price Section */}
-              <div className="mb-[15px] pb-[15px]">
-                <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold">
-                  Price per Day (PKR)
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  placeholder="Amount"
-                  value={formData.price}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  className={inputClasses}
-                />
+              <div>
+                <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Price per Day (PKR)</label>
+                <input type="number" name="price" placeholder="Amount" value={formData.price} onChange={handleChange} required min="0" className={inputClasses} />
               </div>
 
-              {/* Description Section */}
-              <div className="mb-[15px] pb-[15px]">
+              <div>
+                <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Description</label>
+                <textarea name="description" placeholder="Describe what you are renting out..." value={formData.description} onChange={handleChange} required className={`${inputClasses} min-h-[140px] resize-y`} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    placeholder="Describe what you are renting out..."
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                    className="w-full p-[14px] border border-[#c9cbcd] rounded text-base box-border min-h-[140px] resize-none focus:outline-none focus:border-[#002f34] focus:border-2 focus:p-[13px]"
-                  />
+                  <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Location</label>
+                  <input type="text" name="location" placeholder="e.g. DHA Phase 6, Lahore" value={formData.location} onChange={handleChange} required className={inputClasses} />
+                </div>
+                <div>
+                  <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Contact No</label>
+                  <input type="tel" name="contactNumber" placeholder="03XX XXXXXXX" value={formData.contactNumber} onChange={handleChange} required className={inputClasses} />
                 </div>
               </div>
 
-             {/* Location Section */}
-              <div className="mb-[15px] pb-[15px]">
-                <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="e.g. DHA Phase 6, Lahore"
-                  value={formData.location}
-                  onChange={handleChange}
-                  required
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* Contact Section */}
-              <div className="mb-[15px] pb-[15px]">
-                <label className="block text-[15px] text-[#002f34] mb-2.5 font-semibold">
-                  Contact No
-                </label>
-                <input
-                  type="tel"
-                  name="contactNumber"
-                  placeholder="+92 300 1234567"
-                  value={formData.contactNumber}
-                  onChange={handleChange}
-                  required
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* SubmitButton */}
               <button
-               type="submit"
-                  disabled={isSubmitting}
-                   className={`w-full p-[18px] text-white text-[18px] font-bold border-none rounded transition-all duration-200 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] cursor-pointer hover:bg-[#005861]'}`}
->
-                    {isSubmitting ? "Posting Ad..." : "Submit Listing"}
-            </button>
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full py-4 text-white text-lg font-bold rounded-lg transition-all ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] shadow-md hover:bg-[#004d55] hover:shadow-lg'}`}
+              >
+                {isSubmitting ? "Processing & Scanning Images..." : "Post Ad"}
+              </button>
             </form>
           </div>
         )}
