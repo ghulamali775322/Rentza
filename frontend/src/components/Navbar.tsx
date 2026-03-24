@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { IoMdArrowBack } from "react-icons/io";
 import { useUser } from "@/context/UserContext";
-import { IoMdArrowBack } from "react-icons/io"; 
+import { IoMdArrowBack } from "react-icons/io";
 import {
   FiBell,
   FiMessageCircle,
@@ -32,7 +31,6 @@ export default function Navbar() {
   const { token, name: authName } = useAuth();
   const { name, profilePhotoUrl } = useUser();
 
-  const { token, name } = useAuth();
   const { logout } = useAuth();
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -40,7 +38,7 @@ export default function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // --- NEW: STATE TO HOLD MONGODB ID ---
   const [myMongoId, setMyMongoId] = useState<string | null>(null);
 
@@ -75,7 +73,7 @@ export default function Navbar() {
     const localToken = localStorage.getItem("token");
     if (localToken) {
       try {
-        const payload = JSON.parse(atob(localToken.split('.')[1]));
+        const payload = JSON.parse(atob(localToken.split(".")[1]));
         setMyMongoId(payload.id);
       } catch (e) {
         console.error("Could not parse token for profile link");
@@ -87,17 +85,24 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleNotifClickOutside(event: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node)
+      ) {
         setShowNotifications(false);
       }
     }
     document.addEventListener("mousedown", handleNotifClickOutside);
-    return () => document.removeEventListener("mousedown", handleNotifClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleNotifClickOutside);
   }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
         setShowProfileMenu(false);
       }
     }
@@ -107,12 +112,16 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleLocationOutside(event: MouseEvent) {
-      if (locationRef.current && !locationRef.current.contains(event.target as Node)) {
+      if (
+        locationRef.current &&
+        !locationRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleLocationOutside);
-    return () => document.removeEventListener("mousedown", handleLocationOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleLocationOutside);
   }, []);
 
   const RentzaLogoText = () => (
@@ -122,18 +131,28 @@ export default function Navbar() {
   );
 
   if (pathname.startsWith("/admin")) return null;
-  
+
   return (
     <nav className="w-full fixed top-0 left-0 z-50">
-      <div className="w-full bg-[#f2f7ff] border-b border-gray-200 shadow-sm flex items-center justify-between px-6" style={{ height: 72 }}>
+      <div
+        className="w-full bg-[#f2f7ff] border-b border-gray-200 shadow-sm flex items-center justify-between px-6"
+        style={{ height: 72 }}
+      >
         <div className="flex items-center gap-6">
           {pathname === "/create-listing" && (
-            <Link href="/" className="text-gray-600 hover:text-blue-600 -mr-4 flex items-center">
+            <Link
+              href="/"
+              className="text-gray-600 hover:text-blue-600 -mr-4 flex items-center"
+            >
               <IoMdArrowBack size={28} />
             </Link>
           )}
 
-          <Link href="/" className="text-2xl font-bold text-blue-600" onClick={() => setActive("home")}>
+          <Link
+            href="/"
+            className="text-2xl font-bold text-blue-600"
+            onClick={() => setActive("home")}
+          >
             <RentzaLogoText />
           </Link>
 
@@ -157,19 +176,29 @@ export default function Navbar() {
             <div className="w-9 h-9 rounded-full bg-gray-300 animate-pulse" />
           ) : isLoggedIn ? (
             <>
-              <Link href="/inbox" className="icon-btn flex items-center justify-center">
+              <Link
+                href="/inbox"
+                className="icon-btn flex items-center justify-center"
+              >
                 <FiMessageCircle className="text-xl text-black cursor-pointer hover:text-[#0077ff]" />
               </Link>
 
               <div ref={notifRef} className="relative">
-                <div onClick={() => setShowNotifications(!showNotifications)} className="icon-btn cursor-pointer">
+                <div
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="icon-btn cursor-pointer"
+                >
                   <FiBell className="text-xl text-black hover:text-[#0077ff]" />
                 </div>
 
                 {showNotifications && (
                   <div className="absolute right-0 top-10 w-72 bg-white shadow-lg border border-gray-200 rounded-lg p-4 z-50 animate-fadeIn">
-                    <h3 className="font-semibold text-gray-800 mb-2">Notifications</h3>
-                    <p className="text-sm text-gray-500 text-center py-4">You have no notifications yet.</p>
+                    <h3 className="font-semibold text-gray-800 mb-2">
+                      Notifications
+                    </h3>
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      You have no notifications yet.
+                    </p>
                   </div>
                 )}
               </div>
@@ -193,7 +222,11 @@ export default function Navbar() {
                       "U"
                     )}
                   </div>
-                  {showProfileMenu ? <FiChevronUp className="text-black text-lg" /> : <FiChevronDown className="text-black text-lg" />}
+                  {showProfileMenu ? (
+                    <FiChevronUp className="text-black text-lg" />
+                  ) : (
+                    <FiChevronDown className="text-black text-lg" />
+                  )}
                 </button>
 
                 {showProfileMenu && (
@@ -218,7 +251,10 @@ export default function Navbar() {
                             "U"
                           )}
                         </div>
-                        <FiEdit2 size={18} className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]" />
+                        <FiEdit2
+                          size={18}
+                          className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]"
+                        />
                       </Link>
 
                       <div className="flex-1">
@@ -227,7 +263,11 @@ export default function Navbar() {
                         </p>
                         {/* --- UPDATED PUBLIC PROFILE LINK --- */}
                         <Link
-                          href={myMongoId ? `/lender/${myMongoId}` : "/profile/my-ads"}
+                          href={
+                            myMongoId
+                              ? `/lender/${myMongoId}`
+                              : "/profile/my-ads"
+                          }
                           onClick={() => setShowProfileMenu(false)}
                           className="text-xs text-[#0077ff] hover:underline"
                         >
@@ -237,13 +277,22 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex flex-col text-[16px] text-gray-800 font-medium gap-3 mt-2">
-                      <Link href="/profile/packages" className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100">
+                      <Link
+                        href="/profile/packages"
+                        className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"
+                      >
                         <FiTag size={18} /> Buy Discount Packages
                       </Link>
-                      <Link href="/profile/my-ads" className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2">
+                      <Link
+                        href="/profile/my-ads"
+                        className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"
+                      >
                         <FiLayers size={18} /> My Ads
                       </Link>
-                      <Link href="/profile/settings" className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2">
+                      <Link
+                        href="/profile/settings"
+                        className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"
+                      >
                         <FiSettings size={18} /> Settings
                       </Link>
 
@@ -262,7 +311,10 @@ export default function Navbar() {
               </div>
             </>
           ) : (
-            <Link href="/login" className="text-[#0077ff] font-semibold px-4 py-2 rounded-lg border border-[#0077ff] hover:bg-[#0077ff] hover:text-white transition">
+            <Link
+              href="/login"
+              className="text-[#0077ff] font-semibold px-4 py-2 rounded-lg border border-[#0077ff] hover:bg-[#0077ff] hover:text-white transition"
+            >
               Login
             </Link>
           )}
@@ -275,16 +327,26 @@ export default function Navbar() {
             className="relative flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             <div className="bg-white rounded-full px-6 py-2 flex items-center gap-2 transition-all duration-300 hover:bg-[#f9fafb]">
-              <span className="text-2xl text-black font-bold leading-none">＋</span>
-              <span className="font-bold text-[#002f34] tracking-wide">POST AD</span>
+              <span className="text-2xl text-black font-bold leading-none">
+                ＋
+              </span>
+              <span className="font-bold text-[#002f34] tracking-wide">
+                POST AD
+              </span>
             </div>
           </button>
         </div>
       </div>
 
       <div className="w-full text-black bg-white border-t border-gray-200 shadow-inner">
-        <div className="max-w-6xl mx-auto h-full flex items-center gap-3 px-4" style={{ height: 64 }}>
-          <div ref={locationRef} className="relative flex items-center border rounded-lg px-3 w-64 bg-white h-10 transition hover:border-[#0077ff]">
+        <div
+          className="max-w-6xl mx-auto h-full flex items-center gap-3 px-4"
+          style={{ height: 64 }}
+        >
+          <div
+            ref={locationRef}
+            className="relative flex items-center border rounded-lg px-3 w-64 bg-white h-10 transition hover:border-[#0077ff]"
+          >
             <FiMapPin className="text-gray-500 mr-2" />
             <input
               type="text"
@@ -297,14 +359,23 @@ export default function Navbar() {
               className="w-full p-0 text-sm focus:outline-none cursor-text"
               onFocus={() => setShowDropdown(true)}
             />
-            <span onClick={() => setShowDropdown(!showDropdown)} className="ml-2 text-gray-700 flex items-center justify-center cursor-pointer">
-              {showDropdown ? <FiChevronUp className="text-black text-lg" /> : <FiChevronDown className="text-black text-lg" />}
+            <span
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="ml-2 text-gray-700 flex items-center justify-center cursor-pointer"
+            >
+              {showDropdown ? (
+                <FiChevronUp className="text-black text-lg" />
+              ) : (
+                <FiChevronDown className="text-black text-lg" />
+              )}
             </span>
 
             {showDropdown && (
               <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-56 overflow-y-auto">
                 {["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Peshawar"]
-                  .filter((city) => city.toLowerCase().includes(selectedLocation.toLowerCase()))
+                  .filter((city) =>
+                    city.toLowerCase().includes(selectedLocation.toLowerCase()),
+                  )
                   .map((city) => (
                     <div
                       key={city}
@@ -318,9 +389,18 @@ export default function Navbar() {
                     </div>
                   ))}
 
-                {["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Peshawar"]
-                  .filter((city) => city.toLowerCase().includes(selectedLocation.toLowerCase())).length === 0 && (
-                  <div className="px-3 py-2 text-gray-400 text-sm">No matching locations</div>
+                {[
+                  "Karachi",
+                  "Lahore",
+                  "Islamabad",
+                  "Rawalpindi",
+                  "Peshawar",
+                ].filter((city) =>
+                  city.toLowerCase().includes(selectedLocation.toLowerCase()),
+                ).length === 0 && (
+                  <div className="px-3 py-2 text-gray-400 text-sm">
+                    No matching locations
+                  </div>
                 )}
               </div>
             )}
