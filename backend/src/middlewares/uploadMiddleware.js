@@ -4,12 +4,20 @@ import path from "path";
 // Set storage engine
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // This points to the uploads folder at the root (outside src)
-    cb(null, "uploads/listings/"); 
+    if (req.baseUrl.includes("listing")) {
+      cb(null, "uploads/listings/");
+    } else if (req.baseUrl.includes("user")) {
+      cb(null, "uploads/profiles/");
+    } else {
+      cb(null, "uploads/");
+    }
   },
+  // 🔥 ADD THIS BLOCK (THIS IS YOUR MISSING PIECE)
   filename: (req, file, cb) => {
-    // Unique name: timestamp + original filename
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const ext = path.extname(file.originalname); // .jpg/.png
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+    cb(null, uniqueName + ext); // ✅ FIXED
   },
 });
 
@@ -17,7 +25,7 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const fileTypes = /jpeg|jpg|png|webp/;
   const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
-  
+
   if (extname) {
     return cb(null, true);
   } else {
@@ -25,10 +33,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ 
-  storage, 
+const upload = multer({
+  storage,
   fileFilter,
-  limits: { fileSize: 1024 * 1024 * 5 } // 5MB limit
+  limits: { fileSize: 1024 * 1024 * 5 }, // 5MB limit
 });
 
 export default upload;

@@ -18,25 +18,28 @@ export const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select("-passwordHash");
 
       return next();
-    } 
-    
+    }
+
     // 2. GOOGLE LOGIN: Check for the VIP Pass
     if (req.headers["x-google-email"]) {
       const userEmail = req.headers["x-google-email"];
-      
+
       // Find the user by their Google email
-      req.user = await User.findOne({ email: userEmail }).select("-passwordHash");
+      req.user = await User.findOne({ email: userEmail }).select(
+        "-passwordHash",
+      );
 
       if (req.user) {
         return next();
       } else {
-        return res.status(401).json({ message: "Not authorized, Google user not found" });
+        return res
+          .status(401)
+          .json({ message: "Not authorized, Google user not found" });
       }
     }
 
     // 3. If they have neither, reject them
     return res.status(401).json({ message: "Not authorized, token missing" });
-    
   } catch (error) {
     return res.status(401).json({ message: "Not authorized, invalid token" });
   }
