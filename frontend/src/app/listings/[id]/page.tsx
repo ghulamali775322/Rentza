@@ -1,4 +1,5 @@
 "use client";
+import ListingMap from "@/components/ListingMap";
 import ReportModal from "@/components/modals/ReportModal";
 import React, { use, useState, useEffect } from "react"; 
 import Link from "next/link";
@@ -280,15 +281,36 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
+          {/* --- INTERACTIVE MAPBOX MAP --- */}
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-2">Location</h3>
-            <div className="flex items-center gap-2 text-gray-700 text-sm mb-3">
-              <FiMapPin size={18} />
-              {listing.address}
-            </div>
-            <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
-              [ Map Coordinates: {listing.location?.coordinates[1] || 0}, {listing.location?.coordinates[0] || 0} ]
-            </div>
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${listing.location?.coordinates[1]},${listing.location?.coordinates[0]}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm mb-3 w-fit transition-colors cursor-pointer"
+              title="Open in Google Maps"
+            >
+              <FiMapPin size={18} className="shrink-0" />
+              <span className="line-clamp-2">{listing.address}</span>
+            </a>
+            
+           
+            {/* Only show the map if MongoDB actually saved the coordinates! */}
+            {listing.location?.coordinates && listing.location.coordinates.length === 2 ? (
+              <div className="w-full overflow-hidden mt-3">
+                <ListingMap 
+                  longitude={listing.location.coordinates[0]} 
+                  latitude={listing.location.coordinates[1]} 
+                  title={listing.title} // <--- ADD THIS LINE!
+                />
+              </div>
+            ) : (
+              <div className="w-full h-32 bg-gray-100 rounded flex flex-col items-center justify-center text-gray-400 text-xs">
+                <FiMapPin size={24} className="mb-1 opacity-50" />
+                <span>Map unavailable</span>
+              </div>
+            )}
           </div>
 
           {/* Hide the report button from the owner */}

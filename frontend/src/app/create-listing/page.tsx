@@ -1,12 +1,13 @@
 "use client";
-
+import Autocomplete from "react-google-autocomplete";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   FiSmartphone,
   FiHome,
-  FiChevronRight
+  FiChevronRight,
+  FiMapPin
 } from "react-icons/fi";
 import { FaCarSide, FaCouch, FaFootballBall, FaEllipsisH, FaCamera } from "react-icons/fa";
 import { GiHammerNails, GiClothes } from "react-icons/gi";
@@ -43,6 +44,12 @@ export default function CreateListingPage() {
     contactNumber: "",
     location: "",
   });
+  // --- NEW LOCATION STATE ---
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [selectedCoordinates, setSelectedCoordinates] = useState<[number, number] | null>(null);
+  const [locationError, setLocationError] = useState(""); // <-- ADD THIS LINE
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleImageDelete = (indexToDelete: number) => {
     setImageFiles((current) => current.filter((_, index) => index !== indexToDelete));
@@ -92,6 +99,37 @@ export default function CreateListingPage() {
     }
     e.target.value = "";
   };
+ // --- GPS: USE CURRENT LOCATION ---
+  const handleUseCurrentLocationAd = () => {
+    if (!navigator.geolocation) return alert("Geolocation not supported.");
+    
+    setFormData((prev) => ({ ...prev, location: "Locating..." }));
+    
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+      
+      try {
+        const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}`);
+        const data = await res.json();
+        if (data.features && data.features.length > 0) {
+          // Mapbox place_name naturally has commas (e.g., "Bhimber Road, Gujrat, Pakistan")
+          const fullAddress = data.features[0].place_name.replace(", Pakistan", "");
+          setFormData((prev) => ({ ...prev, location: fullAddress }));
+          setSelectedCoordinates([lng, lat]); // Save exact GPS pin!
+          setLocationError("");
+        }
+      } catch (err) {
+        setFormData((prev) => ({ ...prev, location: "" }));
+        setLocationError("Failed to get location address.");
+      }
+    }, () => {
+      alert("Please allow location access in your browser.");
+      setFormData((prev) => ({ ...prev, location: "" }));
+    });
+  };
+  // ---------------------------------
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,16 +142,16 @@ export default function CreateListingPage() {
         throw new Error("You must be logged in to post an ad.");
       }
 
-      let coordinates = [74.3587, 31.5204]; 
-      try {
-        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.location)}`);
-        const geoData = await geoRes.json();
-        if (geoData && geoData.length > 0) {
-          coordinates = [parseFloat(geoData[0].lon), parseFloat(geoData[0].lat)];
-        }
-      } catch (geoError) {
-        console.warn("Could not geocode location, using default.", geoError);
+    // 🗺️ 2. GET REAL COORDINATES
+      // If they didn't click a dropdown suggestion, block them immediately!
+      if (!selectedCoordinates || selectedCoordinates.length !== 2) {
+        setLocationError("⚠️ Please select a valid location from the Google dropdown suggestions.");
+        setIsSubmitting(false);
+        return; // Stops the form from submitting!
       }
+      
+      let finalCoordinates = selectedCoordinates;
+     
 
       const listingData = {
         title: formData.title,
@@ -124,7 +162,7 @@ export default function CreateListingPage() {
         address: formData.location, 
         location: {
           type: "Point",
-          coordinates: coordinates 
+          coordinates: finalCoordinates 
         }
       };
 
@@ -338,10 +376,81 @@ export default function CreateListingPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Location</label>
-                  <input type="text" name="location" placeholder="e.g. DHA Phase 6, Lahore" value={formData.location} onChange={handleChange} required className={inputClasses} />
-                </div>
+               {/* --- STRICT LOCATION INPUT + POP-UP GPS BUTTON --- */}
+             <div className="relative">
+                <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Location</label>
+                
+                <Autocomplete
+                  apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}
+                onPlaceSelected={(place) => {
+                    if (place && place.formatted_address) {
+                      // 1. Grab the giant address (e.g., "Nawab's Cuisine, Bhimber Rd, Gujrat, Pakistan")
+                      const fullAddress = place.formatted_address;
+                      
+                      // 2. Chop off everything after the first comma to get the exact place!
+                      // This gives us "Nawab's Cuisine"
+                      const firstPart = fullAddress.split(',')[0].trim();
+
+                      // 3. Find the exact City name (e.g., "Gujrat")
+                      const cityObj = place.address_components?.find((c: any) => 
+                        c.types.includes("locality") || c.types.includes("administrative_area_level_2")
+                      );
+                      const cityName = cityObj ? cityObj.long_name : "";
+
+                      let finalAddress = firstPart;
+
+                      // 4. Combine them! 
+                      // If the first part isn't ALREADY the city name, stick the city on the end.
+                      if (cityName && firstPart.toLowerCase() !== cityName.toLowerCase()) {
+                         finalAddress = `${firstPart}, ${cityName}`;
+                      }
+
+                      // Save the bulletproof format to your form!
+                      setFormData({ ...formData, location: finalAddress });
+                    }
+
+                    if (place?.geometry?.location) {
+                      setSelectedCoordinates([place.geometry.location.lng(), place.geometry.location.lat()]);
+                      setLocationError(""); 
+                    }
+                  }}
+                  onChange={(e: any) => {
+                    setFormData({ ...formData, location: e.target.value });
+                    setSelectedCoordinates(null); // Erase coordinates if they type manually!
+                  }}
+                  options={{
+                    types: ["geocode", "establishment"],
+                    componentRestrictions: { country: "pk" }, // Restricted to Pakistan
+                  }}
+                  defaultValue={formData.location}
+                  placeholder="Start typing area (e.g. GTS Chowk, Gujrat)"
+                  className={inputClasses}
+                  // To keep your "Use Current Location" pop-up working:
+                  onClick={() => setShowLocationDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
+                />
+
+                {/* --- MINI POP-UP GPS BUTTON --- */}
+                {showLocationDropdown && (
+                  <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-50">
+                    <div 
+                      onMouseDown={(e) => { 
+                        e.preventDefault(); 
+                        handleUseCurrentLocationAd(); 
+                        setShowLocationDropdown(false);
+                      }}
+                      className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center gap-2 text-blue-600 bg-blue-50/40 transition-colors"
+                    >
+                      <FiMapPin className="text-lg shrink-0" />
+                      <span className="font-bold text-[14px]">Use Current Location (GPS)</span>
+                    </div>
+                  </div>
+                )}
+
+                {locationError && (
+                  <p className="text-red-500 text-xs font-bold mt-1 mb-2">{locationError}</p>
+                )}
+              </div>
                 <div>
                   <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Contact No</label>
                   <input type="tel" name="contactNumber" placeholder="03XX XXXXXXX" value={formData.contactNumber} onChange={handleChange} required className={inputClasses} />
