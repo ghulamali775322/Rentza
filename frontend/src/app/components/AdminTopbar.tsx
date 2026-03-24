@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // Import hook
 import {
@@ -11,6 +13,7 @@ import {
   FiEdit2,
 } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
+import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 
 export default function AdminTopbar() {
@@ -18,7 +21,10 @@ export default function AdminTopbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter(); // <-- router for logout redirect
-  const { name, token, role, logout } = useAuth();
+  const { role, logout } = useAuth();
+  const { data: session } = useSession();
+  const { token, name: authName } = useAuth();
+  const { name, profilePhotoUrl } = useUser();
   // Define titles for each path
   const pageTitles: { [key: string]: string } = {
     "/admin/dashboard": "Dashboard",
@@ -66,7 +72,18 @@ export default function AdminTopbar() {
           className="flex items-center gap-3 focus:outline-none"
         >
           <div className="w-10 h-10 rounded-full bg-[#1d4ed8] flex items-center justify-center text-white shadow-md transition-transform hover:scale-105">
-            <FiUser size={20} />
+            {profilePhotoUrl ? (
+              <img
+                src={profilePhotoUrl}
+                alt="Profile"
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              name?.charAt(0) ||
+              authName?.charAt(0) ||
+              session?.user?.name?.charAt(0) ||
+              "U"
+            )}
           </div>
           <FiChevronDown
             className={`text-gray-500 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
@@ -79,11 +96,22 @@ export default function AdminTopbar() {
             <div className="flex items-center gap-3 px-4 py-3 border-b border-[#f5f5f5] mb-1">
               {/* Avatar */}
               <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold">
-                {name?.charAt(0).toUpperCase() || "U"}
+                {profilePhotoUrl ? (
+                  <img
+                    src={profilePhotoUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  name?.charAt(0) ||
+                  authName?.charAt(0) ||
+                  session?.user?.name?.charAt(0) ||
+                  "U"
+                )}
               </div>
               {/* Name */}
               <p className="text-sm font-bold text-[#002f34]">
-                {name || "Admin User"}
+                {name || authName || session?.user?.name || "User"}
               </p>
             </div>
 

@@ -1,166 +1,405 @@
 "use client";
 
-import React, { useState } from 'react';
-import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa'; // For password toggle
-import { FiAlertCircle, FiTrash2 } from 'react-icons/fi'; // Icons for alert/delete confirmation
+import React, { useState } from "react";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa"; // For password toggle
+import { FiAlertCircle, FiTrash2 } from "react-icons/fi"; // Icons for alert/delete confirmation
+import { useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { useUser } from "@/context/UserContext";
+import { useRouter } from "next/navigation";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export default function SettingsPage() {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { data: session } = useSession(); // Google login
+
+  const isEmailUser = !session?.user;
+  const { setName, setProfilePhotoUrl } = useUser();
+
+  const router = useRouter();
+  // Password inputs
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [newPasswordError, setNewPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
 
-  // Password strength validation logic
+  // Password validation
   const meetsMinLength = newPassword.length >= 8;
   const hasNumber = /[0-9]/.test(newPassword);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
   const hasLetter = /[a-zA-Z]/.test(newPassword);
+  const isNewPasswordValid =
+    meetsMinLength && hasNumber && hasSpecialChar && hasLetter;
+  const passwordsMatch =
+    newPassword === confirmPassword && newPassword.length > 0;
 
-  const isNewPasswordValid = meetsMinLength && hasNumber && hasSpecialChar && hasLetter;
-  const passwordsMatch = newPassword === confirmPassword && newPassword.length > 0;
+  const [loading, setLoading] = useState(false);
+  const [currentPasswordError, setCurrentPasswordError] = useState("");
+  const [apiError, setApiError] = useState("");
+  const [apiSuccess, setApiSuccess] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setNewPasswordError('');
-    setConfirmPasswordError('');
+    // Reset errors
+    setCurrentPasswordError("");
+    setNewPasswordError("");
+    setConfirmPasswordError("");
+    setApiError("");
+    setApiSuccess("");
 
-    if (!newPassword) {
-      setNewPasswordError('New password is required.');
-      return;
+    // Frontend validations
+    if (!currentPassword)
+      return setCurrentPasswordError("Current password is required");
+    if (!newPassword) return setNewPasswordError("New password is required");
+    if (!confirmPassword)
+      return setConfirmPasswordError("Confirm password is required");
+    if (!isNewPasswordValid)
+      return setNewPasswordError("Password does not meet all requirements");
+    if (!passwordsMatch)
+      return setConfirmPasswordError("Passwords do not match");
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token"); // JWT for email users
+      if (!token) throw new Error("You must be logged in");
+
+      const res = await fetch(`${API_URL}/api/user/password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // send JWT
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Map backend errors to specific fields if possible
+        if (data.message?.toLowerCase().includes("current")) {
+          setCurrentPasswordError(data.message);
+        } else if (data.message?.toLowerCase().includes("match")) {
+          setConfirmPasswordError(data.message);
+        } else if (data.message?.toLowerCase().includes("length")) {
+          setNewPasswordError(data.message);
+        } else {
+          setApiError(data.message || "Failed to update password");
+        }
+      } else {
+        // Success
+        setApiSuccess(data.message || "Password updated successfully");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+      }
+    } catch (err: any) {
+      setApiError(err.message || "Server error");
+    } finally {
+      setLoading(false);
     }
-    if (!confirmPassword) {
-      setConfirmPasswordError('Confirm password is required.');
-      return;
-    }
-    if (!isNewPasswordValid) {
-        setNewPasswordError('Password does not meet all requirements.');
-        return;
-    }
-    if (!passwordsMatch) {
-      setConfirmPasswordError('Passwords do not match.');
-      return;
-    }
-    
-    // If all checks pass
-    console.log("Password changed!");
-    alert("Password updated successfully!");
-    setNewPassword(''); // Clear fields on success
-    setConfirmPassword('');
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm("Are you sure you want to permanently delete your Rentza account? This action cannot be undone.")) {
-      console.log("Account deletion requested.");
-      alert("Account deletion process initiated. You will be logged out shortly.");
-      // In a real app, you would dispatch an API call and then redirect/logout
+  const handleDeleteAccount = async () => {
+    setDeleteError("");
+    setDeleteLoading(true);
+
+    try {
+      let headers: any = {
+        "Content-Type": "application/json",
+      };
+
+      {
+        // ✅ Email user → ONLY this
+        const token = localStorage.getItem("token");
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      }
+
+      const res = await fetch(`${API_URL}/api/user`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to delete account");
+      }
+
+      // ✅ SUCCESS → LOGOUT + REDIRECT
+      alert("Account deleted successfully");
+
+      // Email logout
+      localStorage.removeItem("token");
+      setName("");
+      setProfilePhotoUrl("");
+
+      // Google logout (NextAuth)
+      if (session?.user) {
+        await signOut({ redirect: false });
+      }
+
+      // Redirect
+      router.push("/");
+    } catch (err: any) {
+      setDeleteError(err.message);
+    } finally {
+      setDeleteLoading(false);
     }
   };
-
-  // --- REUSABLE TAILWIND CLASSES ---
-  const contentBoxClass = "bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.05)] mb-[30px] p-[30px]";
+  // Tailwind classes
+  const contentBoxClass =
+    "bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.05)] mb-[30px] p-[30px]";
   const sectionTitleClass = "text-2xl font-bold text-[#002f34] mb-[25px]";
- const inputBaseClass = "w-full py-3 px-[15px] border rounded text-base box-border mb-2.5 bg-white focus:outline-none focus:border-[#007bff] [&::-ms-reveal]:hidden [&::-ms-clear]:hidden";
-  const passwordToggleBtnClass = "absolute top-1/2 right-3 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[#888] text-xl hover:text-[#007bff]";
-  const errorMessageClass = "text-xs text-[#e30000] -mt-2 mb-[15px] flex items-center gap-[5px]";
+  const inputBaseClass =
+    "w-full py-3 px-[15px] border rounded text-base box-border mb-2.5 bg-white focus:outline-none focus:border-[#007bff]";
+  const passwordToggleBtnClass =
+    "absolute top-1/2 right-3 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[#888] text-xl hover:text-[#007bff]";
+  const errorMessageClass =
+    "text-xs text-[#e30000] -mt-2 mb-[15px] flex items-center gap-[5px]";
   const passwordReqClass = "text-xs mb-[5px] flex items-center gap-[5px]";
 
   return (
-    // SettingsContainer: max-w-900, margin auto, padding 40px 20px, bg light grey, min-h calc, pt-40, pb-50
-    <div className="max-w-[800px] mx-auto px-5 py-10 pt-0 pb-[50px]  min-h-[calc(100vh-80px)]">
-      
-      {/* 1. CHANGE PASSWORD SECTION */}
-      <div className={contentBoxClass}>
-        <h2 className={sectionTitleClass}>Create password</h2> 
-        <form onSubmit={handlePasswordChange}>
-          
-          {/* New Password Input */}
-          <div className="relative w-full mb-5">
-            <input 
-              id="newPassword"
-              type={showNewPassword ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                setNewPasswordError(''); 
-              }}
-              placeholder="New password"
-              className={`${inputBaseClass} ${newPasswordError ? 'border-[#e30000]' : 'border-[#ddd]'}`}
-            />
-            <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className={passwordToggleBtnClass}>
-              {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-            </button>
-          </div>
-          {newPasswordError && <p className={errorMessageClass}><FiAlertCircle size={14} /> {newPasswordError}</p>}
+    <div className="max-w-[900px] mx-auto px-5 py-10 bg-[#f5f5f5] min-h-[calc(100vh-80px)]">
+      {/* ---------------- SECURITY SECTION ---------------- */}
+      {isEmailUser && (
+        <div className="bg-white text-black rounded-xl shadow-sm border border-[#eee] mb-8 p-6">
+          <h2 className="text-xl font-semibold text-[#002f34] mb-2">
+            Security
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Update your password to keep your account secure.
+          </p>
 
-          {/* Password Requirements */}
-          {!newPasswordError && newPassword.length > 0 && (
-            <div className="mb-5">
-              <p className={`${passwordReqClass} ${meetsMinLength ? 'text-[#008000] font-semibold' : 'text-[#888]'}`}>
-                {meetsMinLength ? '✔' : '✖'} Minimum 8 characters
-              </p>
-              <p className={`${passwordReqClass} ${hasNumber ? 'text-[#008000] font-semibold' : 'text-[#888]'}`}>
-                {hasNumber ? '✔' : '✖'} At least 1 number
-              </p>
-              <p className={`${passwordReqClass} ${hasSpecialChar ? 'text-[#008000] font-semibold' : 'text-[#888]'}`}>
-                {hasSpecialChar ? '✔' : '✖'} At least 1 special character
-              </p>
-              <p className={`${passwordReqClass} ${hasLetter ? 'text-[#008000] font-semibold' : 'text-[#888]'}`}>
-                {hasLetter ? '✔' : '✖'} At least 1 letter
-              </p>
+          <form onSubmit={handlePasswordChange}>
+            {/* CURRENT PASSWORD */}
+            <div className="mb-4">
+              <label className="block text-black text-sm font-medium mb-1">
+                Current Password
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className="w-full p-3 border rounded-md border-gray-300 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-3 text-gray-500"
+                >
+                  {showCurrentPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                </button>
+              </div>
             </div>
-          )}
 
-          {/* Confirm Password Input */}
-          <div className="relative w-full mb-5">
-            <input 
-              id="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setConfirmPasswordError(''); 
-              }}
-              placeholder="Confirm new password"
-              className={`${inputBaseClass} ${confirmPasswordError ? 'border-[#e30000]' : 'border-[#ddd]'}`}
-            />
-            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className={passwordToggleBtnClass}>
-              {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-            </button>
-          </div>
-          {confirmPasswordError && <p className={errorMessageClass}><FiAlertCircle size={14} /> {confirmPasswordError}</p>}
-          
-          {/* Submit Button */}
-          <button 
-            type="submit" 
-            disabled={!isNewPasswordValid || !passwordsMatch}
-            className="w-[180px] py-2.5 px-5 bg-[#002f34] text-white text-base font-bold border-none rounded cursor-pointer mt-5 transition-colors duration-200 hover:bg-[#004d55] disabled:bg-[#ccc] disabled:cursor-not-allowed"
-          >
-            Create password
-          </button>
-        </form>
-      </div>
-      
-      {/* 2. DELETE ACCOUNT SECTION */}
-      <div className={contentBoxClass}>
-        <h2 className={sectionTitleClass}>Delete this account</h2>
-        
-        <p className="text-[15px] text-[#333] mb-5 leading-[1.5]">
-          Are you sure you want to delete your account? This action is permanent and cannot be undone. All your data  and profile information will be removed.
+            {/* NEW PASSWORD */}
+            <div className="mb-4">
+              <label className="block text-black text-sm font-medium mb-1">
+                New Password
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    setNewPasswordError("");
+                  }}
+                  autoComplete="new-password"
+                  className={`w-full p-3 border rounded-md ${
+                    newPasswordError ? "border-red-500" : "border-gray-300"
+                  } [&::-ms-reveal]:hidden [&::-ms-clear]:hidden`}
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-3 text-gray-500"
+                >
+                  {showNewPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                </button>
+              </div>
+
+              {newPasswordError && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <FiAlertCircle size={12} /> {newPasswordError}
+                </p>
+              )}
+            </div>
+
+            {/* CONFIRM PASSWORD */}
+            <div className="mb-4">
+              <label className="block text-black text-sm font-medium mb-1">
+                Confirm Password
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setConfirmPasswordError("");
+                  }}
+                  autoComplete="new-password"
+                  className={`w-full p-3 border rounded-md ${
+                    confirmPasswordError ? "border-red-500" : "border-gray-300"
+                  } [&::-ms-reveal]:hidden [&::-ms-clear]:hidden`}
+                  placeholder="Enter confirm new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-3 text-gray-500"
+                >
+                  {showConfirmPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                </button>
+              </div>
+
+              {confirmPasswordError && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <FiAlertCircle size={12} /> {confirmPasswordError}
+                </p>
+              )}
+            </div>
+
+            {/* PASSWORD REQUIREMENTS */}
+            {newPassword.length > 0 && (
+              <div className="bg-gray-50 border rounded-md p-3 text-xs mb-4">
+                <p
+                  className={
+                    meetsMinLength ? "text-green-600" : "text-gray-500"
+                  }
+                >
+                  ✔ Minimum 8 characters
+                </p>
+                <p className={hasNumber ? "text-green-600" : "text-gray-500"}>
+                  ✔ At least 1 number
+                </p>
+                <p
+                  className={
+                    hasSpecialChar ? "text-green-600" : "text-gray-500"
+                  }
+                >
+                  ✔ At least 1 special character
+                </p>
+                <p className={hasLetter ? "text-green-600" : "text-gray-500"}>
+                  ✔ At least 1 letter
+                </p>
+              </div>
+            )}
+
+            {currentPasswordError && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <FiAlertCircle size={12} /> {currentPasswordError}
+              </p>
+            )}
+
+            {apiError && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <FiAlertCircle size={12} /> {apiError}
+              </p>
+            )}
+
+            {apiSuccess && (
+              <p className="text-green-600 text-xs mt-1 flex items-center gap-1">
+                {apiSuccess}
+              </p>
+            )}
+            <div className="flex justify-center mt-4">
+              <button
+                type="submit"
+                disabled={loading || !isNewPasswordValid || !passwordsMatch}
+                className={`bg-[#002f34] text-white px-6 py-2 rounded-md font-semibold hover:bg-[#004d55] disabled:bg-gray-400`}
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ---------------- DANGER ZONE ---------------- */}
+      <div className="bg-white rounded-xl shadow-sm border border-red-200 p-6">
+        <h2 className="text-xl font-semibold text-red-600 mb-2">Danger Zone</h2>
+
+        <p className="text-sm text-gray-600 mb-4">
+          Deleting your account is permanent. All your data will be removed.
         </p>
-        
-        <button 
-          type="button" 
-          onClick={handleDeleteAccount}
-          className="py-3 px-[25px] bg-[#d32f2f] text-white border-none rounded text-base font-bold cursor-pointer transition-colors duration-200 flex items-center gap-2.5 hover:bg-[#c62828]"
-        >
-           <FiTrash2 size={18} />
-           Yes, delete my account
-        </button>
+
+        <div className="border border-red-300 bg-red-50 p-4 rounded-md flex justify-between items-center">
+          <div>
+            <p className="font-medium text-red-700">Delete your account</p>
+            <p className="text-xs text-red-600">
+              This action cannot be undone.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="bg-red-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-red-700 flex items-center gap-2"
+          >
+            <FiTrash2 size={16} />
+            Delete
+          </button>
+        </div>
       </div>
-      
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+            <h3 className="text-lg font-semibold text-red-600 mb-2">
+              Delete Account
+            </h3>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Are you absolutely sure? This action cannot be undone. All your
+              data will be permanently deleted.
+            </p>
+
+            {deleteError && (
+              <p className="text-red-500 text-sm mb-3">{deleteError}</p>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:bg-gray-400"
+              >
+                {deleteLoading ? "Deleting..." : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
