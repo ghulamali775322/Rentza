@@ -1,4 +1,5 @@
 "use client";
+import LocationDropdown from "./LocationDropdown";
 import { useAuth } from "@/context/AuthContext";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
@@ -254,47 +255,7 @@ export default function Navbar() {
 
       <div className="w-full text-black bg-white border-t border-gray-200 shadow-inner">
         <div className="max-w-6xl mx-auto h-full flex items-center gap-3 px-4" style={{ height: 64 }}>
-          <div ref={locationRef} className="relative flex items-center border rounded-lg px-3 w-64 bg-white h-10 transition hover:border-[#0077ff]">
-            <FiMapPin className="text-gray-500 mr-2" />
-            <input
-              type="text"
-              value={selectedLocation}
-              onChange={(e) => {
-                setSelectedLocation(e.target.value);
-                setShowDropdown(true);
-              }}
-              placeholder="Select or search location"
-              className="w-full p-0 text-sm focus:outline-none cursor-text"
-              onFocus={() => setShowDropdown(true)}
-            />
-            <span onClick={() => setShowDropdown(!showDropdown)} className="ml-2 text-gray-700 flex items-center justify-center cursor-pointer">
-              {showDropdown ? <FiChevronUp className="text-black text-lg" /> : <FiChevronDown className="text-black text-lg" />}
-            </span>
-
-            {showDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-56 overflow-y-auto">
-                {["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Peshawar"]
-                  .filter((city) => city.toLowerCase().includes(selectedLocation.toLowerCase()))
-                  .map((city) => (
-                    <div
-                      key={city}
-                      onClick={() => {
-                        setSelectedLocation(city);
-                        setShowDropdown(false);
-                      }}
-                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer text-sm"
-                    >
-                      {city}
-                    </div>
-                  ))}
-
-                {["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Peshawar"]
-                  .filter((city) => city.toLowerCase().includes(selectedLocation.toLowerCase())).length === 0 && (
-                  <div className="px-3 py-2 text-gray-400 text-sm">No matching locations</div>
-                )}
-              </div>
-            )}
-          </div>
+          <LocationDropdown />
 
           <div className="flex items-center border rounded-lg bg-white h-10 flex-1 overflow-hidden transition hover:border-[#0077ff]">
             <div className="flex items-center flex-1 min-w-0 px-3">

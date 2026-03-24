@@ -23,22 +23,46 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
   const queryParam = searchParams.get("query");
-
+  const locationParam = searchParams.get("location");
+  const latParam = searchParams.get("lat");
+  const lngParam = searchParams.get("lng");
+  // This is the Haversine formula! It calculates actual kilometers between two GPS pins.
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
   const [realListings, setRealListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // NEW STATE: Manage which category in the sidebar is expanded
   const [expandedSidebarCats, setExpandedSidebarCats] = useState<string[]>([]);
 
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("Newly listed");
-  const [selectedLocation, setSelectedLocation] = useState("Pakistan");
+  const [selectedLocation, setSelectedLocation] = useState(locationParam || "Pakistan");
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
   const sortOptions = ["Newly listed", "Lowest price", "Highest price"];
-  const locations = ["Pakistan", "Punjab", "Sindh", "Lahore", "Karachi", "Islamabad", "Rawalpindi", "Peshawar", "Multan", "Faisalabad"];
+ useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).google) {
+      const scriptId = "google-maps-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places`;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -74,7 +98,18 @@ export default function SearchPage() {
     );
   };
 
-  const filteredListings = realListings.filter((item) => {
+  const filteredListings = realListings.map((item: any) => {
+    // 1. First, calculate distance if GPS is active
+    let distance = Infinity;
+    if (latParam && lngParam && item.location?.coordinates?.length === 2) {
+      const itemLng = item.location.coordinates[0]; 
+      const itemLat = item.location.coordinates[1];
+      distance = calculateDistance(parseFloat(latParam), parseFloat(lngParam), itemLat, itemLng);
+    }
+    return { ...item, distance }; 
+
+  }).filter((item: any) => {
+    // 2. Category & Query Filters
     let validSubcategories: string[] = [];
     if (categoryParam) {
       const mainCatMatch = CATEGORIES_DATA.find(c => c.name === categoryParam);
@@ -84,27 +119,40 @@ export default function SearchPage() {
         validSubcategories = [categoryParam];
       }
     }
-    const matchCategory = validSubcategories.length > 0 
-      ? validSubcategories.includes(item.category) || item.category === categoryParam 
-      : true; 
-    
-    const matchQuery = queryParam 
-      ? item.title.toLowerCase().includes(queryParam.toLowerCase()) || 
-        item.category.toLowerCase().includes(queryParam.toLowerCase())
-      : true;
-
-    const matchLocation = selectedLocation === "Pakistan" 
-      ? true 
-      : item.address.toLowerCase().includes(selectedLocation.toLowerCase());
-      
+    const matchCategory = validSubcategories.length > 0 ? validSubcategories.includes(item.category) || item.category === categoryParam : true; 
+    const matchQuery = queryParam ? item.title.toLowerCase().includes(queryParam.toLowerCase()) || item.category.toLowerCase().includes(queryParam.toLowerCase()) : true;
     const min = minPrice ? parseInt(minPrice) : 0;
     const max = maxPrice ? parseInt(maxPrice) : Infinity;
     const matchPrice = item.price >= min && item.price <= max;
+
+    // 3. Location Filter
+    let matchLocation = true;
+    if (!latParam || !lngParam) {
+      // If NO GPS is used, run the Highly Forgiving Text Match
+      const activeLocation = locationParam || selectedLocation || "Pakistan";
+      if (activeLocation !== "Pakistan" && activeLocation !== "") {
+        const dbAddr = (item.address || "").toLowerCase();
+        const searchAddr = activeLocation.toLowerCase();
+        
+        if (dbAddr.includes(searchAddr) || searchAddr.includes(dbAddr)) {
+          matchLocation = true;
+        } else {
+          const searchParts = searchAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
+          const dbParts = dbAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
+          matchLocation = searchParts.some((searchPart: string) => dbParts.some((dbPart: string) => dbPart.includes(searchPart) || searchPart.includes(dbPart)));
+        }
+      }
+    }
 
     return matchCategory && matchQuery && matchLocation && matchPrice; 
   });
 
   const sortedListings = [...filteredListings].sort((a, b) => {
+    // 1. If GPS is active, ALWAYS force sorting by Nearest First!
+    if (latParam && lngParam) {
+      return a.distance - b.distance; 
+    }
+    // 2. Otherwise, use normal dropdown sorting
     if (selectedSort === "Lowest price") return a.price - b.price;
     if (selectedSort === "Highest price") return b.price - a.price;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -191,46 +239,82 @@ export default function SearchPage() {
                 </ul>
               </div>
 
-              {/* Location Filter */}
+             {/* Location Filter */}
               <div className="bg-white p-4 rounded border border-gray-200">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-bold text-gray-800">Locations</h3>
                 </div>
                 <div className="relative">
-                  <div 
-                    onClick={() => setIsLocationOpen(!isLocationOpen)}
-                    className="flex items-center border border-gray-300 rounded-md px-3 py-2.5 bg-white hover:border-blue-500 transition-colors cursor-pointer group"
-                  >
-                    <FiMapPin className="text-gray-500 mr-2 text-lg group-hover:text-blue-500" />
-                    <span className={`w-full text-sm ${selectedLocation === 'Pakistan' ? 'text-gray-500' : 'text-gray-900 font-medium'}`}>
-                      {selectedLocation}
-                    </span>
-                    <FiChevronDown className={`text-gray-500 ml-2 text-lg transition-transform ${isLocationOpen ? 'rotate-180' : ''}`} />
+                  {/* Now an input field so they can type! */}
+                  <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white focus-within:border-blue-500 transition-colors">
+                    <FiMapPin className="text-gray-500 mr-2 text-lg" />
+                    <input
+                      type="text"
+                      value={selectedLocation}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedLocation(val);
+                        setIsLocationOpen(true);
+
+                        if (val.trim() === "") {
+                          setSuggestions([]);
+                          return;
+                        }
+
+                        const googleObj = (window as any).google;
+                        if (googleObj && googleObj.maps && googleObj.maps.places) {
+                          const service = new googleObj.maps.places.AutocompleteService();
+                          service.getPlacePredictions({
+                            input: val,
+                            componentRestrictions: { country: "pk" },
+                          }, (predictions: any, status: any) => {
+                            if (status === googleObj.maps.places.PlacesServiceStatus.OK && predictions) {
+                              setSuggestions(predictions.map((p: any) => p.description));
+                            } else {
+                              setSuggestions([]);
+                            }
+                          });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        // When they press enter, it pushes the typed location to the URL!
+                        if (e.key === "Enter") {
+                          setIsLocationOpen(false);
+                          const params = new URLSearchParams(window.location.search);
+                          params.set("location", selectedLocation);
+                          window.history.pushState({}, "", `?${params.toString()}`);
+                        }
+                      }}
+                      placeholder="Select or type location"
+                      className="w-full text-sm outline-none text-gray-900 bg-transparent"
+                    />
+                    <FiChevronDown 
+                      onClick={() => setIsLocationOpen(!isLocationOpen)}
+                      className={`text-gray-500 ml-2 text-lg transition-transform cursor-pointer ${isLocationOpen ? 'rotate-180' : ''}`} 
+                    />
                   </div>
-                  {isLocationOpen && (
+                  
+                  {/* The Dropdown List for the sidebar */}
+                  {isLocationOpen && suggestions.length > 0 && (
                     <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10 max-h-48 overflow-y-auto">
-                      {locations.map((loc) => (
+                      {suggestions.map((loc) => (
                         <div 
                           key={loc}
-                          onClick={() => { setSelectedLocation(loc); setIsLocationOpen(false); }}
-                          className="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
+                          onClick={() => {
+                            setSelectedLocation(loc);
+                            setIsLocationOpen(false);
+                            const params = new URLSearchParams(window.location.search);
+                            params.set("location", loc);
+                            window.history.pushState({}, "", `?${params.toString()}`);
+                          }}
+                          className="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer flex items-center gap-2"
                         >
-                          {loc}
+                          <FiMapPin className="text-gray-400 shrink-0" />
+                          <span className="truncate">{loc}</span>
                         </div>
                       ))}
                     </div>
                   )}
-                </div>
-                <div className="mt-3 space-y-2 text-sm text-gray-600">
-                  {["Lahore", "Karachi", "Islamabad"].map((city) => (
-                     <p 
-                       key={city} 
-                       onClick={() => setSelectedLocation(city)}
-                       className="cursor-pointer hover:text-blue-600 hover:bg-blue-50 p-1 rounded"
-                     >
-                       {city}
-                     </p>
-                  ))}
                 </div>
               </div>
 
