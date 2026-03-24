@@ -7,6 +7,8 @@ import Footer from "@/components/Footer";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Providers from "@/components/Providers";
 import { AuthProvider } from "@/context/AuthContext";
+import { UserProvider } from "@/context/UserContext";
+import UserInitializer from "@/components/UserInitializer";
 
 export const metadata: Metadata = {
   title: "Rentza - Rent Anything, Anytime",
@@ -21,23 +23,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
         >
-          <AuthProvider>
-            <Providers>
-              {/* Navbar */}
-              <Navbar />
+          <UserProvider>
+            <AuthProvider>
+              <Providers>
+                <UserInitializer />
+                {/* Navbar */}
+                <Navbar />
 
-              {/* Main Content */}
-              <main className="pt-[136px] min-h-screen bg-gray-50 relative z-0">
-                {/* Ensures page content doesn’t hug sides */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  {children}
-                </div>
-              </main>
+                {/* Main Content */}
+                <main className="pt-[136px] min-h-screen bg-gray-50 relative z-0">
+                  {/* Ensures page content doesn’t hug sides */}
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {children}
+                  </div>
+                </main>
 
-              {/* Footer */}
-              <Footer />
-            </Providers>
-          </AuthProvider>
+                {/* Footer */}
+                <Footer />
+              </Providers>
+            </AuthProvider>
+          </UserProvider>
         </GoogleOAuthProvider>
       </body>
     </html>

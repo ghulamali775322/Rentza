@@ -10,6 +10,7 @@ import listingRoutes from "./routes/listingRoutes.js";
 import reportRoutes from "./routes/reportRoute.js";
 import notificationRoutes from "./routes/notificationRoute.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import path from "path";
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/user", userRoutes);
 
 // Rate limiter (security)
 const limiter = rateLimit({

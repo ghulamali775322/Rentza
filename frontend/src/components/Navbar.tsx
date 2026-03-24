@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { IoMdArrowBack } from "react-icons/io";
+import { useUser } from "@/context/UserContext";
 import { IoMdArrowBack } from "react-icons/io"; 
 import {
   FiBell,
@@ -27,6 +29,9 @@ export default function Navbar() {
   const [active, setActive] = useState("home");
 
   const { data: session } = useSession();
+  const { token, name: authName } = useAuth();
+  const { name, profilePhotoUrl } = useUser();
+
   const { token, name } = useAuth();
   const { logout } = useAuth();
 
@@ -170,9 +175,23 @@ export default function Navbar() {
               </div>
 
               <div ref={profileRef} className="relative">
-                <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-1 cursor-pointer">
-                  <div className="w-9 h-9 rounded-full bg-[#0077ff] flex items-center justify-center text-white font-bold">
-                    U
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center gap-1 cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0077ff] flex items-center justify-center text-white font-bold">
+                    {profilePhotoUrl ? (
+                      <img
+                        src={profilePhotoUrl}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      name?.charAt(0) ||
+                      authName?.charAt(0) ||
+                      session?.user?.name?.charAt(0) ||
+                      "U"
+                    )}
                   </div>
                   {showProfileMenu ? <FiChevronUp className="text-black text-lg" /> : <FiChevronDown className="text-black text-lg" />}
                 </button>
@@ -186,14 +205,25 @@ export default function Navbar() {
                         className="relative flex-shrink-0 cursor-pointer group hover:opacity-80 transition-opacity"
                       >
                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold">
-                          {session?.user?.name?.charAt(0) || name?.charAt(0) || "U"}
+                          {profilePhotoUrl ? (
+                            <img
+                              src={profilePhotoUrl}
+                              alt="Profile"
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          ) : (
+                            name?.charAt(0) ||
+                            authName?.charAt(0) ||
+                            session?.user?.name?.charAt(0) ||
+                            "U"
+                          )}
                         </div>
                         <FiEdit2 size={18} className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]" />
                       </Link>
 
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800">
-                          {session?.user?.name || name || "User"}
+                          {name || authName || session?.user?.name || "User"}
                         </p>
                         {/* --- UPDATED PUBLIC PROFILE LINK --- */}
                         <Link
