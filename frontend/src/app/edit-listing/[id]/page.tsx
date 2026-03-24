@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { FaCamera } from "react-icons/fa";
+import { FaCamera, FaMapMarkerAlt } from "react-icons/fa";
 
 // --- THE MASTER DICTIONARY ---
 const CATEGORIES_DATA = [
@@ -49,6 +49,26 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
   const totalImagesCount = existingImages.length + newImageFiles.length;
+  // --- LOCATION & MAP STATE ---
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [isLocationSelected, setIsLocationSelected] = useState(true);
+
+  // Load Google Maps Script
+  useEffect(() => {
+    if (typeof window !== "undefined" && !(window as any).google) {
+      const scriptId = "google-maps-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&libraries=places`;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+    }
+  }, []);
 
   // --- 1. FETCH EXISTING DATA ---
   useEffect(() => {
@@ -66,7 +86,11 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
             contactNumber: ad.contactNumber,
             address: ad.address,
           });
-          
+          // Grab existing GPS coordinates if they exist
+          if (ad.location && ad.location.coordinates?.length === 2) {
+            setLng(ad.location.coordinates[0]); 
+            setLat(ad.location.coordinates[1]);
+          }
           setExistingImages(ad.images || []);
 
           const mainCategory = CATEGORIES_DATA.find(cat => cat.subcategories.includes(ad.category));
@@ -157,6 +181,10 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   // --- 2. SUBMIT UPDATES TO BACKEND ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLocationSelected) {
+      alert("Please select a valid location from the dropdown suggestions.");
+      return; // Stop the form from submitting!
+    }
     setIsSubmitting(true);
 
     try {
@@ -166,7 +194,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
       else if (session?.user?.email) headers["x-google-email"] = session.user.email;
 
       // 1. UPDATE TEXT DATA (Checks against backend textFilter)
-      const updatedData = {
+     const updatedData: Record<string, any> = {
         title: formData.title,
         description: formData.description,
         price: Number(formData.price),
@@ -174,6 +202,13 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         address: formData.address,
         category: selectedSubCat || selectedMainCat, 
       };
+      // Attach new GPS coordinates if the user updated the location
+      if (lat !== null && lng !== null) {
+        updatedData.location = {
+          type: "Point",
+          coordinates: [lng, lat]
+        };
+      }
 
       const textResponse = await fetch(`http://localhost:5000/api/listings/${id}`, {
         method: "PUT",
@@ -296,9 +331,153 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
 
             {/* Location & Contact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <label className={labelClasses}>Location / Address</label>
-                <input type="text" name="address" value={formData.address} onChange={handleChange} required className={inputClasses} />
+                <input 
+                  type="text" 
+                  name="address" 
+                  value={formData.address} 
+                  autoComplete="off"
+                  // 👇 This makes the dropdown open immediately when you click the box! 👇
+                  onFocus={() => setIsLocationOpen(true)} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, address: val }));
+                    setIsLocationOpen(true);
+                    setIsLocationSelected(false);
+
+                    if (val.trim() === "") {
+                      setSuggestions([]);
+                      return;
+                    }
+
+                    const googleObj = (window as any).google;
+                    if (googleObj && googleObj.maps && googleObj.maps.places) {
+                      const service = new googleObj.maps.places.AutocompleteService();
+                      service.getPlacePredictions({
+                        input: val,
+                        componentRestrictions: { country: "pk" },
+                      }, (predictions: any, status: any) => {
+                        if (status === googleObj.maps.places.PlacesServiceStatus.OK && predictions) {
+                          setSuggestions(predictions.map((p: any) => p.description));
+                        } else {
+                          setSuggestions([]);
+                        }
+                      });
+                    }
+                  }} 
+                  required 
+                  className={inputClasses} 
+                />
+                
+                {/* Autocomplete Dropdown WITH "Use Current Location" */}
+                {isLocationOpen && (
+                  <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10 max-h-48 overflow-y-auto">
+                    
+                    {/* --- USE CURRENT LOCATION BUTTON --- */}
+                    <div 
+                      onClick={() => {
+                        setIsLocationOpen(false);
+                        setIsLocationSelected(true);
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                              const currentLat = position.coords.latitude;
+                              const currentLng = position.coords.longitude;
+                              setLat(currentLat);
+                              setLng(currentLng);
+                              
+                              // Translate GPS back into a real address text!
+                              const googleObj = (window as any).google;
+                              if (googleObj && googleObj.maps) {
+                                const geocoder = new googleObj.maps.Geocoder();
+                                geocoder.geocode({ location: { lat: currentLat, lng: currentLng } }, (results: any, status: any) => {
+                                  if (status === "OK" && results[0]) {
+                                    // --- ADDRESS SHORTENING LOGIC ---
+                                    const fullAddress = results[0].formatted_address;
+                                    const firstPart = fullAddress.split(',')[0].trim();
+                                    
+                                    const cityObj = results[0].address_components?.find((c: any) => 
+                                      c.types.includes("locality") || c.types.includes("administrative_area_level_2")
+                                    );
+                                    const cityName = cityObj ? cityObj.long_name : "";
+                                    
+                                    let finalAddress = firstPart;
+                                    if (cityName && firstPart.toLowerCase() !== cityName.toLowerCase()) {
+                                      finalAddress = `${firstPart}, ${cityName}`;
+                                    }
+                                    
+                                    setFormData(prev => ({ ...prev, address: finalAddress }));
+                                  } else {
+                                    setFormData(prev => ({ ...prev, address: "Current Location" }));
+                                  }
+                                });
+                              }
+                            },
+                            (error) => {
+                              console.error("Error getting location", error);
+                              alert("Please allow location access in your browser to use this feature.");
+                            }
+                          );
+                        } else {
+                          alert("Geolocation is not supported by your browser.");
+                        }
+                      }}
+                      className="px-4 py-3 text-sm text-blue-600 font-bold hover:bg-blue-50 cursor-pointer border-b border-gray-100 flex items-center gap-2"
+                    >
+                     <FaMapMarkerAlt className="text-[#3b82f6] text-xl" />
+                      Use Current Location
+                    </div>
+
+                    {/* --- TYPED SUGGESTIONS --- */}
+                    {suggestions.map((loc) => (
+                      <div 
+                        key={loc}
+                        onClick={() => {
+                          // Close dropdown and unlock form
+                          setIsLocationOpen(false);
+                          setIsLocationSelected(true);
+                          
+                          // Convert selected text into GPS coordinates AND a clean address
+                          const googleObj = (window as any).google;
+                          if (googleObj && googleObj.maps) {
+                            const geocoder = new googleObj.maps.Geocoder();
+                            geocoder.geocode({ address: loc }, (results: any, status: any) => {
+                              if (status === "OK" && results[0]) {
+                                // Save GPS Coordinates
+                                setLat(results[0].geometry.location.lat());
+                                setLng(results[0].geometry.location.lng());
+
+                                // --- ADDRESS SHORTENING LOGIC ---
+                                const fullAddress = results[0].formatted_address;
+                                const firstPart = fullAddress.split(',')[0].trim();
+                                
+                                const cityObj = results[0].address_components?.find((c: any) => 
+                                  c.types.includes("locality") || c.types.includes("administrative_area_level_2")
+                                );
+                                const cityName = cityObj ? cityObj.long_name : "";
+                                
+                                let finalAddress = firstPart;
+                                if (cityName && firstPart.toLowerCase() !== cityName.toLowerCase()) {
+                                  finalAddress = `${firstPart}, ${cityName}`;
+                                }
+                                
+                                // Update text box with clean address instead of the giant one!
+                                setFormData(prev => ({ ...prev, address: finalAddress }));
+                              } else {
+                                // Fallback just in case
+                                setFormData(prev => ({ ...prev, address: loc }));
+                              }
+                            });
+                          }
+                        }}
+                        className="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer truncate"
+                      >
+                        {loc}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className={labelClasses}>Contact Number</label>
