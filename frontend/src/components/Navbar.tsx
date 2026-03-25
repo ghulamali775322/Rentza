@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useUser } from "@/context/UserContext";
 import { IoMdArrowBack } from "react-icons/io";
+import Pusher from 'pusher-js';
 import {
   FiBell,
   FiMessageCircle,
@@ -40,8 +41,9 @@ export default function Navbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- NEW: STATE TO HOLD MONGODB ID ---
+ // --- NEW: STATE TO HOLD MONGODB ID ---
   const [myMongoId, setMyMongoId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0); 
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -69,18 +71,74 @@ export default function Navbar() {
     setHasMounted(true);
   }, []);
 
-  // --- NEW: CRACK TOKEN TO GET ID ---
+// --- AGGRESSIVE ID FINDER & BADGE CHECKER ---
   useEffect(() => {
-    const localToken = localStorage.getItem("token");
-    if (localToken) {
-      try {
-        const payload = JSON.parse(atob(localToken.split(".")[1]));
-        setMyMongoId(payload.id);
-      } catch (e) {
-        console.error("Could not parse token for profile link");
+    const fetchBadgeData = async () => {
+      // 1. Force find the ID
+      let id = (session?.user as any)?.id || (session?.user as any)?._id;
+      const localToken = localStorage.getItem("token");
+      
+      if (!id && localToken) {
+        try {
+          const payload = JSON.parse(atob(localToken.split(".")[1]));
+          id = payload._id || payload.id || payload.userId;
+        } catch (e) {}
       }
-    }
-  }, [token]); // Re-run if token changes
+
+      // If still no ID but token exists, ask Backend
+      if (!id && (localToken || session?.user?.email)) {
+        try {
+          const headers: HeadersInit = {};
+          if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+          else if (session?.user?.email) headers["x-google-email"] = session?.user?.email;
+          const profileRes = await fetch("http://localhost:5000/profile", { headers });
+          const profileData = await profileRes.json();
+          id = profileData?.user?._id;
+        } catch (e) {}
+      }
+
+      if (!id) return; // Exit if truly logged out
+      setMyMongoId(id);
+
+      // 2. Immediately ask for unread count
+      try {
+        const res = await fetch(`http://localhost:5000/api/chat/unread-count/${id}?t=${Date.now()}`);
+        const result = await res.json();
+        if (result.success) {
+          setUnreadCount(result.count || 0);
+        }
+      } catch (err) {}
+    };
+
+    fetchBadgeData();
+    // Safety Net: Run again after 1 second if token was delayed on page load
+    const timer = setTimeout(fetchBadgeData, 1000);
+    return () => clearTimeout(timer);
+  }, [session, token]);
+
+  // --- PUSHER REAL-TIME LISTENER ---
+  useEffect(() => {
+    if (!myMongoId) return;
+
+    const refreshBadge = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/chat/unread-count/${myMongoId}?t=${Date.now()}`);
+        const result = await res.json();
+        if (result.success) setUnreadCount(result.count || 0);
+      } catch (err) {}
+    };
+
+    const pusher = new Pusher("8007c29c16276e840f53", { cluster: "ap2" });
+    const channel = pusher.subscribe(`user-${myMongoId}`);
+    
+    channel.bind("update-badge", refreshBadge);
+    channel.bind("new-message", refreshBadge);
+
+    return () => {
+      pusher.unsubscribe(`user-${myMongoId}`);
+      pusher.disconnect();
+    };
+  }, [myMongoId]);
 
   const isLoggedIn = hasMounted && (!!session || !!token);
 
@@ -177,11 +235,18 @@ export default function Navbar() {
             <div className="w-9 h-9 rounded-full bg-gray-300 animate-pulse" />
           ) : isLoggedIn ? (
             <>
-              <Link
+            <Link
                 href="/inbox"
-                className="icon-btn flex items-center justify-center"
+                className="icon-btn flex items-center justify-center relative"
               >
                 <FiMessageCircle className="text-xl text-black cursor-pointer hover:text-[#0077ff]" />
+                
+                
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#f62d51] text-white text-[10px] font-bold h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
 
               <div ref={notifRef} className="relative">

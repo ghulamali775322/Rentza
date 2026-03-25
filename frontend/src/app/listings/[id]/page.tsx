@@ -101,6 +101,70 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       alert("An error occurred while deleting the ad.");
     }
   };
+ // --- CHAT HANDLER ---
+  const handleChatClick = async () => {
+    let realUserId = (session?.user as any)?.id || (session?.user as any)?._id;
+    const localToken = localStorage.getItem("token");
+    const googleEmail = session?.user?.email;
+
+    // 1. If we don't have the ID yet, but we know you are logged in, ask the backend for it!
+    if (!realUserId && (localToken || googleEmail)) {
+      try {
+        const headers: HeadersInit = {};
+        
+        // Use the exact same header logic from your delete function
+        if (localToken) {
+          headers["Authorization"] = `Bearer ${localToken}`;
+        } else if (googleEmail) {
+          headers["x-google-email"] = googleEmail;
+        }
+
+        // Hit your backend /profile route to get the real MongoDB User ID
+        const profileRes = await fetch("http://localhost:5000/profile", { headers });
+        const profileData = await profileRes.json();
+        
+        realUserId = profileData?.user?._id || profileData?.user?.id;
+      } catch (e) {
+        console.error("Failed to fetch user profile", e);
+      }
+    }
+
+    // 2. VISITOR CHECK: If still no ID, they are a visitor. Show the popup!
+    if (!realUserId) {
+      alert("Please log in to start a chat.");
+      return;
+    }
+
+    // 3. Prevent chatting with themselves
+    if (realUserId === listing.lenderId?._id) {
+      alert("You cannot chat with yourself!");
+      return;
+    }
+
+    // 4. Create the chat using the real ID
+    try {
+      const response = await fetch("http://localhost:5000/api/chat/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: realUserId,               // 👈 The real, verified ID
+          receiverId: listing.lenderId?._id,  // Ad Owner ID
+          listingId: listing._id              // Ad ID
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // 👇 Passes the conversation ID in the URL so the Inbox can open it!
+        router.push(`/inbox?open=${data.data._id}`); 
+      } else {
+        alert("Could not start chat.");
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -270,13 +334,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   {showPhone ? listing.contactNumber : "Show Phone Number"}
                 </button>
 
-                <Link 
-                  href={`/chat?user=${encodeURIComponent(listing.lenderId?.name || "user")}`} 
-                  className="w-full border-2 border-[#002f34] text-[#002f34] font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                <button 
+                  onClick={handleChatClick}
+                  className="w-full border-2 border-[#002f34] text-[#002f34] font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer"
                 >
                   <FiMessageCircle size={20} />
                   Chat
-                </Link>
+                </button>
               </>
             )}
           </div>

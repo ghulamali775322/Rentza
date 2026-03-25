@@ -14,11 +14,13 @@ const conversationSchema = new mongoose.Schema(
     lastMessage: {
       text: { type: String, default: "" },
       senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      isRead: { type: Boolean, default: false }, // 👈 ADD THIS LINE!
     },
 
     deletedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
-  { timestamps: true }, // THIS IS MAGIC: Automatically adds 'createdAt' and 'updatedAt'
+  { timestamps: true }, 
 );
 
-export default mongoose.model("Conversation", conversationSchema);
+const Conversation = mongoose.models.Conversation || mongoose.model("Conversation", conversationSchema);
+export default Conversation;
