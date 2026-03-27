@@ -12,21 +12,23 @@ export default function LenderProfilePage({ params }: { params: Promise<{ id: st
   const [listings, setListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lenderName, setLenderName] = useState("Loading...");
+  const [lenderPhoto, setLenderPhoto] = useState(""); 
 
   useEffect(() => {
     const fetchLenderAds = async () => {
       setIsLoading(true);
       try {
-        // Fetch using your perfectly prepared backend route!
         const response = await fetch(`http://localhost:5000/api/listings/lender/${lenderId}`);
         const result = await response.json();
         
         if (result.success && result.data.length > 0) {
           setListings(result.data);
-          // Grab the lender's name from the first populated listing
           setLenderName(result.data[0].lenderId?.name || "Rentza User");
+          
+          // 2. GRAB THE PHOTO FROM THE FIRST AD
+          setLenderPhoto(result.data[0].lenderId?.profilePhotoPath || "");
         } else {
-          setLenderName("Rentza User"); // Fallback if they have 0 active ads
+          setLenderName("Rentza User"); 
         }
       } catch (error) {
         console.error("Error fetching lender ads:", error);
@@ -42,10 +44,20 @@ export default function LenderProfilePage({ params }: { params: Promise<{ id: st
   return (
     <div className="max-w-[1200px] mx-auto py-10 px-5 min-h-screen pt-[50px]">
       
-      {/* 1. PUBLIC PROFILE HEADER */}
+     {/* 1. PUBLIC PROFILE HEADER */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 mb-8 flex flex-col md:flex-row items-center gap-6">
-        <div className="w-24 h-24 bg-[#002f34] rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-md">
-           {lenderName.charAt(0).toUpperCase()}
+        
+        {/* THE FIX: THE UPDATED AVATAR CIRCLE */}
+        <div className="w-24 h-24 bg-[#002f34] rounded-full overflow-hidden flex items-center justify-center text-white text-4xl font-bold shadow-md shrink-0 border-2 border-gray-100">
+          {lenderPhoto ? (
+            <img 
+              src={`http://localhost:5000${lenderPhoto}`} 
+              alt={lenderName} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            lenderName.charAt(0).toUpperCase()
+          )}
         </div>
         
         <div className="text-center md:text-left">

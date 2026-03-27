@@ -5,6 +5,7 @@ import { getListingsByLenderService } from "../services/listingService.js";
 import { updateListingService } from "../services/listingService.js";
 import { deleteListingService } from "../services/listingService.js";
 import { deleteListingImageService } from "../services/listingService.js";
+import { getMyListingsService } from "../services/listingService.js";
 import { validateText } from "../utils/textFilter.js";
 import fs from "fs"; 
 import { moderateImage } from "../utils/moderation.js"; 
@@ -248,10 +249,9 @@ export const deleteListingImage = async (req, res) => {
     if (!imageUrl) {
       return res.status(400).json({ success: false, message: "Please provide the imageUrl to delete." });
     }
-
     
+    // Attempt to delete the physical file
     try {
-      
       const filePath = `.${imageUrl}`; 
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath); 
@@ -259,12 +259,18 @@ export const deleteListingImage = async (req, res) => {
     } catch (fileError) {
       console.log("Could not delete physical file, but will proceed to remove from database:", fileError);
     }
-
     
-    const updatedListing = await deleteListingImageService(listingId, imageUrl);
+    // 1. Remove the image from the database array
+    let updatedListing = await deleteListingImageService(listingId, imageUrl);
 
     if (!updatedListing) {
       return res.status(404).json({ success: false, message: "Listing not found." });
+    }
+
+    // 2. THE FIX: If no images are left, automatically demote the ad to "pending"!
+    if (updatedListing.images && updatedListing.images.length === 0) {
+      updatedListing.status = "pending";
+      await updatedListing.save(); 
     }
 
     res.status(200).json({
@@ -273,6 +279,22 @@ export const deleteListingImage = async (req, res) => {
       data: updatedListing
     });
 
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// NEW: Fetch all ads (Active + Pending) securely for the logged-in user
+export const getMyOwnListings = async (req, res) => {
+  try {
+    // req.user._id is securely provided by your protect middleware!
+    const listings = await getMyListingsService(req.user._id);
+    
+    res.status(200).json({
+      success: true,
+      count: listings.length, 
+      data: listings,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

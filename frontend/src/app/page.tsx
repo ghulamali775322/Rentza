@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect, useLayoutEffect, JSX } from "react";
 import { FiChevronDown, FiSmartphone, FiHome, FiMenu } from "react-icons/fi";
 import { FaCarSide, FaCouch, FaFootballBall, FaEllipsisH } from "react-icons/fa";
-import { GiScooter, GiTreehouse, GiHammerNails, GiClothes } from "react-icons/gi";
+import { GiTreehouse, GiHammerNails, GiClothes } from "react-icons/gi";
 import { TbBike } from "react-icons/tb";
 import { MdOutlineDevices } from "react-icons/md";
 import ListingCard from "@/components/ListingCard";
@@ -24,7 +24,6 @@ const CATEGORIES_DATA = [
 
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
-  // NEW STATE: Tracks which category in the dropdown has its arrow clicked
   const [expandedCat, setExpandedCat] = useState<string | null>(null); 
   
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -33,7 +32,19 @@ export default function Home() {
 
   const [realListings, setRealListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // --- THE ANTI-BLINK SCROLL STATE ---
+  const [savedScrollPos, setSavedScrollPos] = useState<number | null>(null);
 
+  // 1. Grab the scroll position immediately before anything else happens
+  useEffect(() => {
+    const pos = sessionStorage.getItem('homeScrollPos');
+    if (pos) {
+      setSavedScrollPos(parseInt(pos));
+    }
+  }, []);
+
+  // 2. Fetch the listings normally
   useEffect(() => {
     const fetchListings = async () => {
       try {
@@ -51,10 +62,18 @@ export default function Home() {
     fetchListings();
   }, []);
 
+  // 3. The Magic Hook: This runs BEFORE the browser paints the screen, stopping the blink!
+  useLayoutEffect(() => {
+    if (!isLoading && savedScrollPos !== null) {
+      window.scrollTo({ top: savedScrollPos, behavior: "instant" });
+      sessionStorage.removeItem('homeScrollPos');
+    }
+  }, [isLoading, savedScrollPos]);
+
   useLayoutEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownTop(rect.bottom - rect.top + 10); // Tightened the gap
+      setDropdownTop(rect.bottom - rect.top + 10);
     }
   }, [isOpen]);
 
@@ -66,7 +85,7 @@ export default function Home() {
         !buttonRef.current?.contains(e.target as Node)
       ) {
         setIsOpen(false);
-        setExpandedCat(null); // Reset accordion when closing
+        setExpandedCat(null); 
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -104,10 +123,7 @@ export default function Home() {
     <div className="relative border-t border-gray-200 bg-white z-10">
       
       {/* ======= CATEGORY BAR ======= */}
-      {/* ADDED: overflow-x-auto and scrollbar hiding to prevent layout breaking */}
       <div className="flex items-center gap-6 px-10 py-3 text-gray-800 text-[15px] font-medium overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        
-        {/* ADDED: whitespace-nowrap and flex-shrink-0 to keep button on one line */}
         <button
           ref={buttonRef}
           onClick={() => setIsOpen((prev) => !prev)}
@@ -120,7 +136,6 @@ export default function Home() {
           <FiChevronDown className={`transition-transform ${isOpen ? "rotate-180 text-[#0077ff]" : "rotate-0"}`} />
         </button>
 
-        {/* The rest of the categories naturally flow in a single line */}
         {CATEGORIES_DATA.map((cat) => (
           <Link
             key={cat.name}
@@ -146,7 +161,6 @@ export default function Home() {
               return (
                 <li key={mainCat.name} className="border-b border-gray-50 last:border-0">
                   <div className="flex justify-between items-center px-3 py-3 hover:bg-gray-50 rounded-md transition-colors">
-                    {/* The Name is a clickable Link */}
                     <Link 
                       href={`/search?category=${encodeURIComponent(mainCat.name)}`}
                       onClick={() => setIsOpen(false)}
@@ -154,8 +168,6 @@ export default function Home() {
                     >
                       {mainCat.name}
                     </Link>
-                    
-                    {/* The Arrow toggles the subcategories */}
                     <button 
                       onClick={() => setExpandedCat(isExpanded ? null : mainCat.name)}
                       className="p-1 text-gray-400 hover:text-[#0077ff] hover:bg-blue-50 rounded-full transition-colors"
@@ -164,7 +176,6 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* Subcategories (Hidden by default) */}
                   <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                     <ul className="overflow-hidden pl-4 ml-3 border-l-2 border-blue-100 mb-2 space-y-1">
                       {mainCat.subcategories.map(subCat => (
@@ -205,7 +216,13 @@ export default function Home() {
 
       {/* ======= RECENT LISTINGS ======= */}
       {isLoading ? (
-        <div className="text-center py-20 text-gray-500 font-bold text-lg animate-pulse">Loading latest ads...</div>
+        <div 
+          className="flex justify-center pt-20 text-gray-500 font-bold text-lg animate-pulse w-full"
+          // THE FIX: If a scroll position is saved, artificially pad the page so the browser doesn't hit the footer!
+          style={{ minHeight: savedScrollPos ? `${savedScrollPos + 1000}px` : '50vh' }}
+        >
+          Loading latest ads...
+        </div>
       ) : realListings.length === 0 ? (
         <div className="text-center py-20 text-gray-500">No ads found in the database yet.</div>
       ) : (
@@ -219,7 +236,6 @@ export default function Home() {
       )}
 
       {/* ======= SAFETY GUIDELINES ======= */}
-      {/* ... (Your Safety Guidelines code remains exactly the same) ... */}
       <section className="px-10 py-12 bg-gray-50">
         <h2 className="text-2xl font-semibold text-center text-gray-900 mb-10">Safety Guidelines</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
