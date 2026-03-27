@@ -10,18 +10,26 @@ export const createListingService = async (data) => {
 
 //get all listing
 export const getAllListings = async () => {
-  const listings = await Listing.find().populate("lenderId", "name email");
+  // THE FIX: Added { status: "active" } so pending ads are completely hidden from the public!
+  const listings = await Listing.find({ status: "active" }).populate("lenderId", "name email");
   return listings;
 };
 
 // Get a single listing by its ID
 export const getListingByIdService = async (id) => {
-  const listing = await Listing.findById(id).populate("lenderId", "name email phone");
+  const listing = await Listing.findById(id).populate("lenderId", "name email phone profilePhotoPath");
   return listing;
 };
 
-// Get all listings for a specific lender
+// Get all ACTIVE listings for a specific lender (Public Profile)
 export const getListingsByLenderService = async (lenderId) => {
+  // Added { status: 'active' } so the public never sees pending ads!
+  const listings = await Listing.find({ lenderId: lenderId, status: 'active' }).populate("lenderId", "name email profilePhotoPath");
+  return listings;
+};
+
+// NEW: Get ALL listings (Active + Pending) for the private "My Ads" dashboard
+export const getMyListingsService = async (lenderId) => {
   const listings = await Listing.find({ lenderId: lenderId }).populate("lenderId", "name email");
   return listings;
 };

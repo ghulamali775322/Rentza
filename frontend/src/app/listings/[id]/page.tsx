@@ -29,7 +29,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   // --- AUTHENTICATION STATE ---
   const { data: session } = useSession();
   const { name } = useAuth();
-  const loggedInName = session?.user?.name || name;
+  
+  // --- NEW: STATE TO HOLD MONGODB ID ---
+  const [myMongoId, setMyMongoId] = useState<string | null>(null);
 
   // --- STATE FOR REAL DATA ---
   const [listing, setListing] = useState<any>(null);
@@ -41,7 +43,37 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [showPhone, setShowPhone] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0); 
 
-  // --- FETCH DATA ---
+  // --- 1. GET USER ID ---
+  useEffect(() => {
+    const fetchUserId = async () => {
+      let currentId = (session?.user as any)?.id || (session?.user as any)?._id;
+      const localToken = localStorage.getItem("token");
+      
+      if (!currentId && localToken) {
+        try {
+          const payload = JSON.parse(atob(localToken.split(".")[1]));
+          currentId = payload._id || payload.id || payload.userId;
+        } catch (e) {}
+      }
+
+      if (!currentId && (localToken || session?.user?.email)) {
+        try {
+          const headers: HeadersInit = {};
+          if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+          else if (session?.user?.email) headers["x-google-email"] = session?.user?.email;
+          const profileRes = await fetch("http://localhost:5000/profile", { headers });
+          const profileData = await profileRes.json();
+          currentId = profileData?.user?._id;
+        } catch (e) {}
+      }
+
+      if (currentId) setMyMongoId(currentId);
+    };
+
+    fetchUserId();
+  }, [session]);
+
+  // --- 2. FETCH LISTING DATA ---
   useEffect(() => {
     const fetchSingleListing = async () => {
       try {
@@ -76,11 +108,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         "Content-Type": "application/json",
       };
       
-      if (localToken) {
-        headers["Authorization"] = `Bearer ${localToken}`;
-      } else if (session?.user?.email) {
-        headers["x-google-email"] = session.user.email; 
-      }
+      if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+      else if (session?.user?.email) headers["x-google-email"] = session.user.email; 
 
       const response = await fetch(`http://localhost:5000/api/listings/${id}`, {
         method: "DELETE",
@@ -90,9 +119,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
       const result = await response.json();
 
-     if (response.ok && result.success) {
+      if (response.ok && result.success) {
         alert("Ad deleted successfully!");
-        router.replace("/profile/my-ads"); // <--- Replaces the history entry!
+        router.replace("/profile/my-ads"); 
       } else {
         alert(result.message || "Failed to delete ad.");
       }
@@ -101,62 +130,66 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       alert("An error occurred while deleting the ad.");
     }
   };
- // --- CHAT HANDLER ---
-  const handleChatClick = async () => {
-    let realUserId = (session?.user as any)?.id || (session?.user as any)?._id;
-    const localToken = localStorage.getItem("token");
-    const googleEmail = session?.user?.email;
 
-    // 1. If we don't have the ID yet, but we know you are logged in, ask the backend for it!
-    if (!realUserId && (localToken || googleEmail)) {
-      try {
-        const headers: HeadersInit = {};
-        
-        // Use the exact same header logic from your delete function
-        if (localToken) {
-          headers["Authorization"] = `Bearer ${localToken}`;
-        } else if (googleEmail) {
-          headers["x-google-email"] = googleEmail;
-        }
+  // --- SHARE HANDLER ---
+  const handleShare = async () => {
+    const currentUrl = window.location.href;
+    const shareText = `Check out "${listing.title}" on Rentza!\n\n${currentUrl}`;
 
-        // Hit your backend /profile route to get the real MongoDB User ID
-        const profileRes = await fetch("http://localhost:5000/profile", { headers });
-        const profileData = await profileRes.json();
-        
-        realUserId = profileData?.user?._id || profileData?.user?.id;
-      } catch (e) {
-        console.error("Failed to fetch user profile", e);
+    try {
+      // Use the native mobile sharing menu if the browser supports it
+      if (navigator.share) {
+        await navigator.share({
+          title: listing.title,
+          text: `Check out "${listing.title}" on Rentza!\n\n`,
+          url: currentUrl,
+        });
+      } else {
+        // Fallback for desktop: Copy nicely formatted text to clipboard
+        await navigator.clipboard.writeText(shareText);
+        alert("Link copied to clipboard!");
       }
+    } catch (err) {
+      console.error("Error sharing:", err);
     }
+  };
 
-    // 2. VISITOR CHECK: If still no ID, they are a visitor. Show the popup!
-    if (!realUserId) {
+  // --- PHONE HANDLER ---
+  const handleShowPhoneClick = () => {
+    const localToken = localStorage.getItem("token");
+    if (!session && !localToken) {
+      alert("Please log in to view the phone number.");
+      return;
+    }
+    setShowPhone(true);
+  };
+
+  // --- CHAT HANDLER ---
+  const handleChatClick = async () => {
+    if (!myMongoId) {
       alert("Please log in to start a chat.");
       return;
     }
 
-    // 3. Prevent chatting with themselves
-    if (realUserId === listing.lenderId?._id) {
+    if (myMongoId === listing.lenderId?._id) {
       alert("You cannot chat with yourself!");
       return;
     }
 
-    // 4. Create the chat using the real ID
     try {
       const response = await fetch("http://localhost:5000/api/chat/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          senderId: realUserId,               // 👈 The real, verified ID
-          receiverId: listing.lenderId?._id,  // Ad Owner ID
-          listingId: listing._id              // Ad ID
+          senderId: myMongoId, 
+          receiverId: listing.lenderId?._id, 
+          listingId: listing._id 
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // 👇 Passes the conversation ID in the URL so the Inbox can open it!
         router.push(`/inbox?open=${data.data._id}`); 
       } else {
         alert("Could not start chat.");
@@ -165,6 +198,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       console.error("Chat error:", error);
     }
   };
+
+  // THE FIX: Force the page to always open at the very top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (isLoading) {
     return (
@@ -192,16 +230,15 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     year: 'numeric', month: 'short', day: 'numeric'
   });
 
-  // --- OWNER CHECK ---
-  const isOwner = listing.lenderId?.name === loggedInName;
+  // --- THE FIX: BULLETPROOF OWNER CHECK USING MONGODB ID ---
+  const isOwner = myMongoId === listing.lenderId?._id;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[50px] pb-10">
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-        <p className="text-base text-gray-500">
-          <Link href="/" className="hover:text-blue-800">Home</Link> / 
-          <Link href={`/search?category=${encodeURIComponent(listing.category)}`} className="hover:text-blue-600 mx-1">
+     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+        <p className="text-base text-gray-500 flex items-center">
+          <Link href={`/search?category=${encodeURIComponent(listing.category)}`} className="hover:text-blue-600 mr-1">
             {listing.category}
           </Link> / 
           <span className="text-gray-700 ml-1 truncate">{listing.title}</span>
@@ -219,11 +256,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 className="h-full w-full object-contain"
               />
               <div className="absolute top-4 right-4 flex gap-3 z-10">
-                <button className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
-                  <FiShare2 size={20} className="text-gray-700" />
-                </button>
-                <button className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer">
-                  <FiHeart size={20} className="text-gray-700" />
+                <button 
+                  onClick={handleShare}
+                  className="bg-white p-2.5 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer group"
+                  title="Share this ad"
+                >
+                  <FiShare2 size={20} className="text-gray-700 group-hover:text-blue-600 transition-colors" />
                 </button>
               </div>
             </div>
@@ -272,15 +310,20 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-4">
-          {/* 1. SELLER PROFILE CARD */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-            
-            {/* WRAPPED IN A LINK TO THE LENDER PROFILE */}
             <Link href={`/lender/${listing.lenderId?._id}`} className="block">
               <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition">
                 <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 bg-[#002f34] rounded-full flex items-center justify-center text-white text-2xl font-bold relative">
-                     {listing.lenderId?.name?.charAt(0).toUpperCase() || <FiUser size={32} />}
+                 <div className="w-16 h-16 bg-[#002f34] rounded-full overflow-hidden flex items-center justify-center text-white text-2xl font-bold relative shrink-0 shadow-sm border border-gray-200">
+                    {listing.lenderId?.profilePhotoPath ? (
+                      <img 
+                        src={`http://localhost:5000${listing.lenderId.profilePhotoPath}`} 
+                        alt={listing.lenderId?.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      listing.lenderId?.name?.charAt(0).toUpperCase() || <FiUser size={32} />
+                    )}
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-0.5">Posted by</p>
@@ -325,7 +368,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               // RENTER VIEW: Phone and Chat Buttons
               <>
                 <button 
-                  onClick={() => setShowPhone(true)}
+                  onClick={handleShowPhoneClick}
                   className={`w-full font-bold py-3 rounded flex items-center justify-center gap-2 transition ${
                     showPhone ? "bg-green-600 text-white" : "bg-[#002f34] text-white hover:bg-[#004247]"
                   }`}
@@ -359,14 +402,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               <span className="line-clamp-2">{listing.address}</span>
             </a>
             
-           
-            {/* Only show the map if MongoDB actually saved the coordinates! */}
             {listing.location?.coordinates && listing.location.coordinates.length === 2 ? (
               <div className="w-full overflow-hidden mt-3">
                 <ListingMap 
                   longitude={listing.location.coordinates[0]} 
                   latitude={listing.location.coordinates[1]} 
-                  title={listing.title} // <--- ADD THIS LINE!
+                  title={listing.title} 
                 />
               </div>
             ) : (
@@ -386,7 +427,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                           className="flex items-center gap-2 text-red-600 font-bold hover:underline text-sm"
                               >
                        <FiFlag size={18} /> 
-                     Report this ad
+                      Report this ad
                    </button>
                </div>
             </div>

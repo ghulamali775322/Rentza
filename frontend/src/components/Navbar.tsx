@@ -41,9 +41,12 @@ export default function Navbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
- // --- NEW: STATE TO HOLD MONGODB ID ---
+  // --- MONGODB ID & NOTIFICATIONS STATE ---
   const [myMongoId, setMyMongoId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0); 
+  
+  // --- NEW: AGGRESSIVE PHOTO FETCHER STATE ---
+  const [fetchedPhoto, setFetchedPhoto] = useState<string | null>(null);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -71,10 +74,32 @@ export default function Navbar() {
     setHasMounted(true);
   }, []);
 
-// --- AGGRESSIVE ID FINDER & BADGE CHECKER ---
+  // --- NEW: AGGRESSIVELY FETCH PHOTO ON TOKEN CHANGE ---
+  useEffect(() => {
+    const loadPhoto = async () => {
+      const localToken = localStorage.getItem("token");
+      if (localToken) {
+        try {
+          const res = await fetch("http://localhost:5000/api/user/profile", {
+            headers: { Authorization: `Bearer ${localToken}` }
+          });
+          const data = await res.json();
+          if (data.profilePhotoPath) {
+            // Add a timestamp to bust the cache and guarantee the freshest image
+            setFetchedPhoto(`http://localhost:5000${data.profilePhotoPath}?t=${Date.now()}`);
+          }
+        } catch (e) {
+          console.error("Failed to load nav photo");
+        }
+      }
+    };
+    
+    loadPhoto();
+  }, [token]);
+
+  // --- AGGRESSIVE ID FINDER & BADGE CHECKER ---
   useEffect(() => {
     const fetchBadgeData = async () => {
-      // 1. Force find the ID
       let id = (session?.user as any)?.id || (session?.user as any)?._id;
       const localToken = localStorage.getItem("token");
       
@@ -85,7 +110,6 @@ export default function Navbar() {
         } catch (e) {}
       }
 
-      // If still no ID but token exists, ask Backend
       if (!id && (localToken || session?.user?.email)) {
         try {
           const headers: HeadersInit = {};
@@ -97,10 +121,9 @@ export default function Navbar() {
         } catch (e) {}
       }
 
-      if (!id) return; // Exit if truly logged out
+      if (!id) return;
       setMyMongoId(id);
 
-      // 2. Immediately ask for unread count
       try {
         const res = await fetch(`http://localhost:5000/api/chat/unread-count/${id}?t=${Date.now()}`);
         const result = await res.json();
@@ -111,7 +134,6 @@ export default function Navbar() {
     };
 
     fetchBadgeData();
-    // Safety Net: Run again after 1 second if token was delayed on page load
     const timer = setTimeout(fetchBadgeData, 1000);
     return () => clearTimeout(timer);
   }, [session, token]);
@@ -241,7 +263,6 @@ export default function Navbar() {
               >
                 <FiMessageCircle className="text-xl text-black cursor-pointer hover:text-[#0077ff]" />
                 
-                
                 {unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-[#f62d51] text-white text-[10px] font-bold h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -274,10 +295,11 @@ export default function Navbar() {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center gap-1 cursor-pointer"
                 >
+                  {/* --- FIX: AVATAR 1 (NAVBAR TOGGLE BUTTON) --- */}
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0077ff] flex items-center justify-center text-white font-bold">
-                    {profilePhotoUrl ? (
+                    {fetchedPhoto || profilePhotoUrl ? (
                       <img
-                        src={profilePhotoUrl}
+                        src={fetchedPhoto || profilePhotoUrl}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -303,10 +325,11 @@ export default function Navbar() {
                         onClick={() => setShowProfileMenu(false)}
                         className="relative flex-shrink-0 cursor-pointer group hover:opacity-80 transition-opacity"
                       >
+                        {/* --- FIX: AVATAR 2 (INSIDE DROPDOWN MENU) --- */}
                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold">
-                          {profilePhotoUrl ? (
+                          {fetchedPhoto || profilePhotoUrl ? (
                             <img
-                              src={profilePhotoUrl}
+                              src={fetchedPhoto || profilePhotoUrl}
                               alt="Profile"
                               className="w-full h-full object-cover rounded-full"
                             />
@@ -327,7 +350,6 @@ export default function Navbar() {
                         <p className="font-semibold text-gray-800">
                           {name || authName || session?.user?.name || "User"}
                         </p>
-                        {/* --- UPDATED PUBLIC PROFILE LINK --- */}
                         <Link
                           href={
                             myMongoId
