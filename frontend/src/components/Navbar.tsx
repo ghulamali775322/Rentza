@@ -320,7 +320,7 @@ export default function Navbar() {
                       )}
                     </div>
                   </div>
-                  </div>
+                  
                   {showProfileMenu ? (
                     <FiChevronUp className="text-black text-lg" />
                   ) : (
@@ -353,7 +353,7 @@ export default function Navbar() {
                             )}
                           </div>
                         </div>
-                        </div>
+                        
                         <FiEdit2
                           size={18}
                           className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]"
