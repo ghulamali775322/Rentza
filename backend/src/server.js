@@ -12,6 +12,7 @@ import notificationRoutes from "./routes/notificationRoute.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import path from "path";
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 // Rate limiter (security)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

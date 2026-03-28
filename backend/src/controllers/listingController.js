@@ -1,3 +1,4 @@
+import User from "../models/user.js";
 import { createListingService } from "../services/listingService.js";
 import { getAllListings } from "../services/listingService.js";
 import { getListingByIdService } from "../services/listingService.js";
@@ -30,6 +31,9 @@ export const createListing = async (req, res) => {
     const listingData = req.body;
     listingData.lenderId = req.user._id;
     const listing = await createListingService(listingData);
+
+ const userId = req.user._id || req.user.id;
+    await User.findByIdAndUpdate(userId, { $inc: { adsPostedCount: 1 } });
 
     res.status(201).json({
       success: true,

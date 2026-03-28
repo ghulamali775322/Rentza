@@ -3,6 +3,7 @@ import Autocomplete from "react-google-autocomplete";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import React, { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   FiSmartphone,
   FiHome,
@@ -31,6 +32,7 @@ const CATEGORIES = [
 
 export default function CreateListingPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedMainCatId, setSelectedMainCatId] = useState<string>("");
   const [finalCategory, setFinalCategory] = useState({ main: "", sub: "" });
@@ -186,6 +188,13 @@ export default function CreateListingPage() {
       const textResult = await textResponse.json();
 
       if (!textResponse.ok) {
+        //  3. CATCH THE LIMIT ERROR AND REDIRECT 
+        if (textResult.message && textResult.message.includes("Limit Reached")) {
+          alert("⚠️ " + textResult.message + "\n\nRedirecting to Packages...");
+          router.push("/profile/packages");
+          return; // Stop everything else!
+        }
+        
         throw new Error(textResult.message || "Failed to save listing details.");
       }
 
