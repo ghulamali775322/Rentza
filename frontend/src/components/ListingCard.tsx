@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link"; 
-import { FiHeart } from "react-icons/fi";
 
 interface ListingProps {
   data: {
@@ -20,7 +19,11 @@ export default function ListingCard({ data }: ListingProps) {
     : "https://via.placeholder.com/300?text=No+Image";
 
   return (
-    <Link href={`/listings/${data._id}`} className="block"> 
+    <Link 
+      href={`/listings/${data._id}`} 
+      className="block"
+      onClick={() => sessionStorage.setItem('homeScrollPos', window.scrollY.toString())}
+    >
       <div className="border border-gray-200 rounded-md overflow-hidden hover:shadow-lg transition-shadow bg-white group cursor-pointer h-full flex flex-col">
         <div className="relative h-40 w-full bg-gray-100 flex-shrink-0">
           <img 
@@ -28,14 +31,7 @@ export default function ListingCard({ data }: ListingProps) {
             alt={data.title} 
             className="w-full h-full object-cover"
           />
-          <button 
-            onClick={(e) => {
-              e.preventDefault(); 
-            }}
-            className="absolute top-2 right-2 p-2 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-              <FiHeart />
-          </button>
+          {/* The Hover Heart Button was completely removed from right here! */}
         </div>
         <div className="p-3 flex flex-col flex-grow justify-between">
           <div>
