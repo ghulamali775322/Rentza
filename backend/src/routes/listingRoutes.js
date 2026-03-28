@@ -10,10 +10,12 @@ import upload from "../middlewares/uploadMiddleware.js";
 import { uploadListingImages } from "../controllers/listingController.js";
 import { deleteListingImage } from "../controllers/listingController.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import { checkAdLimit } from "../middlewares/subscriptionMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", protect, createListing);
+router.post("/create", protect, checkAdLimit, createListing);
+router.post("/", protect, checkAdLimit, createListing);
 router.get("/", getListings);
 router.get("/my-listings", protect, getMyOwnListings);
 router.get("/lender/:lenderId", getLenderListings);

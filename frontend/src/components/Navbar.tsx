@@ -43,6 +43,7 @@ export default function Navbar() {
 
   // --- MONGODB ID & NOTIFICATIONS STATE ---
   const [myMongoId, setMyMongoId] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState("free");
   const [unreadCount, setUnreadCount] = useState(0); 
   
   // --- NEW: AGGRESSIVE PHOTO FETCHER STATE ---
@@ -124,6 +125,13 @@ export default function Navbar() {
       if (!id) return;
       setMyMongoId(id);
 
+      try {
+        const planRes = await fetch(`http://localhost:5000/api/subscriptions/status/${id}`);
+        const planData = await planRes.json();
+        if (planData.success && planData.data) {
+          setUserPlan(planData.data.planType);
+        }
+      } catch (err) {}
       try {
         const res = await fetch(`http://localhost:5000/api/chat/unread-count/${id}?t=${Date.now()}`);
         const result = await res.json();
@@ -295,20 +303,23 @@ export default function Navbar() {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center gap-1 cursor-pointer"
                 >
-                  {/* --- FIX: AVATAR 1 (NAVBAR TOGGLE BUTTON) --- */}
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0077ff] flex items-center justify-center text-white font-bold">
-                    {fetchedPhoto || profilePhotoUrl ? (
-                      <img
-                        src={fetchedPhoto || profilePhotoUrl}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      name?.charAt(0) ||
-                      authName?.charAt(0) ||
-                      session?.user?.name?.charAt(0) ||
-                      "U"
-                    )}
+{/* 🔥 COLORFUL GRADIENT RING WRAPPER + FRIEND'S PHOTO FIX */}
+                  <div className={`rounded-full ${userPlan === 'premium' ? 'p-[2.5px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-sm' : userPlan === 'gold' ? 'p-[2.5px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-sm' : ''}`}>
+                    <div className={`w-9 h-9 rounded-full overflow-hidden bg-[#0077ff] flex items-center justify-center text-white font-bold ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
+                      {fetchedPhoto || profilePhotoUrl ? (
+                        <img
+                          src={fetchedPhoto || profilePhotoUrl}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        name?.charAt(0) ||
+                        authName?.charAt(0) ||
+                        session?.user?.name?.charAt(0) ||
+                        "U"
+                      )}
+                    </div>
+                  </div>
                   </div>
                   {showProfileMenu ? (
                     <FiChevronUp className="text-black text-lg" />
@@ -325,20 +336,23 @@ export default function Navbar() {
                         onClick={() => setShowProfileMenu(false)}
                         className="relative flex-shrink-0 cursor-pointer group hover:opacity-80 transition-opacity"
                       >
-                        {/* --- FIX: AVATAR 2 (INSIDE DROPDOWN MENU) --- */}
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold">
-                          {fetchedPhoto || profilePhotoUrl ? (
-                            <img
-                              src={fetchedPhoto || profilePhotoUrl}
-                              alt="Profile"
-                              className="w-full h-full object-cover rounded-full"
-                            />
-                          ) : (
-                            name?.charAt(0) ||
-                            authName?.charAt(0) ||
-                            session?.user?.name?.charAt(0) ||
-                            "U"
-                          )}
+{/* 🔥 COLORFUL GRADIENT RING WRAPPER + FRIEND'S PHOTO FIX */}
+                        <div className={`rounded-full ${userPlan === 'premium' ? 'p-[3px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-md' : userPlan === 'gold' ? 'p-[3px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-md' : ''}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
+                            {fetchedPhoto || profilePhotoUrl ? (
+                              <img
+                                src={fetchedPhoto || profilePhotoUrl}
+                                alt="Profile"
+                                className="w-full h-full object-cover rounded-full"
+                              />
+                            ) : (
+                              name?.charAt(0) ||
+                              authName?.charAt(0) ||
+                              session?.user?.name?.charAt(0) ||
+                              "U"
+                            )}
+                          </div>
+                        </div>
                         </div>
                         <FiEdit2
                           size={18}
@@ -346,10 +360,27 @@ export default function Navbar() {
                         />
                       </Link>
 
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">
-                          {name || authName || session?.user?.name || "User"}
-                        </p>
+<div className="flex-1">
+                        <div className="flex items-center">
+                          <p className="font-semibold text-gray-800">
+                            {name || authName || session?.user?.name || "User"}
+                          </p>
+                          
+                          {/* 👑 Premium Badge */}
+                          {userPlan === 'premium' && (
+                            <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shadow-sm border border-yellow-600 inline-flex items-center gap-1">
+                              👑 Premium
+                            </span>
+                          )}
+
+                          {/* ⭐ Gold Badge */}
+                          {userPlan === 'gold' && (
+                            <span className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shadow-sm border border-gray-500 inline-flex items-center gap-1">
+                              ⭐ Gold
+                            </span>
+                          )}
+                        </div>
+                        {/* --- UPDATED PUBLIC PROFILE LINK --- */}
                         <Link
                           href={
                             myMongoId
