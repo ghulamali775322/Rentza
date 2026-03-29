@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useUser } from "@/context/UserContext";
 import { IoMdArrowBack } from "react-icons/io";
@@ -37,16 +37,19 @@ export default function Navbar() {
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- MONGODB ID & NOTIFICATIONS STATE ---
   const [myMongoId, setMyMongoId] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState("free");
-  const [unreadCount, setUnreadCount] = useState(0); 
   
-  // --- NEW: AGGRESSIVE PHOTO FETCHER STATE ---
+  const [unreadCount, setUnreadCount] = useState(0); 
+  const [notifications, setNotifications] = useState<any[]>([]); 
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0); 
+  
   const [fetchedPhoto, setFetchedPhoto] = useState<string | null>(null);
 
   const handleSearch = () => {
@@ -75,7 +78,6 @@ export default function Navbar() {
     setHasMounted(true);
   }, []);
 
-  // --- NEW: AGGRESSIVELY FETCH PHOTO ON TOKEN CHANGE ---
   useEffect(() => {
     const loadPhoto = async () => {
       const localToken = localStorage.getItem("token");
@@ -86,7 +88,6 @@ export default function Navbar() {
           });
           const data = await res.json();
           if (data.profilePhotoPath) {
-            // Add a timestamp to bust the cache and guarantee the freshest image
             setFetchedPhoto(`http://localhost:5000${data.profilePhotoPath}?t=${Date.now()}`);
           }
         } catch (e) {
@@ -94,11 +95,49 @@ export default function Navbar() {
         }
       }
     };
-    
     loadPhoto();
   }, [token]);
 
-  // --- AGGRESSIVE ID FINDER & BADGE CHECKER ---
+  // --- ISOLATED NOTIFICATION FETCHER ---
+  const fetchNotificationsOnly = useCallback(async () => {
+    if (!myMongoId) return;
+    try {
+      const localToken = localStorage.getItem("token");
+      const authHeaders: HeadersInit = { "Content-Type": "application/json" };
+      if (localToken) authHeaders["Authorization"] = `Bearer ${localToken}`;
+      else if (session?.user?.email) authHeaders["x-google-email"] = session.user.email;
+
+      const notifRes = await fetch(`http://localhost:5000/api/notifications?t=${Date.now()}`, { headers: authHeaders });
+      const notifResult = await notifRes.json();
+      
+      if (notifResult.success) {
+        const sorted = notifResult.data.sort((a: any, b: any) => b._id.localeCompare(a._id));
+        setNotifications(sorted);
+        setUnreadNotifCount(notifResult.unreadCount || 0);
+      }
+    } catch (err) {}
+  }, [myMongoId, session]);
+
+  // --- THE FIX: WINDOW FOCUS & BACKGROUND POLLING ---
+  useEffect(() => {
+    // 1. Listen for cross-page clicks
+    window.addEventListener("syncNotifications", fetchNotificationsOnly);
+    
+    // 2. Fetch instantly when user clicks back into the browser tab (matches Google NextAuth behavior)
+    window.addEventListener("focus", fetchNotificationsOnly);
+
+    // 3. Poll the server quietly every 30 seconds just in case they are staring at the screen
+    const interval = setInterval(() => {
+      fetchNotificationsOnly();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener("syncNotifications", fetchNotificationsOnly);
+      window.removeEventListener("focus", fetchNotificationsOnly);
+      clearInterval(interval);
+    };
+  }, [fetchNotificationsOnly]);
+
   useEffect(() => {
     const fetchBadgeData = async () => {
       let id = (session?.user as any)?.id || (session?.user as any)?._id;
@@ -132,12 +171,11 @@ export default function Navbar() {
           setUserPlan(planData.data.planType);
         }
       } catch (err) {}
+
       try {
         const res = await fetch(`http://localhost:5000/api/chat/unread-count/${id}?t=${Date.now()}`);
         const result = await res.json();
-        if (result.success) {
-          setUnreadCount(result.count || 0);
-        }
+        if (result.success) setUnreadCount(result.count || 0);
       } catch (err) {}
     };
 
@@ -146,7 +184,33 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, [session, token]);
 
-  // --- PUSHER REAL-TIME LISTENER ---
+  useEffect(() => {
+    if (myMongoId) fetchNotificationsOnly();
+  }, [myMongoId, fetchNotificationsOnly]);
+
+  const handleReadNotification = async (notifId: string, isRead: boolean) => {
+    if (isRead) return; 
+    
+    try {
+      const localToken = localStorage.getItem("token");
+      const authHeaders: HeadersInit = { "Content-Type": "application/json" };
+      if (localToken) authHeaders["Authorization"] = `Bearer ${localToken}`;
+      else if (session?.user?.email) authHeaders["x-google-email"] = session.user.email;
+
+      await fetch(`http://localhost:5000/api/notifications/${notifId}/read`, {
+        method: "PATCH",
+        headers: authHeaders
+      });
+
+      setNotifications((prev) => prev.map((n) => n._id === notifId ? { ...n, isRead: true } : n));
+      setUnreadNotifCount((prev) => Math.max(0, prev - 1));
+      window.dispatchEvent(new Event("syncNotifications"));
+
+    } catch (error) {
+      console.error("Failed to mark notification as read", error);
+    }
+  };
+
   useEffect(() => {
     if (!myMongoId) return;
 
@@ -174,24 +238,17 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleNotifClickOutside(event: MouseEvent) {
-      if (
-        notifRef.current &&
-        !notifRef.current.contains(event.target as Node)
-      ) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
     }
     document.addEventListener("mousedown", handleNotifClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleNotifClickOutside);
+    return () => document.removeEventListener("mousedown", handleNotifClickOutside);
   }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setShowProfileMenu(false);
       }
     }
@@ -201,16 +258,12 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleLocationOutside(event: MouseEvent) {
-      if (
-        locationRef.current &&
-        !locationRef.current.contains(event.target as Node)
-      ) {
+      if (locationRef.current && !locationRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleLocationOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleLocationOutside);
+    return () => document.removeEventListener("mousedown", handleLocationOutside);
   }, []);
 
   const RentzaLogoText = () => (
@@ -223,25 +276,15 @@ export default function Navbar() {
 
   return (
     <nav className="w-full fixed top-0 left-0 z-50">
-      <div
-        className="w-full bg-[#f2f7ff] border-b border-gray-200 shadow-sm flex items-center justify-between px-6"
-        style={{ height: 72 }}
-      >
+      <div className="w-full bg-[#f2f7ff] border-b border-gray-200 shadow-sm flex items-center justify-between px-6" style={{ height: 72 }}>
         <div className="flex items-center gap-6">
           {pathname === "/create-listing" && (
-            <Link
-              href="/"
-              className="text-gray-600 hover:text-blue-600 -mr-4 flex items-center"
-            >
+            <Link href="/" className="text-gray-600 hover:text-blue-600 -mr-4 flex items-center">
               <IoMdArrowBack size={28} />
             </Link>
           )}
 
-          <Link
-            href="/"
-            className="text-2xl font-bold text-blue-600"
-            onClick={() => setActive("home")}
-          >
+          <Link href="/" className="text-2xl font-bold text-blue-600" onClick={() => setActive("home")}>
             <RentzaLogoText />
           </Link>
 
@@ -265,12 +308,8 @@ export default function Navbar() {
             <div className="w-9 h-9 rounded-full bg-gray-300 animate-pulse" />
           ) : isLoggedIn ? (
             <>
-            <Link
-                href="/inbox"
-                className="icon-btn flex items-center justify-center relative"
-              >
+            <Link href="/inbox" className="icon-btn flex items-center justify-center relative">
                 <FiMessageCircle className="text-xl text-black cursor-pointer hover:text-[#0077ff]" />
-                
                 {unreadCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-[#f62d51] text-white text-[10px] font-bold h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -279,179 +318,119 @@ export default function Navbar() {
               </Link>
 
               <div ref={notifRef} className="relative">
-                <div
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="icon-btn cursor-pointer"
-                >
+                <div onClick={() => setShowNotifications(!showNotifications)} className="icon-btn flex items-center justify-center cursor-pointer relative">
                   <FiBell className="text-xl text-black hover:text-[#0077ff]" />
+                  {unreadNotifCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-[#f62d51] text-white text-[10px] font-bold h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                      {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                    </span>
+                  )}
                 </div>
 
                 {showNotifications && (
-                  <div className="absolute right-0 top-10 w-72 bg-white shadow-lg border border-gray-200 rounded-lg p-4 z-50 animate-fadeIn">
-                    <h3 className="font-semibold text-gray-800 mb-2">
-                      Notifications
-                    </h3>
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      You have no notifications yet.
-                    </p>
+                  <div className="absolute right-0 top-10 w-80 bg-white shadow-xl border border-gray-200 rounded-lg p-0 z-50 animate-fadeIn overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                      <h3 className="font-semibold text-gray-800">Notifications</h3>
+                      {unreadNotifCount > 0 && (
+                        <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold uppercase tracking-wider">
+                          {unreadNotifCount} New
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-6">You have no notifications yet.</p>
+                      ) : (
+                        notifications.slice(0, 5).map((n) => (
+                          <div 
+                            key={n._id} 
+                            onClick={() => handleReadNotification(n._id, n.isRead)}
+                            className={`p-4 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${!n.isRead ? 'bg-blue-50/40' : ''}`}
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className={`text-sm ${!n.isRead ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                {n.title}
+                              </h4>
+                              {!n.isRead && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0"></span>}
+                            </div>
+                            <p className="text-xs text-gray-500 line-clamp-2">{n.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="p-3 border-t border-gray-100 bg-white">
+                      <Link 
+                        href="/profile/notifications" 
+                        onClick={() => setShowNotifications(false)}
+                        className="block w-full text-center text-sm text-[#0077ff] font-bold hover:underline"
+                      >
+                        See All Notifications
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
 
               <div ref={profileRef} className="relative">
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-1 cursor-pointer"
-                >
-{/* 🔥 COLORFUL GRADIENT RING WRAPPER + FRIEND'S PHOTO FIX */}
+                <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-1 cursor-pointer">
                   <div className={`rounded-full ${userPlan === 'premium' ? 'p-[2.5px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-sm' : userPlan === 'gold' ? 'p-[2.5px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-sm' : ''}`}>
                     <div className={`w-9 h-9 rounded-full overflow-hidden bg-[#0077ff] flex items-center justify-center text-white font-bold ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
                       {fetchedPhoto || profilePhotoUrl ? (
-                        <img
-                          src={fetchedPhoto || profilePhotoUrl}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={fetchedPhoto || profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
-                        name?.charAt(0) ||
-                        authName?.charAt(0) ||
-                        session?.user?.name?.charAt(0) ||
-                        "U"
+                        name?.charAt(0) || authName?.charAt(0) || session?.user?.name?.charAt(0) || "U"
                       )}
                     </div>
                   </div>
-                  
-                  {showProfileMenu ? (
-                    <FiChevronUp className="text-black text-lg" />
-                  ) : (
-                    <FiChevronDown className="text-black text-lg" />
-                  )}
+                  {showProfileMenu ? <FiChevronUp className="text-black text-lg" /> : <FiChevronDown className="text-black text-lg" />}
                 </button>
 
                 {showProfileMenu && (
                   <div className="absolute top-12 right-0 w-64 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 animate-fadeIn">
                     <div className="flex items-center gap-3 border-b border-gray-100 pb-2 mb-2">
-                      <Link
-                        href="/profile/edit"
-                        onClick={() => setShowProfileMenu(false)}
-                        className="relative flex-shrink-0 cursor-pointer group hover:opacity-80 transition-opacity"
-                      >
-{/* 🔥 COLORFUL GRADIENT RING WRAPPER + FRIEND'S PHOTO FIX */}
+                      <Link href="/profile/edit" onClick={() => setShowProfileMenu(false)} className="relative flex-shrink-0 cursor-pointer group hover:opacity-80 transition-opacity">
                         <div className={`rounded-full ${userPlan === 'premium' ? 'p-[3px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-md' : userPlan === 'gold' ? 'p-[3px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-md' : ''}`}>
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
                             {fetchedPhoto || profilePhotoUrl ? (
-                              <img
-                                src={fetchedPhoto || profilePhotoUrl}
-                                alt="Profile"
-                                className="w-full h-full object-cover rounded-full"
-                              />
+                              <img src={fetchedPhoto || profilePhotoUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
                             ) : (
-                              name?.charAt(0) ||
-                              authName?.charAt(0) ||
-                              session?.user?.name?.charAt(0) ||
-                              "U"
+                              name?.charAt(0) || authName?.charAt(0) || session?.user?.name?.charAt(0) || "U"
                             )}
                           </div>
                         </div>
-                        
-                        <FiEdit2
-                          size={18}
-                          className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]"
-                        />
+                        <FiEdit2 size={18} className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]" />
                       </Link>
 
-<div className="flex-1">
+                      <div className="flex-1">
                         <div className="flex items-center">
-                          <p className="font-semibold text-gray-800">
-                            {name || authName || session?.user?.name || "User"}
-                          </p>
-                          
-                          {/* 👑 Premium Badge */}
-                          {userPlan === 'premium' && (
-                            <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shadow-sm border border-yellow-600 inline-flex items-center gap-1">
-                              👑 Premium
-                            </span>
-                          )}
-
-                          {/* ⭐ Gold Badge */}
-                          {userPlan === 'gold' && (
-                            <span className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shadow-sm border border-gray-500 inline-flex items-center gap-1">
-                              ⭐ Gold
-                            </span>
-                          )}
+                          <p className="font-semibold text-gray-800">{name || authName || session?.user?.name || "User"}</p>
+                          {userPlan === 'premium' && <span className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shadow-sm border border-yellow-600 inline-flex items-center gap-1">👑 Premium</span>}
+                          {userPlan === 'gold' && <span className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shadow-sm border border-gray-500 inline-flex items-center gap-1">⭐ Gold</span>}
                         </div>
-                        {/* --- UPDATED PUBLIC PROFILE LINK --- */}
-                        <Link
-                          href={
-                            myMongoId
-                              ? `/lender/${myMongoId}`
-                              : "/profile/my-ads"
-                          }
-                          onClick={() => setShowProfileMenu(false)}
-                          className="text-xs text-[#0077ff] hover:underline"
-                        >
-                          View public profile
-                        </Link>
+                        <Link href={myMongoId ? `/lender/${myMongoId}` : "/profile/my-ads"} onClick={() => setShowProfileMenu(false)} className="text-xs text-[#0077ff] hover:underline">View public profile</Link>
                       </div>
                     </div>
 
                     <div className="flex flex-col text-[16px] text-gray-800 font-medium gap-3 mt-2">
-                      <Link
-                        href="/profile/packages"
-                        className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"
-                      >
-                        <FiTag size={18} /> Buy Discount Packages
-                      </Link>
-                      <Link
-                        href="/profile/my-ads"
-                        className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"
-                      >
-                        <FiLayers size={18} /> My Ads
-                      </Link>
-                      <Link
-                        href="/profile/settings"
-                        className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"
-                      >
-                        <FiSettings size={18} /> Settings
-                      </Link>
-
-                      <button
-                        onClick={() => {
-                          if (session) signOut();
-                          else if (token) logout();
-                        }}
-                        className="flex items-center gap-2 text-red-500 hover:text-red-600 transition px-3 py-2 rounded-md hover:bg-red-50"
-                      >
-                        <FiLogOut size={18} /> Logout
-                      </button>
+                      <Link href="/profile/packages" className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"><FiTag size={18} /> Buy Discount Packages</Link>
+                      <Link href="/profile/my-ads" className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiLayers size={18} /> My Ads</Link>
+                      <Link href="/profile/settings" className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiSettings size={18} /> Settings</Link>
+                      <button onClick={() => { if (session) signOut(); else if (token) logout(); }} className="flex items-center gap-2 text-red-500 hover:text-red-600 transition px-3 py-2 rounded-md hover:bg-red-50"><FiLogOut size={18} /> Logout</button>
                     </div>
                   </div>
                 )}
               </div>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="text-[#0077ff] font-semibold px-4 py-2 rounded-lg border border-[#0077ff] hover:bg-[#0077ff] hover:text-white transition"
-            >
-              Login
-            </Link>
+            <Link href="/login" className="text-[#0077ff] font-semibold px-4 py-2 rounded-lg border border-[#0077ff] hover:bg-[#0077ff] hover:text-white transition">Login</Link>
           )}
 
-          <button
-            onClick={() => {
-              if (!hasMounted || (!session && !token)) router.push("/login");
-              else router.push("/create-listing");
-            }}
-            className="relative flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
-          >
+          <button onClick={() => { if (!hasMounted || (!session && !token)) router.push("/login"); else router.push("/create-listing"); }} className="relative flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg">
             <div className="bg-white rounded-full px-6 py-2 flex items-center gap-2 transition-all duration-300 hover:bg-[#f9fafb]">
-              <span className="text-2xl text-black font-bold leading-none">
-                ＋
-              </span>
-              <span className="font-bold text-[#002f34] tracking-wide">
-                POST AD
-              </span>
+              <span className="text-2xl text-black font-bold leading-none">＋</span>
+              <span className="font-bold text-[#002f34] tracking-wide">POST AD</span>
             </div>
           </button>
         </div>
@@ -460,26 +439,11 @@ export default function Navbar() {
       <div className="w-full text-black bg-white border-t border-gray-200 shadow-inner">
         <div className="max-w-6xl mx-auto h-full flex items-center gap-3 px-4" style={{ height: 64 }}>
           <LocationDropdown />
-
           <div className="flex items-center border rounded-lg bg-white h-10 flex-1 overflow-hidden transition hover:border-[#0077ff]">
             <div className="flex items-center flex-1 min-w-0 px-3">
-              <input
-                type="text"
-                placeholder="Find anything you"
-                className="flex-1 min-w-0 text-sm focus:outline-none cursor-text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
+              <input type="text" placeholder="Find anything you" className="flex-1 min-w-0 text-sm focus:outline-none cursor-text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={handleKeyDown} />
             </div>
-
-            <button
-              onClick={handleSearch}
-              className="bg-[#002f34] text-white flex items-center justify-center gap-2 px-4 h-full rounded-r-lg hover:bg-[#004247] cursor-pointer"
-            >
-              <FiSearch className="text-lg" />
-              <span className="text-sm">Search</span>
-            </button>
+            <button onClick={handleSearch} className="bg-[#002f34] text-white flex items-center justify-center gap-2 px-4 h-full rounded-r-lg hover:bg-[#004247] cursor-pointer"><FiSearch className="text-lg" /><span className="text-sm">Search</span></button>
           </div>
         </div>
       </div>
@@ -487,13 +451,7 @@ export default function Navbar() {
       <div className="md:hidden w-full bg-[#f2f7ff] border-t border-gray-200">
         <div className="max-w-7xl mx-auto flex items-center gap-2 px-4 py-2 overflow-auto">
           {sections.map((section) => (
-            <button
-              key={section.key}
-              onClick={() => setActive(section.key)}
-              className={`nav-item ${active === section.key ? "active" : ""}`}
-            >
-              {section.label}
-            </button>
+            <button key={section.key} onClick={() => setActive(section.key)} className={`nav-item ${active === section.key ? "active" : ""}`}>{section.label}</button>
           ))}
         </div>
       </div>

@@ -19,3 +19,11 @@ export const markAsReadService = async (notificationId) => {
     { new: true } 
   );
 };
+
+// Helper 4: Mark ALL unread notifications as read for a specific user
+export const markAllAsReadService = async (userId) => {
+  return await Notification.updateMany(
+    { recipientId: userId, isRead: false },
+    { isRead: true }
+  );
+};
