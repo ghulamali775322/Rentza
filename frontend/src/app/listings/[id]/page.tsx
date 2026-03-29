@@ -159,6 +159,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     const localToken = localStorage.getItem("token");
     if (!session && !localToken) {
       alert("Please log in to view the phone number.");
+      router.push("/login");
       return;
     }
     setShowPhone(true);
@@ -168,6 +169,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const handleChatClick = async () => {
     if (!myMongoId) {
       alert("Please log in to start a chat.");
+      router.push("/login");
       return;
     }
 
@@ -206,6 +208,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     // Check if the user is logged in
     if (!session && !localToken) {
       alert("Please log in to report this ad.");
+      router.push("/login");
       return;
     }
 
