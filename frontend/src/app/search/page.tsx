@@ -127,7 +127,9 @@ export default function SearchPage() {
 
     // 3. Location Filter
     let matchLocation = true;
-    if (!latParam || !lngParam) {
+   if (latParam && lngParam) {
+      matchLocation = true; 
+    } else {
       // If NO GPS is used, run the Highly Forgiving Text Match
       const activeLocation = locationParam || selectedLocation || "Pakistan";
       if (activeLocation !== "Pakistan" && activeLocation !== "") {
@@ -148,13 +150,16 @@ export default function SearchPage() {
   });
 
   const sortedListings = [...filteredListings].sort((a, b) => {
-    // 1. If GPS is active, ALWAYS force sorting by Nearest First!
+    // 1. PRICE TAKES PRIORITY: If the user explicitly chose a price filter, respect it first!
+    if (selectedSort === "Lowest price") return a.price - b.price;
+    if (selectedSort === "Highest price") return b.price - a.price;
+
+    // 2. GPS FALLBACK: If they didn't choose a price filter, AND GPS is active, sort by nearest
     if (latParam && lngParam) {
       return a.distance - b.distance; 
     }
-    // 2. Otherwise, use normal dropdown sorting
-    if (selectedSort === "Lowest price") return a.price - b.price;
-    if (selectedSort === "Highest price") return b.price - a.price;
+
+    // 3. DEFAULT: If no GPS and no price filter, sort by Newly Listed
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 

@@ -62,35 +62,66 @@ const LocationDropdown = () => {
     }
 
     setSelectedLocation("Locating...");
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         
-        const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+        // Grab the Google key you are already using!
+        const googleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
         
         try {
-          if (mapboxToken) {
-            const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}`);
+          if (googleKey) {
+            //  CALLING THE GOOGLE MAPS GEOCODING API
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleKey}`);
             const data = await res.json();
             
-            if (data.features && data.features.length > 0) {
-              const cityObj = data.features.find((f: any) => f.place_type.includes('place'));
-              const regionObj = data.features.find((f: any) => f.place_type.includes('region'));
-              const cityName = cityObj ? cityObj.text : data.features[0].text;
-              const regionName = regionObj ? regionObj.text : '';
-              const displayName = regionName ? `${cityName}, ${regionName}` : cityName;
+            if (data.results && data.results.length > 0) {
+              // Google returns an array of "address_components"
+              const components = data.results[0].address_components;
+
+              let exactArea = "";
+              let city = "";
+
+              // 1. Look for the neighborhood, street, or specific sub-area
+              const areaObj = components.find((c: any) => 
+                c.types.includes("sublocality") || 
+                c.types.includes("neighborhood") || 
+                c.types.includes("route")
+              );
+              if (areaObj) exactArea = areaObj.long_name;
+
+              // 2. Look for the main city
+              const cityObj = components.find((c: any) => c.types.includes("locality"));
+              if (cityObj) city = cityObj.long_name;
+
+              // 3. Combine them beautifully (e.g., "Model Town, Gujrat")
+              let displayName = "Current Location";
+              if (exactArea && city && exactArea !== city) {
+                displayName = `${exactArea}, ${city}`;
+              } else if (exactArea || city) {
+                displayName = exactArea || city;
+              } else {
+                // If all else fails, just use Google's formatted address
+                displayName = data.results[0].formatted_address;
+              }
               
               setSelectedLocation(displayName); 
             } else {
               setSelectedLocation("Current Location"); 
             }
           } else {
+            console.error("Missing Google Maps API Key");
             setSelectedLocation("Current Location"); 
           }
         } catch (error) {
-          console.error("Geocoding failed:", error);
+          console.error("Google Geocoding failed:", error);
           setSelectedLocation("Current Location");
         }
 
@@ -99,7 +130,6 @@ const LocationDropdown = () => {
         params.delete("location"); // Clear text location
         params.set("lat", lat.toString());
         params.set("lng", lng.toString());
-        params.set("radius", "20");
         router.push(`/search?${params.toString()}`);
       },
       (error) => {
@@ -107,7 +137,8 @@ const LocationDropdown = () => {
           alert("Please allow location access in your browser to use this feature.");
           setSelectedLocation("Pakistan"); 
         }
-      }
+      },
+      options
     );
   };
 
