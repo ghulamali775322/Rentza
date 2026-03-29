@@ -199,6 +199,20 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  // --- REPORT HANDLER ---
+  const handleReportClick = () => {
+    const localToken = localStorage.getItem("token");
+    
+    // Check if the user is logged in
+    if (!session && !localToken) {
+      alert("Please log in to report this ad.");
+      return;
+    }
+
+    // If logged in, open the modal
+    setIsReportOpen(true);
+  };
+
   // THE FIX: Force the page to always open at the very top
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -422,10 +436,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           {!isOwner && (
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                <div className="flex justify-center">
-                  <button 
-                       onClick={() => setIsReportOpen(true)}
-                          className="flex items-center gap-2 text-red-600 font-bold hover:underline text-sm"
-                              >
+                 <button 
+                       onClick={handleReportClick}
+                       className="flex items-center gap-2 text-red-600 font-bold hover:underline text-sm"
+                   >
                        <FiFlag size={18} /> 
                       Report this ad
                    </button>
