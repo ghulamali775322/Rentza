@@ -10,7 +10,6 @@ export const upgradePlanService = async (userId, planType, transactionId, amount
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 30); 
 
-  // 🔥 THE FIX: We added "const newSubscription =" here!
   const newSubscription = await Subscription.create({
     userId: userId,
     subscriptionType: planType, 
@@ -20,7 +19,6 @@ export const upgradePlanService = async (userId, planType, transactionId, amount
     createdAt: new Date(),
   });
 
-  // Now this can successfully grab the ID without crashing!
   await Payment.create({
     userId: userId,
     subscriptionId: newSubscription._id, 
@@ -60,8 +58,9 @@ export const getSubscriptionStatusService = async (userId) => {
 export const generatePaymentPayload = async (userId, planType, price) => {
   const SAFEPAY_API_KEY = "sec_709a04fc-cc02-4022-9b80-c087be874c1c"; 
   
-  const RETURN_URL = `http://localhost:5000/api/subscriptions/payment-callback?userId=${userId}&planType=${planType}&amount=${price}`;
-  const CANCEL_URL = `http://localhost:3000/profile/packages?payment=failed`;
+  // 🔥 THE FIX: A completely clean URL that Safepay cannot destroy
+  const FRONTEND_CALLBACK = `http://localhost:3000/profile/packages?safepay=success`;
+  const CANCEL_URL = `http://localhost:3000/profile/packages?safepay=failed`;
 
   try {
     const response = await fetch("https://sandbox.api.getsafepay.com/order/v1/init", {
@@ -78,12 +77,13 @@ export const generatePaymentPayload = async (userId, planType, price) => {
     const data = await response.json();
     
     if (!data || !data.data || !data.data.token) {
-      return { gatewayUrl: CANCEL_URL }; // Safepay is down? Send to failure page.
+      return { gatewayUrl: CANCEL_URL }; 
     }
 
     const trackerToken = data.data.token; 
     
-    const checkoutUrl = `https://sandbox.api.getsafepay.com/checkout/pay?env=sandbox&beacon=${trackerToken}&source=custom&order_id=TXN-${Date.now()}&success_url=${encodeURIComponent(RETURN_URL)}&cancel_url=${encodeURIComponent(CANCEL_URL)}`;
+    // 🔥 Send Safepay the clean success_url
+    const checkoutUrl = `https://sandbox.api.getsafepay.com/checkout/pay?env=sandbox&beacon=${trackerToken}&source=custom&order_id=TXN-${Date.now()}&success_url=${encodeURIComponent(FRONTEND_CALLBACK)}&cancel_url=${encodeURIComponent(CANCEL_URL)}`;
 
     return { gatewayUrl: checkoutUrl };
 

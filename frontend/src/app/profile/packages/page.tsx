@@ -7,18 +7,18 @@ import { useRouter } from "next/navigation";
 
 const PACKAGES = [
   { id: 'free', name: 'Free', price: 0, duration: ' month', features: ['Post 1 Ad', 'Valid for 30 days'], color: '#A0A0A0', popular: false },
-  { id: 'gold', name: 'Gold', price: 1500, duration: 'month', features: ['Post 2 Ads ', '(1 free + 1 Gold Ad)', 'Valid for 30 days'], color: '#FFD700', popular: true },
-  { id: 'premium', name: 'Premium', price: 3000, duration: 'month', features: ['Post 3 Ads', '(1 free + 2 Premium Ads)' ,'Valid for 30 days '], color: '#007bff', popular: false }
+  { id: 'gold', name: 'Gold', price: 1500, duration: 'month', features: ['Post 2 Ads ', 'Valid for 30 days'], color: '#FFD700', popular: true },
+  { id: 'premium', name: 'Premium', price: 3000, duration: 'month', features: ['Post 3 Ads' ,'Valid for 30 days '], color: '#007bff', popular: false }
 ];
 
 export default function PackagesPage() {
- const { data: session, status } = useSession(); 
+  const { data: session, status } = useSession(); 
   const router = useRouter();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null); 
 
   const BACKEND_URL = "http://localhost:5000";
 
-  const [selectedPlan, setSelectedPlan] = useState(PACKAGES[1]); // Default to Gold
+  const [selectedPlan, setSelectedPlan] = useState(PACKAGES[1]); 
   const [currentDbPlan, setCurrentDbPlan] = useState("free");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -64,25 +64,53 @@ export default function PackagesPage() {
     fetchStatus();
   }, [currentUserId]);
 
-  // --- 3. CHECK URL FOR PAYMENT SUCCESS/FAIL ---
+  // --- 3. 🛡️ THE SECURE FIX: ONLY UPDATE ON REAL SUCCESS ---
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
+    const checkPendingPayment = () => {
+      if (typeof window === 'undefined') return;
 
-    if (paymentStatus === 'success') {
-      alert("🎉 Payment Successful! Your account has been upgraded.");
-      window.history.replaceState(null, '', window.location.pathname);
-    } else if (paymentStatus === 'failed') {
-      alert("❌ Payment Failed or Cancelled.");
-      window.history.replaceState(null, '', window.location.pathname);
-    }
+      const search = window.location.search;
+      const pendingData = localStorage.getItem('rentza_pending_payment');
+
+      // SCENARIO 1: Safepay confirms the payment was a SUCCESS
+      if (search.includes('safepay=success') && pendingData) {
+        try {
+          const { userId, planType, amount } = JSON.parse(pendingData);
+          localStorage.removeItem('rentza_pending_payment'); // Clear memory
+          
+          // Only NOW do we force the backend update!
+          window.location.href = `${BACKEND_URL}/api/subscriptions/payment-callback?userId=${userId}&planType=${planType}&amount=${amount}`;
+        } catch (error) {
+          console.error("Error reading payment data");
+        }
+      } 
+      // SCENARIO 2: User clicked "Cancel" on Safepay
+      else if (search.includes('safepay=failed') || search.includes('payment=failed')) {
+        localStorage.removeItem('rentza_pending_payment'); // Clear memory
+        alert("❌ Payment Cancelled.");
+        window.history.replaceState(null, '', window.location.pathname);
+      } 
+      // SCENARIO 3: User hit the browser "Back" arrow (Aborted payment)
+      else if (pendingData) {
+        // Silently delete the memory so they don't get a free upgrade!
+        localStorage.removeItem('rentza_pending_payment');
+      }
+    };
+
+    checkPendingPayment();
   }, []);
 
   // --- 4. CHECKOUT CONNECTION ---
   const handleCheckout = async () => {
-    // Extra security: Never allow checkout for Free plan!
     if (selectedPlan.id === 'free' || !currentUserId) return;
     setIsProcessing(true);
+    
+    // 🔥 SAVE THE DATA BEFORE WE LEAVE FOR SAFEPAY
+    localStorage.setItem('rentza_pending_payment', JSON.stringify({
+      userId: currentUserId,
+      planType: selectedPlan.id,
+      amount: selectedPlan.price
+    }));
     
     try {
       const res = await fetch(`${BACKEND_URL}/api/subscriptions/init-payment`, {
@@ -115,21 +143,18 @@ export default function PackagesPage() {
 
   return (
     <div className="max-w-[1000px] mx-auto px-5 py-10 pt-[40px] font-['Helvetica_Neue',_Arial,_sans-serif] min-h-screen bg-[#f8f9fa]">
-      <div className="text-center mb-[50px]">
-        <h1 className="text-[32px] font-semibold text-[#002f34] mb-2.5">Upgrade your plan</h1>
-        <p className="text-base text-[#666]">Sell faster with our premium exposure packages</p>
+      <div className="text-center mb-[60px]">
+        <h1 className="text-[36px] font-extrabold text-[#002f34] mb-3 tracking-tight">Upgrade your plan</h1>
+        <p className="text-lg text-[#666] font-medium">Sell faster with our premium exposure packages</p>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-[30px] mb-[50px]">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-[30px] mb-[60px] items-center">
         {PACKAGES.map((plan) => {
           const isSelected = selectedPlan.id === plan.id;
-          
-          // 🔥 SMART LOGIC FLAGS 🔥
           const isFreePlan = plan.id === 'free';
           const isCurrentPlan = plan.id === currentDbPlan;
           const isRenewing = isCurrentPlan && !isFreePlan;
 
-          // Figure out exactly what the button should say!
           let buttonText = 'Choose Plan';
           if (isFreePlan) {
             buttonText = isCurrentPlan ? 'Your current plan' : 'Available next month';
@@ -139,40 +164,58 @@ export default function PackagesPage() {
             buttonText = 'Selected';
           }
 
+          // Dynamic Checkmark Colors
+          let checkColor = "text-[#008000]"; 
+          if (plan.id === 'gold') checkColor = "text-[#FFD700]";
+          if (plan.id === 'premium') checkColor = "text-[#007bff]";
+
           return (
             <div 
               key={plan.id} 
-              // 🔥 FIX: You can ONLY click on Paid plans now!
               onClick={() => { if (!isFreePlan) setSelectedPlan(plan); }}
-              className={`flex-1 bg-white border rounded-xl p-[30px] relative transition-all duration-300 ease-out ${isFreePlan ? 'cursor-default' : 'cursor-pointer hover:-translate-y-[5px]'} ${isSelected && !isFreePlan ? '-translate-y-[5px]' : ''}`}
+              className={`flex-1 bg-white border rounded-2xl p-[35px] relative transition-all duration-300 ease-out 
+                ${isFreePlan ? 'cursor-default opacity-90' : 'cursor-pointer hover:-translate-y-[5px]'} 
+                ${isSelected && !isFreePlan ? 'scale-105 z-10 border-2' : 'scale-100 z-0'}`}
               style={{
-                borderColor: isSelected ? plan.color : '#eee',
-                boxShadow: isSelected ? `0 10px 30px -10px ${plan.color}66` : '0 4px 10px rgba(0,0,0,0.05)',
+                borderColor: isSelected && !isFreePlan ? plan.color : '#eaeaea',
+                boxShadow: isSelected && !isFreePlan ? `0 20px 40px -10px ${plan.color}55` : '0 4px 15px rgba(0,0,0,0.03)',
               }}
             >
               {plan.popular && (
-                <div className="absolute -top-[15px] left-1/2 -translate-x-1/2 bg-[#002f34] text-white py-[5px] px-[15px] rounded-[20px] text-xs font-bold uppercase flex items-center gap-[5px]">
-                  <FiStar /> Most Popular
+                <div className="absolute -top-[16px] left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-red-500 text-white py-[6px] px-[20px] rounded-full text-xs font-black tracking-wider uppercase flex items-center gap-[6px] shadow-md border-2 border-white">
+                  <FiStar size={14} className="fill-white" /> Most Popular
                 </div>
               )}
               
-              <h3 className="text-2xl font-semibold text-[#002f34] mb-2.5 text-left">{plan.name}</h3>
+              <h3 className="text-2xl font-extrabold text-[#002f34] mb-3 text-left flex items-center gap-2">
+                {plan.id === 'free' && '🍃'}
+                {plan.id === 'gold' && '⭐'}
+                {plan.id === 'premium' && '👑'}
+                {plan.name}
+              </h3>
               
-              <div className="text-4xl font-medium text-left mb-5" style={{ color: plan.color }}>
-                PKR {plan.price} <span className="text-base text-[#888] font-medium">/ {plan.duration}</span>
+              <div className="text-[42px] font-bold text-left mb-6 tracking-tight" style={{ color: plan.color }}>
+                <span className="text-2xl font-medium mr-1">PKR</span>{plan.price} 
+                <span className="text-base text-[#888] font-medium ml-1">/ {plan.duration}</span>
               </div>
 
-              <ul className="list-none p-0 m-0 mb-[30px]">
+              <ul className="list-none p-0 m-0 mb-[35px]">
                 {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5 text-[15px] text-[#555] mb-3">
-                    <FiCheck size={18} className="text-[#008000] flex-shrink-0" /> {feature}
+                  <li key={idx} className="flex items-center gap-3 text-[15px] font-medium text-[#444] mb-4">
+                    <div className={`p-1 rounded-full bg-opacity-10 ${plan.id === 'free' ? 'bg-green-100' : plan.id === 'gold' ? 'bg-yellow-100' : 'bg-blue-100'}`}>
+                      <FiCheck size={16} className={`${checkColor} flex-shrink-0`} strokeWidth={3} />
+                    </div>
+                    {feature}
                   </li>
                 ))}
               </ul>
 
               <button 
-                className={`w-full p-[15px] rounded-md text-base font-bold transition-opacity duration-200 ${isFreePlan ? 'bg-transparent text-[#555] border border-[#ccc] cursor-default pointer-events-none' : 'text-white border border-transparent cursor-pointer hover:opacity-90'}`}
-                style={{ backgroundColor: isFreePlan ? 'transparent' : plan.color }}
+                className={`w-full p-[16px] rounded-xl text-[16px] font-bold transition-all duration-200 
+                  ${isFreePlan 
+                    ? 'bg-[#f4f4f4] text-[#888] border border-[#ddd] cursor-default pointer-events-none' 
+                    : 'text-white shadow-md hover:shadow-lg hover:opacity-90'}`}
+                style={{ backgroundColor: isFreePlan ? '#f4f4f4' : plan.color }}
               >
                 {buttonText}
               </button>
@@ -181,18 +224,24 @@ export default function PackagesPage() {
         })}
       </div>
 
-      <div className="bg-white border border-[#ddd] rounded-lg p-[30px] flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.05)] max-md:flex-col max-md:gap-5 max-md:text-center">
+      <div className="bg-white border border-[#e0e0e0] rounded-2xl p-[35px] flex justify-between items-center shadow-[0_10px_30px_rgba(0,0,0,0.04)] max-md:flex-col max-md:gap-5 max-md:text-center">
         <div>
-          <h3 className="text-xl font-bold text-[#002f34] mb-[5px]">Selected: {selectedPlan.name} Package</h3>
-          <p className="text-[#666]">Total to pay: <strong>PKR {selectedPlan.price}</strong></p>
+          <p className="text-[#666] font-medium text-sm mb-1 uppercase tracking-wide">Order Summary</p>
+          <h3 className="text-2xl font-bold text-[#002f34] mb-1 flex items-center gap-2">
+            {selectedPlan.name} Package
+          </h3>
+          <p className="text-[#555] text-lg">Total to pay: <strong className="text-black text-xl">PKR {selectedPlan.price}</strong></p>
         </div>
         
         <button 
           onClick={handleCheckout}
           disabled={isProcessing || selectedPlan.id === 'free'}
-          className={`py-[15px] px-[40px] text-white text-lg font-bold border-none rounded-md transition-colors ${isProcessing || selectedPlan.id === 'free' ? 'bg-[#ccc] cursor-not-allowed' : 'bg-[#002f34] cursor-pointer hover:bg-[#004d55]'}`}
+          className={`py-[16px] px-[45px] text-white text-lg font-bold border-none rounded-xl transition-all flex items-center justify-center gap-3 
+            ${isProcessing || selectedPlan.id === 'free' 
+              ? 'bg-[#ccc] cursor-not-allowed' 
+              : 'bg-gradient-to-r from-[#002f34] to-[#005a63] cursor-pointer hover:shadow-xl hover:-translate-y-1'}`}
         >
-          {isProcessing ? "Processing..." : "Proceed to Pay"}
+          {isProcessing ? "Processing..." : <>Proceed to Pay <span className="text-xl">➔</span></>}
         </button>
       </div>
     </div>

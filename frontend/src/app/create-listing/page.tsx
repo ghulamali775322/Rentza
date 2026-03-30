@@ -188,14 +188,19 @@ export default function CreateListingPage() {
       const textResult = await textResponse.json();
 
       if (!textResponse.ok) {
-        //  3. CATCH THE LIMIT ERROR AND REDIRECT 
-        if (textResult.message && textResult.message.includes("Limit Reached")) {
+        //  THE FIX: Check for the flag OR case-insensitive text, and STOP throwing errors!
+        if (textResult.requiresUpgrade || (textResult.message && textResult.message.toLowerCase().includes("limit reached"))) {
+          // Kept your custom redirecting message!
           alert("⚠️ " + textResult.message + "\n\nRedirecting to Packages...");
           router.push("/profile/packages");
-          return; // Stop everything else!
+          setIsSubmitting(false);
+          return; // Stop gracefully!
         }
         
-        throw new Error(textResult.message || "Failed to save listing details.");
+        // For any other random errors, just show the popup and stop (NO throwing)
+        alert(textResult.message || "Failed to save listing details.");
+        setIsSubmitting(false);
+        return; 
       }
 
       const newListingId = textResult.data._id; 
