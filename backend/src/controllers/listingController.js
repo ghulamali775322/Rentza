@@ -34,7 +34,20 @@ export const createListing = async (req, res) => {
     const listing = await createListingService(listingData);
 
  const userId = req.user._id || req.user.id;
-    await User.findByIdAndUpdate(userId, { $inc: { adsPostedCount: 1 } });
+    const user = await User.findById(userId);
+
+    if (user) {
+      user.adsPostedCount = (user.adsPostedCount || 0) + 1;
+
+      //  If they are a Free user and just posted their 1st ad, start the 30-day timer!
+      if (user.planType === "free" && user.adsPostedCount === 1) {
+        const nextMonth = new Date();
+        nextMonth.setDate(nextMonth.getDate() + 30);
+        user.planExpiresAt = nextMonth;
+      }
+
+      await user.save();
+    }
 
     res.status(201).json({
       success: true,

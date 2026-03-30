@@ -74,6 +74,15 @@ export default function Navbar() {
   useEffect(() => {
     setHasMounted(true);
   }, []);
+  //  NEW: AUTO-REFRESH FIX FOR SAFEPAY RETURN ---
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('payment=success')) {
+      // 1. Clean the URL so it looks nice and professional
+      window.history.replaceState(null, '', window.location.pathname);
+      // 2. Force the browser to grab the fresh Premium badge
+      window.location.reload(); 
+    }
+  }, []);
 
   // --- NEW: AGGRESSIVELY FETCH PHOTO ON TOKEN CHANGE ---
   useEffect(() => {
