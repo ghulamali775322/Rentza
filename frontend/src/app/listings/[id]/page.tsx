@@ -21,6 +21,10 @@ import {
   FiTrash2
 } from "react-icons/fi";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id; 
@@ -42,6 +46,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0); 
+
+  // 2. MODAL STATES
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // --- 1. GET USER ID ---
   useEffect(() => {
@@ -96,12 +104,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     fetchSingleListing();
   }, [id]);
 
-  // --- DELETE HANDLER ---
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to permanently delete this ad?")) {
-      return;
-    }
+  // --- DELETE HANDLER (Split into Open Modal & Execute) ---
+  const confirmDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
 
+  const executeDelete = async () => {
     try {
       const localToken = localStorage.getItem("token");
       const headers: HeadersInit = {
@@ -120,14 +128,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("Ad deleted successfully!");
+        toast.success("Ad deleted successfully!");
         router.replace("/profile/my-ads"); 
       } else {
-        alert(result.message || "Failed to delete ad.");
+        toast.error(result.message || "Failed to delete ad.");
       }
     } catch (error) {
       console.error("Error deleting ad:", error);
-      alert("An error occurred while deleting the ad.");
+      toast.error("An error occurred while deleting the ad.");
     }
   };
 
@@ -137,7 +145,6 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     const shareText = `Check out "${listing.title}" on Rentza!\n\n${currentUrl}`;
 
     try {
-      // Use the native mobile sharing menu if the browser supports it
       if (navigator.share) {
         await navigator.share({
           title: listing.title,
@@ -145,9 +152,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           url: currentUrl,
         });
       } else {
-        // Fallback for desktop: Copy nicely formatted text to clipboard
         await navigator.clipboard.writeText(shareText);
-        alert("Link copied to clipboard!");
+        toast.success("Link copied to clipboard!");
       }
     } catch (err) {
       console.error("Error sharing:", err);
@@ -158,8 +164,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const handleShowPhoneClick = () => {
     const localToken = localStorage.getItem("token");
     if (!session && !localToken) {
-      alert("Please log in to view the phone number.");
-      router.push("/login");
+      setIsLoginModalOpen(true); // Replaces alert + instant redirect
       return;
     }
     setShowPhone(true);
@@ -168,13 +173,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   // --- CHAT HANDLER ---
   const handleChatClick = async () => {
     if (!myMongoId) {
-      alert("Please log in to start a chat.");
-      router.push("/login");
+      setIsLoginModalOpen(true); // Replaces alert + instant redirect
       return;
     }
 
     if (myMongoId === listing.lenderId?._id) {
-      alert("You cannot chat with yourself!");
+      toast.error("You cannot chat with yourself!");
       return;
     }
 
@@ -194,10 +198,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       if (data.success) {
         router.push(`/inbox?open=${data.data._id}`); 
       } else {
-        alert("Could not start chat.");
+        toast.error("Could not start chat.");
       }
     } catch (error) {
       console.error("Chat error:", error);
+      toast.error("An error occurred while starting the chat.");
     }
   };
 
@@ -205,14 +210,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const handleReportClick = () => {
     const localToken = localStorage.getItem("token");
     
-    // Check if the user is logged in
     if (!session && !localToken) {
-      alert("Please log in to report this ad.");
-      router.push("/login");
+      setIsLoginModalOpen(true); // Replaces alert + instant redirect
       return;
     }
 
-    // If logged in, open the modal
     setIsReportOpen(true);
   };
 
@@ -374,7 +376,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   Edit Ad
                 </Link>
                 <button 
-                  onClick={handleDelete}
+                  onClick={confirmDelete}
                   className="w-full border-2 border-red-500 text-red-600 font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-red-50 transition"
                 >
                   <FiTrash2 size={20} />
@@ -458,6 +460,29 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         onClose={() => setIsReportOpen(false)}
         type="ad"
         id={listing._id}
+      />
+
+      {/* --- OUR NEW DELETE CONFIRMATION MODAL --- */}
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={executeDelete}
+        title="Delete Ad"
+        message="Are you sure you want to permanently delete this ad? This action cannot be undone."
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDestructive={true} 
+      />
+
+      {/* --- OUR NEW LOGIN REQUIRED MODAL --- */}
+      <ConfirmModal 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onConfirm={() => router.push("/login")}
+        title="Login Required"
+        message="You need an account to view phone numbers, chat with lenders, or report ads. Would you like to log in now?"
+        confirmText="Go to Login"
+        cancelText="Cancel"
       />
     </div>
   );

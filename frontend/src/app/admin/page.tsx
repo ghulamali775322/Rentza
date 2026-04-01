@@ -12,6 +12,9 @@ import { LuPackageCheck } from "react-icons/lu";
 import { getUsersStats } from "@/app/api/admin/users";
 import Link from "next/link";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 export default function AdminDashboard() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -91,6 +94,8 @@ export default function AdminDashboard() {
         }
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
+        // 2. ADDED TOAST FOR API FAILURE
+        toast.error("Failed to load dashboard statistics.");
       }
     };
 

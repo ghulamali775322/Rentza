@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { FiSearch, FiEye } from "react-icons/fi";
 import { getUsers } from "@/app/api/admin/users";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 // --- TYPE DEFINITIONS ---
 interface User {
   id: string;
@@ -47,6 +50,8 @@ export default function UsersPage() {
       setUsers(mappedUsers);
     } catch (err) {
       console.error("Failed to fetch users:", err);
+      // 2. ADDED TOAST FOR API FAILURE
+      toast.error("Failed to load users.");
     } finally {
       setLoading(false);
     }

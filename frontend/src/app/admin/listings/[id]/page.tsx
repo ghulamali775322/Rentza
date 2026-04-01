@@ -12,17 +12,22 @@ import {
   updateListingStatus,
 } from "@/app/api/admin/listings";
 
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 interface Props {
-  params: { id: string }; // Already resolved
+  params: { id: string }; 
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function ListingDetailsPage({ params }: Props) {
   const router = useRouter();
   const listingId = params.id;
   const searchParams = useSearchParams();
   const reportId = searchParams.get("reportId");
   const [actionLoading, setActionLoading] = useState(false);
+
   interface Listing {
     id: string;
     title: string;
@@ -37,6 +42,7 @@ export default function ListingDetailsPage({ params }: Props) {
     cloudReason?: string;
     pendingImages?: { id: number; src: string; status: "ok" | "flagged" }[];
   }
+
   // MODALS STATE
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showSuspendModal, setShowSuspendModal] = useState(false);
@@ -57,15 +63,16 @@ export default function ListingDetailsPage({ params }: Props) {
 
       await deleteListing(listing.id);
 
-      alert("Listing deleted successfully");
+      toast.success("Listing deleted successfully"); 
       router.push("/admin/listings");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete listing");
+      toast.error("Failed to delete listing"); 
     } finally {
       setActionLoading(false);
     }
   };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!listing) return;
 
@@ -74,16 +81,17 @@ export default function ListingDetailsPage({ params }: Props) {
 
       await updateListingStatus(listing.id, newStatus);
 
-      alert(`Listing ${newStatus} successfully`);
+      toast.success(`Listing ${newStatus} successfully`); 
 
       setListing((prev) => (prev ? { ...prev, status: newStatus } : prev));
     } catch (err) {
       console.error(err);
-      alert("Failed to update status");
+      toast.error("Failed to update status"); 
     } finally {
       setActionLoading(false);
     }
   };
+
   useEffect(() => {
     const fetchListing = async () => {
       setLoading(true);
@@ -116,7 +124,6 @@ export default function ListingDetailsPage({ params }: Props) {
               })) || [],
           });
 
-          // ✅ ADD THIS LINE (VERY IMPORTANT)
           setSelectedImage(firstImage);
         } else {
           setListing(null);
@@ -130,6 +137,7 @@ export default function ListingDetailsPage({ params }: Props) {
     };
     fetchListing();
   }, [listingId]);
+
   if (loading) {
     return (
       <div className="w-full h-96 flex items-center justify-center text-gray-500 text-lg">
@@ -433,102 +441,48 @@ export default function ListingDetailsPage({ params }: Props) {
       </div>
 
       {/* --- MODALS --- */}
-      {[
-        {
-          state: showRemoveModal,
-          set: setShowRemoveModal,
-          title: "Delete Listing",
-          color: "#ff3547",
-          actionText: "Delete Listing",
-        },
-        {
-          state: showSuspendModal,
-          set: setShowSuspendModal,
-          title: "Suspend Listing",
-          color: "#ff6b00",
-          actionText: "Suspend Listing",
-        },
-        {
-          state: showActivateModal,
-          set: setShowActivateModal,
-          title: "Activate Listing",
-          color: "#00c851",
-          actionText: "Activate Listing",
-        },
-        {
-          state: showApproveModal,
-          set: setShowApproveModal,
-          title: "Approve Listing",
-          color: "#00c851",
-          actionText: "Approve Listing",
-        },
-      ].map(
-        ({ state, set, title, color, actionText }, idx) =>
-          state && (
-            <div
-              key={idx}
-              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-            >
-              <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-gray-100 p-8">
-                {" "}
-                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-bold text-[#002f34]">{title}</h3>
-                  <button
-                    onClick={() => set(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <FiX size={20} />
-                  </button>
-                </div>
-                <div className="px-6 py-6">
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Are you sure you want to {title.toLowerCase()} "
-                    <span className="font-bold text-[#002f34]">
-                      {listing.title}
-                    </span>
-                    "?
-                  </p>
-                </div>
-                <div className="px-6 pb-6 flex justify-end gap-3">
-                  <button
-                    onClick={() => set(false)}
-                    className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    disabled={actionLoading}
-                    onClick={async () => {
-                      if (actionText === "Delete Listing") {
-                        await handleDelete();
-                      }
+      <ConfirmModal 
+        isOpen={showRemoveModal}
+        onClose={() => setShowRemoveModal(false)}
+        onConfirm={handleDelete}
+        title="Delete Listing"
+        message={`Are you sure you want to delete listing "${listing.title}"?`}
+        confirmText="Delete Listing"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
 
-                      if (actionText === "Suspend Listing") {
-                        await handleStatusChange("inactive");
-                      }
+      <ConfirmModal 
+        isOpen={showSuspendModal}
+        onClose={() => setShowSuspendModal(false)}
+        onConfirm={() => handleStatusChange("inactive")}
+        title="Suspend Listing"
+        message={`Are you sure you want to suspend listing "${listing.title}"?`}
+        confirmText="Suspend Listing"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
 
-                      if (actionText === "Activate Listing") {
-                        await handleStatusChange("active");
-                      }
+      <ConfirmModal 
+        isOpen={showActivateModal}
+        onClose={() => setShowActivateModal(false)}
+        onConfirm={() => handleStatusChange("active")}
+        title="Activate Listing"
+        message={`Are you sure you want to activate listing "${listing.title}"?`}
+        confirmText="Activate Listing"
+        cancelText="Cancel"
+      />
 
-                      if (actionText === "Approve Listing") {
-                        await handleStatusChange("active");
-                      }
+      <ConfirmModal 
+        isOpen={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        onConfirm={() => handleStatusChange("active")}
+        title="Approve Listing"
+        message={`Are you sure you want to approve listing "${listing.title}"?`}
+        confirmText="Approve Listing"
+        cancelText="Cancel"
+      />
 
-                      set(false);
-                    }}
-                    style={{ backgroundColor: color }}
-                    className={`px-5 py-2.5 rounded-lg text-white font-bold text-sm hover:opacity-90 ${
-                      actionLoading ? "opacity-70 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    {actionLoading ? "Processing..." : actionText}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ),
-      )}
     </div>
   );
 }

@@ -15,6 +15,10 @@ import { GiHammerNails, GiClothes } from "react-icons/gi";
 import { TbBike } from "react-icons/tb";
 import { MdOutlineDevices } from "react-icons/md";
 
+// 1. IMPORT TOAST AND OUR NEW MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 // --- MASTER DICTIONARY (Synced with Homepage/Search) ---
 const CATEGORIES = [
   { id: "mobiles", name: "Mobiles", image: "/categories/mobile.png", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
@@ -46,12 +50,17 @@ export default function CreateListingPage() {
     contactNumber: "",
     location: "",
   });
+  
   // --- NEW LOCATION STATE ---
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [selectedCoordinates, setSelectedCoordinates] = useState<[number, number] | null>(null);
-  const [locationError, setLocationError] = useState(""); // <-- ADD THIS LINE
+  const [locationError, setLocationError] = useState(""); 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // 2. NEW MODAL STATE
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
 
   const handleImageDelete = (indexToDelete: number) => {
     setImageFiles((current) => current.filter((_, index) => index !== indexToDelete));
@@ -101,9 +110,11 @@ export default function CreateListingPage() {
     }
     e.target.value = "";
   };
- // --- GPS: USE CURRENT LOCATION ---
+
+  // --- GPS: USE CURRENT LOCATION ---
   const handleUseCurrentLocationAd = () => {
-    if (!navigator.geolocation) return alert("Geolocation not supported.");
+    // REPLACED ALERT WITH TOAST
+    if (!navigator.geolocation) return toast.error("Geolocation not supported.");
     
     setFormData((prev) => ({ ...prev, location: "Locating..." }));
     
@@ -116,10 +127,9 @@ export default function CreateListingPage() {
         const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}`);
         const data = await res.json();
         if (data.features && data.features.length > 0) {
-          // Mapbox place_name naturally has commas (e.g., "Bhimber Road, Gujrat, Pakistan")
           const fullAddress = data.features[0].place_name.replace(", Pakistan", "");
           setFormData((prev) => ({ ...prev, location: fullAddress }));
-          setSelectedCoordinates([lng, lat]); // Save exact GPS pin!
+          setSelectedCoordinates([lng, lat]); 
           setLocationError("");
         }
       } catch (err) {
@@ -127,7 +137,8 @@ export default function CreateListingPage() {
         setLocationError("Failed to get location address.");
       }
     }, () => {
-      alert("Please allow location access in your browser.");
+      // REPLACED ALERT WITH TOAST
+      toast.error("Please allow location access in your browser.");
       setFormData((prev) => ({ ...prev, location: "" }));
     });
   };
@@ -144,16 +155,13 @@ export default function CreateListingPage() {
         throw new Error("You must be logged in to post an ad.");
       }
 
-    // 🗺️ 2. GET REAL COORDINATES
-      // If they didn't click a dropdown suggestion, block them immediately!
       if (!selectedCoordinates || selectedCoordinates.length !== 2) {
         setLocationError("⚠️ Please select a valid location from the Google dropdown suggestions.");
         setIsSubmitting(false);
-        return; // Stops the form from submitting!
+        return; 
       }
       
       let finalCoordinates = selectedCoordinates;
-     
 
       const listingData = {
         title: formData.title,
@@ -177,7 +185,6 @@ export default function CreateListingPage() {
         headers["x-google-email"] = session.user.email; 
       }
 
-      // 1. POST TEXT DATA
       const textResponse = await fetch("http://localhost:5000/api/listings", {
         method: "POST",
         headers: headers,
@@ -188,17 +195,16 @@ export default function CreateListingPage() {
       const textResult = await textResponse.json();
 
       if (!textResponse.ok) {
-        //  THE FIX: Check for the flag OR case-insensitive text, and STOP throwing errors!
         if (textResult.requiresUpgrade || (textResult.message && textResult.message.toLowerCase().includes("limit reached"))) {
-          // Kept your custom redirecting message!
-          alert("⚠️ " + textResult.message + "\n\nRedirecting to Packages...");
-          router.push("/profile/packages");
+          // REPLACED ALERT WITH OUR NEW MODAL
+          setUpgradeMessage(textResult.message);
+          setShowUpgradeModal(true);
           setIsSubmitting(false);
-          return; // Stop gracefully!
+          return; 
         }
         
-        // For any other random errors, just show the popup and stop (NO throwing)
-        alert(textResult.message || "Failed to save listing details.");
+        // REPLACED ALERT WITH TOAST
+        toast.error(textResult.message || "Failed to save listing details.");
         setIsSubmitting(false);
         return; 
       }
@@ -230,18 +236,21 @@ export default function CreateListingPage() {
           throw new Error(imageResult.message || "Listing created, but image upload failed.");
         }
         
-        // Grab the detailed AI moderation message from the backend!
         if (imageResult.message) {
           moderationMessage = `Ad Created!\n\nAI Moderation Results:\n${imageResult.message}`;
         }
       }
 
-      alert(moderationMessage);
-      window.location.href = "/"; 
+      // REPLACED ALERT WITH TOAST (Duration increased slightly so they can read AI results)
+      toast.success(moderationMessage, { duration: 5000 });
+      
+      // REPLACED WINDOW.LOCATION WITH NEXT.JS ROUTER (Keeps the toast alive!)
+      router.push("/"); 
 
     } catch (error: any) {
       console.error("Integration Error:", error);
-      alert(error.message);
+      // REPLACED ALERT WITH TOAST
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -406,14 +415,9 @@ export default function CreateListingPage() {
                   apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}
                 onPlaceSelected={(place) => {
                     if (place && place.formatted_address) {
-                      // 1. Grab the giant address (e.g., "Nawab's Cuisine, Bhimber Rd, Gujrat, Pakistan")
                       const fullAddress = place.formatted_address;
-                      
-                      // 2. Chop off everything after the first comma to get the exact place!
-                      // This gives us "Nawab's Cuisine"
                       const firstPart = fullAddress.split(',')[0].trim();
 
-                      // 3. Find the exact City name (e.g., "Gujrat")
                       const cityObj = place.address_components?.find((c: any) => 
                         c.types.includes("locality") || c.types.includes("administrative_area_level_2")
                       );
@@ -421,13 +425,10 @@ export default function CreateListingPage() {
 
                       let finalAddress = firstPart;
 
-                      // 4. Combine them! 
-                      // If the first part isn't ALREADY the city name, stick the city on the end.
                       if (cityName && firstPart.toLowerCase() !== cityName.toLowerCase()) {
                          finalAddress = `${firstPart}, ${cityName}`;
                       }
 
-                      // Save the bulletproof format to your form!
                       setFormData({ ...formData, location: finalAddress });
                     }
 
@@ -438,16 +439,15 @@ export default function CreateListingPage() {
                   }}
                   onChange={(e: any) => {
                     setFormData({ ...formData, location: e.target.value });
-                    setSelectedCoordinates(null); // Erase coordinates if they type manually!
+                    setSelectedCoordinates(null);
                   }}
                   options={{
                     types: ["geocode", "establishment"],
-                    componentRestrictions: { country: "pk" }, // Restricted to Pakistan
+                    componentRestrictions: { country: "pk" }, 
                   }}
                   defaultValue={formData.location}
                   placeholder="Start typing area (e.g. GTS Chowk, Gujrat)"
                   className={inputClasses}
-                  // To keep your "Use Current Location" pop-up working:
                   onClick={() => setShowLocationDropdown(true)}
                   onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
                 />
@@ -489,6 +489,18 @@ export default function CreateListingPage() {
             </form>
           </div>
         )}
+
+        {/* 3. OUR NEW CONFIRM MODAL (Sits invisibly at the bottom until triggered) */}
+        <ConfirmModal 
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          onConfirm={() => router.push("/profile/packages")}
+          title="Ad Limit Reached"
+          message={`${upgradeMessage} Would you like to view our premium packages to continue posting?`}
+          confirmText="View Packages"
+          cancelText="Cancel"
+        />
+
       </div>
     </ProtectedRoute>
   );

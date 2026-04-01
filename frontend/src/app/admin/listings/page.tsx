@@ -5,6 +5,9 @@ import Link from "next/link";
 import { FiSearch, FiEye } from "react-icons/fi";
 import { getListings } from "@/app/api/admin/listings"; // ✅ make sure the path is correct
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 // --- TYPES ---
 interface Listing {
   id: string;
@@ -76,6 +79,8 @@ export default function ListingsPage() {
         }
       } catch (err) {
         console.error("Failed to fetch listings:", err);
+        // 2. ADDED TOAST FOR API FAILURE
+        toast.error("Failed to fetch listings.");
         setListings([]);
       } finally {
         setLoading(false);

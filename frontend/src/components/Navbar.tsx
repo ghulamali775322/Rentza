@@ -77,7 +77,8 @@ export default function Navbar() {
   useEffect(() => {
     setHasMounted(true);
   }, []);
-  //  NEW: AUTO-REFRESH FIX FOR SAFEPAY RETURN ---
+  
+  // NEW: AUTO-REFRESH FIX FOR SAFEPAY RETURN ---
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.search.includes('payment=success')) {
       // 1. Clean the URL so it looks nice and professional
@@ -386,11 +387,14 @@ export default function Navbar() {
                 <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-1 cursor-pointer">
                   <div className={`rounded-full ${userPlan === 'premium' ? 'p-[2.5px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-sm' : userPlan === 'gold' ? 'p-[2.5px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-sm' : ''}`}>
                     <div className={`w-9 h-9 rounded-full overflow-hidden bg-[#0077ff] flex items-center justify-center text-white font-bold ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
-                      {fetchedPhoto || profilePhotoUrl ? (
-                        <img src={fetchedPhoto || profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                      
+                      {/* FIXED LOGIC HERE: prioritizing Context over Fetched */}
+                      {profilePhotoUrl || fetchedPhoto ? (
+                        <img src={profilePhotoUrl || fetchedPhoto || ""} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         name?.charAt(0) || authName?.charAt(0) || session?.user?.name?.charAt(0) || "U"
                       )}
+
                     </div>
                   </div>
                   {showProfileMenu ? <FiChevronUp className="text-black text-lg" /> : <FiChevronDown className="text-black text-lg" />}
@@ -402,11 +406,14 @@ export default function Navbar() {
                       <Link href="/profile/edit" onClick={() => setShowProfileMenu(false)} className="relative flex-shrink-0 cursor-pointer group hover:opacity-80 transition-opacity">
                         <div className={`rounded-full ${userPlan === 'premium' ? 'p-[3px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-md' : userPlan === 'gold' ? 'p-[3px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-md' : ''}`}>
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
-                            {fetchedPhoto || profilePhotoUrl ? (
-                              <img src={fetchedPhoto || profilePhotoUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                            
+                            {/* FIXED LOGIC HERE: prioritizing Context over Fetched */}
+                            {profilePhotoUrl || fetchedPhoto ? (
+                              <img src={profilePhotoUrl || fetchedPhoto || ""} alt="Profile" className="w-full h-full object-cover rounded-full" />
                             ) : (
                               name?.charAt(0) || authName?.charAt(0) || session?.user?.name?.charAt(0) || "U"
                             )}
+
                           </div>
                         </div>
                         <FiEdit2 size={18} className="absolute bottom-0 right-0 text-base bg-white rounded-full p-1 border border-gray-200 text-[#0077ff]" />
@@ -423,11 +430,11 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex flex-col text-[16px] text-gray-800 font-medium gap-3 mt-2">
-  <Link href="/profile/packages" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"><FiTag size={18} /> Buy Discount Packages</Link>
-  <Link href="/profile/my-ads" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiLayers size={18} /> My Ads</Link>
-  <Link href="/profile/settings" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiSettings size={18} /> Settings</Link>
-  <button onClick={() => { setShowProfileMenu(false); if (session) signOut(); else if (token) logout(); }} className="flex items-center gap-2 text-red-500 hover:text-red-600 transition px-3 py-2 rounded-md hover:bg-red-50"><FiLogOut size={18} /> Logout</button>
-</div>
+                      <Link href="/profile/packages" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"><FiTag size={18} /> Buy Discount Packages</Link>
+                      <Link href="/profile/my-ads" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiLayers size={18} /> My Ads</Link>
+                      <Link href="/profile/settings" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiSettings size={18} /> Settings</Link>
+                      <button onClick={() => { setShowProfileMenu(false); if (session) signOut(); else if (token) logout(); }} className="flex items-center gap-2 text-red-500 hover:text-red-600 transition px-3 py-2 rounded-md hover:bg-red-50"><FiLogOut size={18} /> Logout</button>
+                    </div>
                   </div>
                 )}
               </div>

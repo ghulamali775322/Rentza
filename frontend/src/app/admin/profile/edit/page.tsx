@@ -7,6 +7,9 @@ import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function EditProfilePage() {
@@ -24,7 +27,6 @@ export default function EditProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const [errors, setErrors] = useState({
     name: "",
@@ -58,6 +60,8 @@ export default function EditProfilePage() {
         );
       } catch (err) {
         console.error(err);
+        // ADDED TOAST FOR API FAILURE
+        toast.error("Failed to load profile.");
       } finally {
         setLoading(false);
       }
@@ -104,7 +108,6 @@ export default function EditProfilePage() {
 
     setErrors({ name: "", phone: "" });
     setSaving(true);
-    setSuccessMessage("");
 
     try {
       const formData = new FormData();
@@ -144,10 +147,13 @@ export default function EditProfilePage() {
       setProfilePhotoUrl(photoUrl);
       setProfileImageUrl(photoUrl);
 
-      setSuccessMessage("Profile updated successfully!");
+      // REPLACED INLINE MESSAGE WITH TOAST
+      toast.success("Profile updated successfully!");
       setRemovePhoto(false);
     } catch (err) {
       console.error(err);
+      // ADDED TOAST FOR API FAILURE
+      toast.error("Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -158,13 +164,7 @@ export default function EditProfilePage() {
   return (
     <ProtectedRoute>
       <div className="max-w-[600px] text-black mx-auto py-10 px-5 bg-white rounded-lg shadow min-h-auto pt-[30px] mb-[50px]">
-        {/* ✅ SUCCESS MESSAGE */}
-        {successMessage && (
-          <div className="text-green-600 font-semibold mb-3">
-            {successMessage}
-          </div>
-        )}
-
+        
         <div className="w-full border-t border-[#eee] mb-0" />
 
         {/* Profile Photo */}
