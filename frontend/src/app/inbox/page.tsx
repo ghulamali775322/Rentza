@@ -21,6 +21,7 @@ export default function InboxPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null); //  NEW: Real dynamic user ID
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [showNumber, setShowNumber] = useState(false);
@@ -256,6 +257,15 @@ export default function InboxPage() {
   };
 
   const activeChatData = chats.find(c => c._id === activeChat);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(event.target as Node)) {
+        setShowOptionsMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // --- HELPER FUNCTIONS FOR REAL TIME ---
   const formatTime = (dateString: string) => {
@@ -320,16 +330,16 @@ export default function InboxPage() {
     <div className="flex max-w-[1200px] mx-auto border border-[#ddd] rounded-md shadow-[0_4px_10px_rgba(0,0,0,0.05)] bg-white mt-5 h-[80vh] overflow-hidden">
       
      {/* LEFT SIDEBAR */}
-      {/* 👇 FIX 1: Changed background to crisp white and added flex-col to control layout */}
+      {/*  FIX 1: Changed background to crisp white and added flex-col to control layout */}
       {/* LEFT SIDEBAR */}
       <div className="w-[350px] min-w-[350px] shrink-0 border-r-2 border-gray-400 bg-white flex flex-col h-full z-10">
         
-        {/* 👇 FIX 2: INBOX Header stays STATIC (shrink-0 means it never squishes or scrolls) */}
+        {/*  FIX 2: INBOX Header stays STATIC (shrink-0 means it never squishes or scrolls) */}
         <div className="px-5 py-[15px] text-[23px] font-bold text-[#002f34] border-b border-[#eee] w-full shrink-0 bg-white z-10 shadow-sm">
           INBOX
         </div>
         
-        {/* 👇 FIX 3: ONLY the chat list scrolls! (flex-1 takes remaining space) */}
+        {/*  FIX 3: ONLY the chat list scrolls! (flex-1 takes remaining space) */}
         <div className="flex-1 overflow-y-auto bg-white [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-[#ccc] [&::-webkit-scrollbar-thumb]:rounded-[3px]">
           {chats.length > 0 ? chats.map(chat => {
             const otherUser = chat.participants.find((p: any) => String(p._id) !== currentUserId);
@@ -439,7 +449,7 @@ export default function InboxPage() {
                   <Phone size={20} className="cursor-pointer hover:text-[#1877f2] transition" onClick={() => setShowNumber(true)} />
                 )}
 
-                <div className="relative">
+                <div className="relative" ref={optionsMenuRef}>
                     <MoreVertical size={22} className="cursor-pointer" onClick={() => setShowOptionsMenu(!showOptionsMenu)} />
                     {showOptionsMenu && (
                         <div className="absolute top-10 right-1 bg-white border border-[#ddd] rounded-md shadow-lg z-[200] min-w-[150px] py-[5px]">
