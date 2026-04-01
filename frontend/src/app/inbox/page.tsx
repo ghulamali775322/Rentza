@@ -444,7 +444,6 @@ export default function InboxPage() {
                     {showOptionsMenu && (
                         <div className="absolute top-10 right-1 bg-white border border-[#ddd] rounded-md shadow-lg z-[200] min-w-[150px] py-[5px]">
                            <div className="px-[15px] py-[10px] text-sm cursor-pointer hover:bg-red-50 text-red-600 font-medium" onClick={handleDeleteChat}>Delete Chat</div>
-                            <div className="px-[15px] py-[10px] text-sm cursor-pointer hover:bg-[#f0f0f0]" onClick={() => setIsReportOpen(true)}>Report User</div>
                         </div>
                     )}
                 </div>
