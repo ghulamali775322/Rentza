@@ -17,17 +17,17 @@ import { MdOutlineDevices } from "react-icons/md";
 
 // --- MASTER DICTIONARY (Synced with Homepage/Search) ---
 const CATEGORIES = [
-  { id: "mobiles", name: "Mobiles", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
-  { id: "vehicles", name: "Vehicles", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
-  { id: "property", name: "Property for Rent", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
-  { id: "electronics", name: "Electronics & Home Appliances", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
-  { id: "bikes", name: "Bikes", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
-  { id: "business", name: "Business, Industrial & Agriculture", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
-  { id: "furniture", name: "Furniture & Home Decor", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
-  { id: "fashion", name: "Fashion & Beauty", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
-  { id: "sports", name: "Books, Sports & Hobbies", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
-  { id: "outdoor", name: "Outdoor Equipment", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
-  { id: "other", name: "Other", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous", "Events"] },
+  { id: "mobiles", name: "Mobiles", image: "/categories/mobile.png", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
+  { id: "vehicles", name: "Vehicles", image: "/categories/car.png", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
+  { id: "property", name: "Property for Rent", image: "/categories/rent.png", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
+  { id: "electronics", name: "Electronics & Home Appliances", image: "/categories/electronic.png", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
+  { id: "bikes", name: "Bikes", image: "/categories/bike.png", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
+  { id: "business", name: "Business, Industrial & Agriculture", image: "/categories/tractor.png", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
+  { id: "furniture", name: "Furniture & Home Decor", image: "/categories/furniture.png", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
+  { id: "fashion", name: "Fashion & Beauty", image: "/categories/fashion.png", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
+  { id: "sports", name: "Books, Sports & Hobbies", image: "/categories/book.png", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
+  { id: "outdoor", name: "Outdoor Equipment", image: "/categories/outdoor.png", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
+  { id: "other", name: "Other", image: "/categories/other.png", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous", "Events"] },
 ];
 
 export default function CreateListingPage() {
@@ -268,9 +268,13 @@ export default function CreateListingPage() {
                   onClick={() => handleMainCatClick(cat.id)}
                   className="bg-white border border-[#ebebeb] rounded-lg p-5 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 text-center h-[160px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:border-[#002f34] hover:-translate-y-1"
                 >
-                  <div className="text-[40px] mb-4" style={{ color: cat.color ? cat.color : "#002f34" }}>
-                    {cat.icon}
-                  </div>
+                  <div className="w-[70px] h-[70px] mb-6 flex items-center justify-center">
+  <img 
+    src={cat.image} 
+    alt={cat.name} 
+    className="w-full h-full object-contain drop-shadow-md scale-150" 
+  />
+</div>
                   <div className="text-[16px] font-bold text-[#002f34]">{cat.name}</div>
                 </div>
               ))}
@@ -297,9 +301,13 @@ export default function CreateListingPage() {
                       onClick={() => handleSidebarClick(cat.id)}
                       className={`flex items-center px-5 py-[15px] cursor-pointer border-b border-[#eee] transition-all duration-100 border-l-[5px] hover:bg-white hover:text-[#002f34] ${isActive ? "bg-white text-[#002f34] font-bold border-l-[#002f34]" : "bg-transparent text-[#555] font-normal border-l-transparent"}`}
                     >
-                      <div className="mr-3 text-[20px] w-6 flex justify-center" style={{ color: cat.color }}>
-                        {cat.icon}
-                      </div>
+                     <div className="mr-4 w-[40px] h-[40px] flex items-center justify-center flex-shrink-0">
+  <img 
+    src={cat.image} 
+    alt={cat.name} 
+    className="w-full h-full object-contain drop-shadow-sm scale-125" 
+  />
+</div>
                       <span className="flex-grow">{cat.name}</span>
                       {isActive && <FiChevronRight className="text-[#002f34]" />}
                     </div>

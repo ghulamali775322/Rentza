@@ -9,17 +9,72 @@ import { MdOutlineDevices } from "react-icons/md";
 import ListingCard from "@/components/ListingCard";
 
 const CATEGORIES_DATA = [
-  { name: "Mobiles", icon: <FiSmartphone className="text-blue-600 text-3xl" />, subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
-  { name: "Vehicles", icon: <FaCarSide className="text-blue-600 text-3xl" />, subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
-  { name: "Property for Rent", icon: <FiHome className="text-blue-600 text-3xl" />, subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
-  { name: "Electronics & Home Appliances", icon: <MdOutlineDevices className="text-blue-600 text-3xl" />, subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
-  { name: "Bikes", icon: <TbBike className="text-blue-600 text-3xl" />, subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
-  { name: "Business, Industrial & Agriculture", icon: <GiHammerNails className="text-blue-600 text-3xl" />, subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
-  { name: "Furniture & Home Decor", icon: <FaCouch className="text-blue-600 text-3xl" />, subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
-  { name: "Fashion & Beauty", icon: <GiClothes className="text-blue-600 text-3xl" />, subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
-  { name: "Books, Sports & Hobbies", icon: <FaFootballBall className="text-blue-600 text-3xl" />, subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
-  { name: "Outdoor Equipment", icon: <GiTreehouse className="text-blue-600 text-3xl" />, subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
-  { name: "Other", icon: <FaEllipsisH className="text-blue-600 text-3xl" />, subcategories: ["Miscellaneous", "Events"] }
+  { 
+    name: "Mobiles", 
+    image: "/categories/mobile.png", 
+    icon: <FiSmartphone className="text-blue-600 text-3xl" />, 
+    subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] 
+  },
+  { 
+    name: "Vehicles", 
+    image: "/categories/car.png", 
+    icon: <FaCarSide className="text-blue-600 text-3xl" />, 
+    subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] 
+  },
+  { 
+    name: "Property for Rent", 
+    image: "/categories/rent.png", 
+    icon: <FiHome className="text-blue-600 text-3xl" />, 
+    subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] 
+  },
+  { 
+    name: "Electronics & Home Appliances", 
+    image: "/categories/electronic.png", 
+    icon: <MdOutlineDevices className="text-blue-600 text-3xl" />, 
+    subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] 
+  },
+  { 
+    name: "Bikes", 
+    image: "/categories/bike.png", 
+    icon: <TbBike className="text-blue-600 text-3xl" />, 
+    subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] 
+  },
+  { 
+    name: "Business, Industrial & Agriculture", 
+    image: "/categories/tractor.png", 
+    icon: <GiHammerNails className="text-blue-600 text-3xl" />, 
+    subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] 
+  },
+  { 
+    name: "Furniture & Home Decor", 
+    image: "/categories/furniture.png", 
+    icon: <FaCouch className="text-blue-600 text-3xl" />, 
+    subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] 
+  },
+  { 
+    name: "Fashion & Beauty", 
+    image: "/categories/fashion.png", 
+    icon: <GiClothes className="text-blue-600 text-3xl" />, 
+    subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] 
+  },
+  { 
+    name: "Books, Sports & Hobbies", 
+    image: "/categories/book.png", 
+    icon: <FaFootballBall className="text-blue-600 text-3xl" />, 
+    subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] 
+  },
+  { 
+    name: "Outdoor Equipment", 
+    image: "/categories/outdoor.png", 
+    icon: <GiTreehouse className="text-blue-600 text-3xl" />, 
+    subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] 
+  },
+  { 
+    name: "Other", 
+    image: "/categories/other.png", 
+    icon: <FaEllipsisH className="text-blue-600 text-3xl" />, 
+    subcategories: ["Miscellaneous", "Events"] 
+  }
 ];
 
 export default function Home() {
@@ -204,9 +259,14 @@ export default function Home() {
           {CATEGORIES_DATA.map((cat) => (
             <Link key={cat.name} href={`/search?category=${encodeURIComponent(cat.name)}`} className="contents">
               <div className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-500 transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:bg-blue-50">
-                <div className="w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 mb-3">
-                  {cat.icon}
-                </div>
+                {/* The container stays exactly 70px. The white card will NOT change size. */}
+<div className="w-[70px] h-[70px] mb-5 flex items-center justify-center">
+  <img 
+    src={cat.image} 
+    alt={cat.name} 
+    className="w-full h-full object-contain drop-shadow-md scale-180" 
+  />
+</div>
                 <p className="text-gray-800 font-medium text-sm text-center">{cat.name}</p>
               </div>
             </Link>
