@@ -7,6 +7,9 @@ import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export default function EditProfilePage() {
   const [profileData, setProfileData] = useState({
@@ -20,7 +23,6 @@ export default function EditProfilePage() {
   const [profileImageUrl, setProfileImageUrl] = useState("");
   const [loading, setLoading] = useState(true); // ONLY for initial fetch
   const [saving, setSaving] = useState(false); // ✅ NEW (for save button)
-  const [successMessage, setSuccessMessage] = useState(""); // ✅ NEW
   const { setName, setProfilePhotoUrl } = useUser();
 
   const [errors, setErrors] = useState<{ name: string; phone: string }>({
@@ -64,7 +66,7 @@ export default function EditProfilePage() {
         );
       } catch (err) {
         console.error(err);
-        alert("Failed to load profile. Please login again.");
+        toast.error("Failed to load profile. Please login again.");
       } finally {
         setLoading(false);
       }
@@ -118,7 +120,6 @@ export default function EditProfilePage() {
     setErrors({ name: "", phone: "" });
 
     setSaving(true);
-    setSuccessMessage("");
 
     try {
       const formDataToSend = new FormData();
@@ -166,7 +167,6 @@ export default function EditProfilePage() {
       // ✅ Update global name (Navbar will update instantly)
       setName(updatedData.user.name || "");
 
-      // ✅ Handle profile photo
       // ✅ Handle profile photo (fix for email login)
       const photoUrl = updatedData.user.profilePhotoPath
         ? `${API_URL}${updatedData.user.profilePhotoPath}?t=${Date.now()}`
@@ -178,11 +178,11 @@ export default function EditProfilePage() {
       // Reset removePhoto flag after successful update
       setRemovePhoto(false);
 
-      // ✅ SUCCESS MESSAGE (NO ALERT)
-      setSuccessMessage("Profile updated successfully!");
+      // 2. REPLACED INLINE MESSAGE WITH TOAST
+      toast.success("Profile updated successfully!");
     } catch (err: any) {
       console.error("Update error:", err);
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -197,13 +197,6 @@ export default function EditProfilePage() {
         <h1 className="text-[28px] font-bold text-[#002f34] mb-0 pb-[25px]">
           Edit profile
         </h1>
-
-        {/* ✅ SUCCESS MESSAGE */}
-        {successMessage && (
-          <div className="text-green-600 font-semibold mb-3">
-            {successMessage}
-          </div>
-        )}
 
         <div className="w-full border-t border-[#eee] mb-0" />
 

@@ -19,6 +19,10 @@ import {
   deleteReport,
 } from "@/app/api/admin/reports";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 export default function ReportDetailsPage({
   params,
 }: {
@@ -30,6 +34,7 @@ export default function ReportDetailsPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") || "Pending";
+  
   // MODALS STATE
   const [showDismissModal, setShowDismissModal] = useState(false);
   const [showReviewLaterModal, setShowReviewLaterModal] = useState(false);
@@ -37,8 +42,7 @@ export default function ReportDetailsPage({
   const [showSuspendOwnerModal, setShowSuspendOwnerModal] = useState(false);
   const [showDeleteListingModal, setShowDeleteListingModal] = useState(false);
 
-  // Find the report corresponding to the ID
-  // Step 2: State to hold real report
+  // State to hold real report
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,13 +55,13 @@ export default function ReportDetailsPage({
     try {
       setActionLoading(true);
       await updateReportStatus(report.id, status);
-      alert(`Report status updated to ${status}`); // Replace with toast if needed
+      toast.success(`Report marked as ${status}`); // REPLACED ALERT
       // Refresh report data
       const res = await getReportDetails(reportId);
       setReport(transformReport(res.data.data));
     } catch (err) {
       console.error(err);
-      alert("Failed to update report status");
+      toast.error("Failed to update report status"); // REPLACED ALERT
     } finally {
       setActionLoading(false);
     }
@@ -68,12 +72,16 @@ export default function ReportDetailsPage({
     try {
       setActionLoading(true);
       await executeReportAction(report.id, actionType);
-      alert(`Action '${actionType}' executed successfully`);
+      
+      // Make the success message look nicer
+      const actionName = actionType === "suspend_owner" ? "Owner suspended" : "Listing deleted";
+      toast.success(`${actionName} successfully`); // REPLACED ALERT
+      
       const res = await getReportDetails(reportId);
       setReport(transformReport(res.data.data));
     } catch (err) {
       console.error(err);
-      alert("Failed to execute action");
+      toast.error("Failed to execute action"); // REPLACED ALERT
     } finally {
       setActionLoading(false);
     }
@@ -81,20 +89,21 @@ export default function ReportDetailsPage({
 
   // ✅ Delete report
   const handleDeleteReport = async () => {
-    if (!confirm("Are you sure you want to delete this report?")) return;
+    // REMOVED window.confirm (Modal handles this now)
     try {
       setActionLoading(true);
       await deleteReport(report.id);
-      alert("Report deleted successfully");
+      toast.success("Report deleted successfully"); // REPLACED ALERT
       router.push(`/admin/reports?tab=${tab}`); // Redirect to reports list
     } catch (err) {
       console.error(err);
-      alert("Failed to delete report");
+      toast.error("Failed to delete report"); // REPLACED ALERT
     } finally {
       setActionLoading(false);
     }
   };
-  // Optional: helper to transform API response
+
+  // Helper to transform API response
   const transformReport = (reportData: any) => ({
     id: reportData._id,
     reason: reportData.reason,
@@ -141,44 +150,8 @@ export default function ReportDetailsPage({
 
         // Transform API response to match frontend keys
         const reportData = res.data.data; // this is where actual report object is
-        const transformedReport = {
-          id: reportData._id,
-          reason: reportData.reason,
-          description: reportData.additionalComments,
-          status: reportData.status, // pending, resolved, dismissed
-          reportingUser: reportData.reporterId
-            ? {
-                name: reportData.reporterId.name,
-                id: reportData.reporterId._id,
-                email: reportData.reporterId.email,
-                profilePhotoPath: reportData.reporterId.profilePhotoPath,
-              }
-            : null,
-          reportedItem: reportData.reportedListingId
-            ? {
-                name: reportData.reportedListingId.title,
-                id: reportData.reportedListingId._id,
-                description: reportData.reportedListingId.description,
-                category: reportData.reportedListingId.category,
-                price: reportData.reportedListingId.price,
-                status: reportData.reportedListingId.status,
-                images: reportData.reportedListingId.images,
-              }
-            : null,
-          reportedUser: reportData.reportedUserId
-            ? {
-                name: reportData.reportedUserId.name,
-                id: reportData.reportedUserId._id,
-                email: reportData.reportedUserId.email,
-                phone: reportData.reportedUserId.phone,
-                isActive: reportData.reportedUserId.isActive,
-                totalReportsAgainstUser: reportData.totalReportsAgainstUser,
-              }
-            : null,
-          date: new Date(reportData.createdAt).toLocaleDateString(),
-          updatedAt: new Date(reportData.updatedAt).toLocaleDateString(),
-        };
-        setReport(transformedReport); // call your API function
+        const transformedReport = transformReport(reportData);
+        setReport(transformedReport); 
       } catch (err: any) {
         console.error(err);
         setError("Failed to load report details.");
@@ -484,7 +457,7 @@ export default function ReportDetailsPage({
               {status === "pending" && (
                 <>
                   <button
-                    onClick={() => handleExecuteAction("suspend_owner")}
+                    onClick={() => setShowSuspendOwnerModal(true)} // WIRED UP
                     disabled={actionLoading}
                     className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#ff6b00] hover:bg-[#e65100] text-white rounded-lg font-bold transition-all shadow-sm active:scale-95"
                   >
@@ -492,7 +465,7 @@ export default function ReportDetailsPage({
                   </button>
 
                   <button
-                    onClick={() => handleUpdateStatus("pending")}
+                    onClick={() => setShowReviewLaterModal(true)} // WIRED UP
                     disabled={actionLoading}
                     className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#007bff] hover:bg-[#0056b3] text-white rounded-lg font-bold transition-all shadow-sm active:scale-95"
                   >
@@ -500,7 +473,7 @@ export default function ReportDetailsPage({
                   </button>
 
                   <button
-                    onClick={() => handleUpdateStatus("dismissed")}
+                    onClick={() => setShowDismissModal(true)} // WIRED UP
                     disabled={actionLoading}
                     className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#6c757d] hover:bg-[#5a6268] text-white rounded-lg font-bold transition-all shadow-sm active:scale-95"
                   >
@@ -508,7 +481,7 @@ export default function ReportDetailsPage({
                   </button>
 
                   <button
-                    onClick={() => handleExecuteAction("delete_listing")}
+                    onClick={() => setShowDeleteListingModal(true)} // WIRED UP
                     disabled={actionLoading}
                     className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#ff3547] hover:bg-[#c62828] text-white rounded-lg font-bold transition-all shadow-sm active:scale-95"
                   >
@@ -519,7 +492,7 @@ export default function ReportDetailsPage({
 
               {(status === "resolved" || status === "dismissed") && (
                 <button
-                  onClick={handleDeleteReport}
+                  onClick={() => setShowDeleteModal(true)} // WIRED UP
                   disabled={actionLoading}
                   className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-[#ff3547] hover:bg-[#c62828] text-white rounded-lg font-bold transition-all shadow-sm active:scale-95"
                 >
@@ -530,6 +503,77 @@ export default function ReportDetailsPage({
           </div>
         </div>
       </div>
+
+      {/* --- CONFIRMATION MODALS --- */}
+      <ConfirmModal 
+        isOpen={showSuspendOwnerModal}
+        onClose={() => setShowSuspendOwnerModal(false)}
+        onConfirm={() => {
+          setShowSuspendOwnerModal(false);
+          handleExecuteAction("suspend_owner");
+        }}
+        title="Suspend Owner"
+        message="Are you sure you want to suspend this user? They will not be able to log in or post listings."
+        confirmText="Suspend User"
+        cancelText="Cancel"
+        isDestructive={true} 
+      />
+
+      <ConfirmModal 
+        isOpen={showReviewLaterModal}
+        onClose={() => setShowReviewLaterModal(false)}
+        onConfirm={() => {
+          setShowReviewLaterModal(false);
+          handleUpdateStatus("pending");
+        }}
+        title="Review Later"
+        message="Are you sure you want to mark this report as pending to review it later?"
+        confirmText="Mark Pending"
+        cancelText="Cancel"
+      />
+
+      <ConfirmModal 
+        isOpen={showDismissModal}
+        onClose={() => setShowDismissModal(false)}
+        onConfirm={() => {
+          setShowDismissModal(false);
+          handleUpdateStatus("dismissed");
+        }}
+        title="Dismiss Report"
+        message="Are you sure you want to dismiss this report? No action will be taken."
+        confirmText="Dismiss Report"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
+
+      <ConfirmModal 
+        isOpen={showDeleteListingModal}
+        onClose={() => setShowDeleteListingModal(false)}
+        onConfirm={() => {
+          setShowDeleteListingModal(false);
+          handleExecuteAction("delete_listing");
+        }}
+        title="Delete Listing"
+        message="Are you sure you want to permanently delete the reported listing?"
+        confirmText="Delete Listing"
+        cancelText="Cancel"
+        isDestructive={true} 
+      />
+
+      <ConfirmModal 
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => {
+          setShowDeleteModal(false);
+          handleDeleteReport();
+        }}
+        title="Delete Report"
+        message="Are you sure you want to permanently delete this report? This action cannot be undone."
+        confirmText="Delete Report"
+        cancelText="Cancel"
+        isDestructive={true} 
+      />
+
     </div>
   );
 }

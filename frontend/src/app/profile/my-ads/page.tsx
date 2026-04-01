@@ -7,6 +7,10 @@ import ListingCard from "@/components/ListingCard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Link from "next/link";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 export default function MyAdsPage() {
   const { data: session } = useSession();
 
@@ -14,6 +18,10 @@ export default function MyAdsPage() {
   const [activeFilter, setActiveFilter] = useState("active");
   const [myListings, setMyListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 2. MODAL STATE FOR DELETING ADS
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMyAds = async () => {
@@ -45,8 +53,15 @@ export default function MyAdsPage() {
     fetchMyAds();
   }, [session]);
 
-  const handleDelete = async (listingId: string) => {
-    if (!window.confirm("Are you sure you want to permanently delete this ad?")) return;
+  // 3. SPLIT DELETE FUNCTION: Step A - Open Modal
+  const confirmDelete = (listingId: string) => {
+    setListingToDelete(listingId);
+    setIsDeleteModalOpen(true);
+  };
+
+  // 3. SPLIT DELETE FUNCTION: Step B - Execute Deletion
+  const executeDelete = async () => {
+    if (!listingToDelete) return;
 
     try {
       const localToken = localStorage.getItem("token");
@@ -55,7 +70,7 @@ export default function MyAdsPage() {
       if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
       else if (session?.user?.email) headers["x-google-email"] = session.user.email;
 
-      const response = await fetch(`http://localhost:5000/api/listings/${listingId}`, {
+      const response = await fetch(`http://localhost:5000/api/listings/${listingToDelete}`, {
         method: "DELETE",
         headers: headers,
         credentials: "include",
@@ -64,14 +79,16 @@ export default function MyAdsPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setMyListings((prevListings) => prevListings.filter((ad) => ad._id !== listingId));
-        alert("Ad deleted successfully!");
+        setMyListings((prevListings) => prevListings.filter((ad) => ad._id !== listingToDelete));
+        toast.success("Ad deleted successfully!"); // Replaced alert
       } else {
-        alert(result.message || "Failed to delete ad.");
+        toast.error(result.message || "Failed to delete ad."); // Replaced alert
       }
     } catch (error) {
       console.error("Error deleting ad:", error);
-      alert("An error occurred while deleting the ad.");
+      toast.error("An error occurred while deleting the ad."); // Replaced alert
+    } finally {
+      setListingToDelete(null); // Clean up state
     }
   };
 
@@ -152,7 +169,7 @@ export default function MyAdsPage() {
                   )}
 
                   <button
-                    onClick={() => handleDelete(item._id)}
+                    onClick={() => confirmDelete(item._id)}
                     className="mt-2 flex items-center justify-center gap-2 w-full py-2 bg-white border border-red-500 text-red-600 font-semibold rounded-md transition-colors hover:bg-red-500 hover:text-white"
                   >
                     <FiTrash2 size={18} /> Delete Ad
@@ -173,6 +190,19 @@ export default function MyAdsPage() {
           )}
         </div>
       </div>
+
+      {/* 4. OUR NEW DELETE CONFIRMATION MODAL */}
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={executeDelete}
+        title="Delete Ad"
+        message="Are you sure you want to permanently delete this ad? This action cannot be undone."
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDestructive={true} // Makes the button red!
+      />
+
     </ProtectedRoute>
   );
 }

@@ -4,6 +4,9 @@ import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 import { useSession } from "next-auth/react"; // NEEDED FOR AUTH CHECK
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -69,7 +72,7 @@ export default function ReportModal({ isOpen, onClose, type, id }: ReportModalPr
 
       // If they somehow bypassed the UI to click report without being logged in
       if (!reporterId) {
-        alert("You must be logged in to submit a report.");
+        toast.error("You must be logged in to submit a report."); // REPLACED ALERT
         setIsSubmitting(false);
         return;
       }
@@ -92,24 +95,25 @@ export default function ReportModal({ isOpen, onClose, type, id }: ReportModalPr
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("Report submitted successfully!");
+        toast.success("Report submitted successfully!"); // REPLACED ALERT
         onClose();
         setReason("");
         setComment("");
       } else {
-        alert(result.message || "Failed to submit report.");
+        toast.error(result.message || "Failed to submit report."); // REPLACED ALERT
       }
 
     } catch (error) {
       console.error("Report submission error:", error);
-      alert("An error occurred while submitting the report.");
+      toast.error("An error occurred while submitting the report."); // REPLACED ALERT
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
+    // 3. FIXED Z-INDEX SO TOASTS APPEAR ON TOP
+    <div className="fixed inset-0 bg-black/50 z-[999] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-sm rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
         
         {/* Header */}

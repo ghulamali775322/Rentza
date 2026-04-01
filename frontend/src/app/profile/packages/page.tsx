@@ -5,6 +5,9 @@ import { FiCheck, FiStar } from 'react-icons/fi';
 import { useSession } from "next-auth/react"; 
 import { useRouter } from "next/navigation";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 const PACKAGES = [
   { id: 'free', name: 'Free', price: 0, duration: ' month', features: ['Post 1 Ad', 'Valid for 30 days'], color: '#A0A0A0', popular: false },
   { id: 'gold', name: 'Gold', price: 1500, duration: 'month', features: ['Post 2 Ads ', 'Valid for 30 days'], color: '#FFD700', popular: true },
@@ -87,7 +90,9 @@ export default function PackagesPage() {
       // SCENARIO 2: User clicked "Cancel" on Safepay
       else if (search.includes('safepay=failed') || search.includes('payment=failed')) {
         localStorage.removeItem('rentza_pending_payment'); // Clear memory
-        alert("❌ Payment Cancelled.");
+        
+        // REPLACED ALERT WITH TOAST
+        toast.error("Payment Cancelled.");
         window.history.replaceState(null, '', window.location.pathname);
       } 
       // SCENARIO 3: User hit the browser "Back" arrow (Aborted payment)
@@ -128,11 +133,13 @@ export default function PackagesPage() {
       if (data.success && data.gatewayUrl) {
         window.location.href = data.gatewayUrl; 
       } else {
-        alert(`Error: ${data.message}`);
+        // REPLACED ALERT WITH TOAST
+        toast.error(data.message || "Failed to initiate payment.");
         setIsProcessing(false);
       }
     } catch (err) {
-      alert("Payment connection failed. Please try again.");
+      // REPLACED ALERT WITH TOAST
+      toast.error("Payment connection failed. Please try again.");
       setIsProcessing(false);
     }
   };

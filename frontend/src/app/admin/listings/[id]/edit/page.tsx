@@ -7,6 +7,9 @@ import { IoMdArrowBack } from "react-icons/io";
 import { FiSave } from "react-icons/fi";
 import { getListingDetails, updateListing } from "@/app/api/admin/listings";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 // --- MOCK DATABASE ---
 
 export default function EditListingPage({
@@ -96,6 +99,7 @@ export default function EditListingPage({
       return updated;
     });
   };
+  
   // Submit the form
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,16 +119,17 @@ export default function EditListingPage({
       const res = await updateListing(listingId, payload);
 
       if (res?.data?.success) {
-        alert("Listing updated successfully!");
+        toast.success("Listing updated successfully!"); // REPLACED ALERT
         router.push(`/admin/listings/${listingId}`);
       } else {
         throw new Error(res?.data?.message || "Update failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to update listing.");
+      toast.error("Failed to update listing."); // REPLACED ALERT
     }
   };
+  
   const inputStyles =
     "w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#007bff] focus:border-transparent text-[#002f34] bg-gray-50 hover:bg-white transition-colors";
 

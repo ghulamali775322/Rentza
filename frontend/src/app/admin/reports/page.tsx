@@ -5,6 +5,9 @@ import Link from "next/link";
 import { FiSearch, FiEye } from "react-icons/fi";
 import { getReports } from "@/app/api/admin/reports";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 // --- TYPES (Status property removed) ---
 interface Report {
   _id: string;
@@ -50,6 +53,8 @@ export default function ReportsPage() {
         setReports(res.data.data); // ⚠️ IMPORTANT (your backend structure)
       } catch (error) {
         console.error("Error fetching reports:", error);
+        // 2. ADDED TOAST FOR API FAILURE
+        toast.error("Failed to load reports.");
       } finally {
         setLoading(false);
       }
