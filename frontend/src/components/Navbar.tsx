@@ -423,11 +423,11 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex flex-col text-[16px] text-gray-800 font-medium gap-3 mt-2">
-                      <Link href="/profile/packages" className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"><FiTag size={18} /> Buy Discount Packages</Link>
-                      <Link href="/profile/my-ads" className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiLayers size={18} /> My Ads</Link>
-                      <Link href="/profile/settings" className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiSettings size={18} /> Settings</Link>
-                      <button onClick={() => { if (session) signOut(); else if (token) logout(); }} className="flex items-center gap-2 text-red-500 hover:text-red-600 transition px-3 py-2 rounded-md hover:bg-red-50"><FiLogOut size={18} /> Logout</button>
-                    </div>
+  <Link href="/profile/packages" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100"><FiTag size={18} /> Buy Discount Packages</Link>
+  <Link href="/profile/my-ads" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiLayers size={18} /> My Ads</Link>
+  <Link href="/profile/settings" onClick={() => setShowProfileMenu(false)} className="hover:text-[#0077ff] transition px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2"><FiSettings size={18} /> Settings</Link>
+  <button onClick={() => { setShowProfileMenu(false); if (session) signOut(); else if (token) logout(); }} className="flex items-center gap-2 text-red-500 hover:text-red-600 transition px-3 py-2 rounded-md hover:bg-red-50"><FiLogOut size={18} /> Logout</button>
+</div>
                   </div>
                 )}
               </div>
