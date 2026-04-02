@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X, MoreVertical, User, Phone, Check } from 'lucide-react'; 
+import { MessageSquare, Send, X, MoreVertical, User, Phone, Check,} from 'lucide-react'; 
 import Pusher from 'pusher-js';
 import ReportModal from "@/components/modals/ReportModal"; 
 import { useSession } from "next-auth/react"; //  NEW: Added session
@@ -327,12 +327,10 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="flex max-w-[1200px] mx-auto border border-[#ddd] rounded-md shadow-[0_4px_10px_rgba(0,0,0,0.05)] bg-white mt-5 h-[80vh] overflow-hidden">
+    <div className="flex max-w-[1200px] mx-auto md:border border-[#ddd] md:rounded-md shadow-[0_4px_10px_rgba(0,0,0,0.05)] bg-white fixed md:relative top-[180px] md:top-auto bottom-[56px] md:bottom-auto left-0 right-0 w-full md:mt-5 md:h-[80vh] overflow-hidden z-30">
+     {/* --- LEFT SIDEBAR (Inbox List) --- */}
       
-     {/* LEFT SIDEBAR */}
-      {/*  FIX 1: Changed background to crisp white and added flex-col to control layout */}
-      {/* LEFT SIDEBAR */}
-      <div className="w-[350px] min-w-[350px] shrink-0 border-r-2 border-gray-400 bg-white flex flex-col h-full z-10">
+      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] md:min-w-[350px] shrink-0 md:border-r-2 border-[#eee] bg-white flex-col h-full z-10`}>
         
         {/*  FIX 2: INBOX Header stays STATIC (shrink-0 means it never squishes or scrolls) */}
         <div className="px-5 py-[15px] text-[23px] font-bold text-[#002f34] border-b border-[#eee] w-full shrink-0 bg-white z-10 shadow-sm">
@@ -398,13 +396,21 @@ export default function InboxPage() {
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex-grow flex flex-col justify-between items-center bg-white">
+     <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-grow flex-col bg-white w-full fixed md:relative top-[175px] md:top-auto bottom-[75px] md:bottom-auto left-0 right-0 md:left-auto md:right-auto md:h-full z-[40] md:z-20`}>
         {activeChat ? (
           <div className="w-full h-full flex flex-col justify-between">
             
            {/* Header */}
-            <div className="px-5 py-[12px] border-b border-[#eee] bg-white flex justify-between items-center z-10">
-              <div className="flex items-center gap-3">
+            <div className="px-3 md:px-5 py-[12px] border-b border-[#eee] bg-white flex justify-between items-center z-10 w-full">
+              <div className="flex items-center gap-2 md:gap-3">
+                
+                {/* Mobile Back Button */}
+                <button 
+                  onClick={() => setActiveChat(null)} 
+                  className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
                <div className="w-10 h-10 rounded-full bg-[#1877f2] flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden border border-gray-200">
                   
                   {/* Layer 1: First letter underneath */}
@@ -517,19 +523,18 @@ export default function InboxPage() {
                 })}
               </div>
             </div>
-            
             {/* Input */}
-            <div className="px-5 py-[15px] border-t border-[#eee] flex gap-[10px] bg-white">
+            <div className="px-3 md:px-5 py-[12px] border-t border-[#eee] flex gap-[10px] bg-white w-full">
               <textarea 
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                 placeholder="Type your message..." 
-                className="flex-grow p-[10px] rounded border border-[#ccc] resize-none focus:border-[#007bff] outline-none"
+                className="flex-grow p-[10px] rounded-full border border-[#ccc] resize-none focus:border-[#007bff] outline-none px-4"
                 rows={1}
               />
-              <button onClick={handleSendMessage} className="bg-[#002f34] text-white px-[15px] rounded hover:bg-black transition">
-                <Send size={18} />
+              <button onClick={handleSendMessage} className="bg-[#002f34] text-white px-[18px] rounded-full hover:bg-black transition flex items-center justify-center shadow-md">
+                <Send size={18} className="-ml-1" />
               </button>
             </div>
           </div>

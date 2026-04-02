@@ -101,7 +101,7 @@ export default function NotificationsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-[800px] mx-auto py-10 px-5 min-h-screen pt-[30px]">
+      <div className="max-w-[800px] mx-auto px-5 pt-[100px] pb-24 md:py-10 min-h-screen">
         
         {/* HEADER SECTION */}
         <div className="border-b border-[#eee] pb-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

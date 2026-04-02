@@ -253,7 +253,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const isOwner = myMongoId === listing.lenderId?._id;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[50px] pb-10">
+    <div className="min-h-screen bg-gray-50 pt-[50px] pb-24 md:pb-10">
       
      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
         <p className="text-base text-gray-500 flex items-center">
@@ -268,7 +268,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <div className="bg-black rounded-lg overflow-hidden flex items-center justify-center h-[400px] relative group">
+           <div className="bg-black rounded-lg overflow-hidden flex items-center justify-center h-[250px] md:h-[400px] relative group">
               <img 
                 src={listing.images && listing.images.length > 0 ? `http://localhost:5000${listing.images[activeImageIndex].url}` : "https://via.placeholder.com/600?text=No+Image"} 
                 alt={listing.title} 
@@ -364,44 +364,47 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          <div className="space-y-3">
+         {/* --- MOBILE STICKY ACTION BAR (OLX STYLE) --- */}
+          <div className="fixed bottom-0 left-0 w-full z-50 bg-white p-3 border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex flex-row gap-3 md:relative md:bottom-auto md:left-auto md:w-auto md:border-t-0 md:shadow-none md:bg-transparent md:p-0 md:flex-col md:z-auto">
+            
             {isOwner ? (
-              // OWNER VIEW: Edit and Delete Buttons
               <>
-                <Link 
-                  href={`/edit-listing/${listing._id}`} 
-                  className="w-full bg-[#007bff] text-white font-bold py-3 rounded flex items-center justify-center gap-2 transition hover:bg-[#0056b3]"
+              {/* EDIT BUTTON (For Owner) */}
+                <button 
+                  onClick={() => router.push(`/edit-listing/${listing._id}`)}
+                  className="flex-1 w-full border-2 border-[#002f34] text-[#002f34] bg-white font-bold py-2.5 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer text-[15px]"
                 >
-                  <FiEdit2 size={20} />
-                  Edit Ad
-                </Link>
+                  <FiEdit2 size={18} className="shrink-0" />
+                  <span>Edit Ad</span>
+                </button>
+
+                {/* DELETE BUTTON (For Owner) */}
                 <button 
                   onClick={confirmDelete}
-                  className="w-full border-2 border-red-500 text-red-600 font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-red-50 transition"
+                  className="flex-1 w-full font-bold py-2.5 rounded flex items-center justify-center gap-2 transition text-[15px] bg-red-600 text-white hover:bg-red-700"
                 >
-                  <FiTrash2 size={20} />
-                  Delete Ad
+                  <FiTrash2 size={18} className="shrink-0" />
+                  <span>Delete Ad</span>
                 </button>
               </>
             ) : (
-              // RENTER VIEW: Phone and Chat Buttons
               <>
-                <button 
-                  onClick={handleShowPhoneClick}
-                  className={`w-full font-bold py-3 rounded flex items-center justify-center gap-2 transition ${
-                    showPhone ? "bg-green-600 text-white" : "bg-[#002f34] text-white hover:bg-[#004247]"
-                  }`}
-                >
-                  <FiPhone size={20} />
-                  {showPhone ? listing.contactNumber : "Show Phone Number"}
-                </button>
-
+                {/* CHAT BUTTON (For Renters) */}
                 <button 
                   onClick={handleChatClick}
-                  className="w-full border-2 border-[#002f34] text-[#002f34] font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer"
+                  className="flex-1 w-full border-2 border-[#002f34] text-[#002f34] bg-white font-bold py-2.5 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer text-[15px]"
                 >
-                  <FiMessageCircle size={20} />
-                  Chat
+                  <FiMessageCircle size={18} className="shrink-0" />
+                  <span>Chat</span>
+                </button>
+
+                {/* CALL BUTTON (For Renters) */}
+                <button 
+                  onClick={handleShowPhoneClick}
+                  className="flex-1 w-full font-bold py-2.5 rounded flex items-center justify-center gap-2 transition text-[15px] bg-[#002f34] text-white hover:bg-[#004247]"
+                >
+                  <FiPhone size={18} className="shrink-0" />
+                  <span className="truncate">{showPhone ? listing.contactNumber : "Call"}</span>
                 </button>
               </>
             )}
@@ -411,7 +414,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-2">Location</h3>
             <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${listing.location?.coordinates[1]},${listing.location?.coordinates[0]}`}
+              href={`https://www.google.com/maps?q=${listing.location?.coordinates[1]},${listing.location?.coordinates[0]}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm mb-3 w-fit transition-colors cursor-pointer"

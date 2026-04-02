@@ -162,7 +162,7 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-[900px] mx-auto px-5 py-10 bg-[#f5f5f5] min-h-[calc(100vh-80px)]">
+      <div className="max-w-[900px] mx-auto px-5 pt-[100px] pb-[100px] md:py-10 bg-[#f5f5f5] min-h-[calc(100vh-80px)]">
         {/* ---------------- SECURITY SECTION ---------------- */}
         {isEmailUser && (
           <div className="bg-white text-black rounded-xl shadow-sm border border-[#eee] mb-8 p-6">
@@ -315,7 +315,7 @@ export default function SettingsPage() {
                 <button
                   type="submit"
                   disabled={loading || !isNewPasswordValid || !passwordsMatch}
-                  className={`bg-[#002f34] text-white px-6 py-2 rounded-md font-semibold hover:bg-[#004d55] disabled:bg-gray-400`}
+                  className={`w-full md:w-auto bg-[#002f34] text-white px-6 py-3 md:py-2 rounded-md font-semibold hover:bg-[#004d55] disabled:bg-gray-400`}
                 >
                   {loading ? "Updating..." : "Update Password"}
                 </button>
@@ -335,7 +335,8 @@ export default function SettingsPage() {
             and profile information will be removed.
           </p>
 
-          <div className="border border-red-300 bg-red-50 p-4 rounded-md flex justify-between items-center">
+         
+          <div className="border border-red-300 bg-red-50 p-4 rounded-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
             <div>
               <p className="font-medium text-red-700">Delete your account</p>
               <p className="text-xs text-red-600">

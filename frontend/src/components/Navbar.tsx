@@ -10,6 +10,7 @@ import { useUser } from "@/context/UserContext";
 import { IoMdArrowBack } from "react-icons/io";
 import Pusher from 'pusher-js';
 import {
+  FiHome,
   FiBell,
   FiMessageCircle,
   FiUser,
@@ -37,6 +38,8 @@ export default function Navbar() {
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [showMobileProfileMenu, setShowMobileProfileMenu] = useState(false);
+  const mobileProfileRef = useRef<HTMLDivElement>(null);
   
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -281,19 +284,14 @@ export default function Navbar() {
       Rentza
     </span>
   );
-
+  
+const isListingPage = pathname?.includes("/listings/");
   if (pathname.startsWith("/admin")) return null;
 
   return (
     <nav className="w-full fixed top-0 left-0 z-50">
       <div className="w-full bg-[#f2f7ff] border-b border-gray-200 shadow-sm flex items-center justify-between px-6" style={{ height: 72 }}>
-        <div className="flex items-center gap-6">
-          {pathname === "/create-listing" && (
-            <Link href="/" className="text-gray-600 hover:text-blue-600 -mr-4 flex items-center">
-              <IoMdArrowBack size={28} />
-            </Link>
-          )}
-
+       <div className="flex items-center gap-2 md:gap-6">
           <Link href="/" className="text-2xl font-bold text-blue-600" onClick={() => setActive("home")}>
             <RentzaLogoText />
           </Link>
@@ -313,11 +311,12 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 relative">
+        <div className="flex items-center gap-3 md:gap-4 relative">
+  <Link href="/about" className="md:hidden text-[13px] font-bold text-gray-600 hover:text-[#0077ff]">About Us</Link>
           {!hasMounted ? (
             <div className="w-9 h-9 rounded-full bg-gray-300 animate-pulse" />
-          ) : isLoggedIn ? (
-            <>
+         ) : isLoggedIn ? (
+  <div className="hidden md:flex items-center gap-4">
             <Link href="/inbox" className="icon-btn flex items-center justify-center relative">
                 <FiMessageCircle className="text-xl text-black cursor-pointer hover:text-[#0077ff]" />
                 {unreadCount > 0 && (
@@ -438,37 +437,178 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            </>
-          ) : (
+  </div>
+) : (
             <Link href="/login" className="text-[#0077ff] font-semibold px-4 py-2 rounded-lg border border-[#0077ff] hover:bg-[#0077ff] hover:text-white transition">Login</Link>
           )}
 
-          <button onClick={() => { if (!hasMounted || (!session && !token)) router.push("/login"); else router.push("/create-listing"); }} className="relative flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg">
-            <div className="bg-white rounded-full px-6 py-2 flex items-center gap-2 transition-all duration-300 hover:bg-[#f9fafb]">
-              <span className="text-2xl text-black font-bold leading-none">＋</span>
-              <span className="font-bold text-[#002f34] tracking-wide">POST AD</span>
-            </div>
+          <button onClick={() => { if (!hasMounted || (!session && !token)) router.push("/login"); else router.push("/create-listing"); }} className="hidden md:flex relative items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg">
+            <div className="bg-white rounded-full px-3 sm:px-6 py-2 flex items-center gap-1 sm:gap-2 transition-all duration-300 hover:bg-[#f9fafb]">
+  <span className="text-2xl text-black font-bold leading-none">＋</span>
+  <span className="hidden sm:inline font-bold text-[#002f34] tracking-wide">POST AD</span>
+</div>
           </button>
         </div>
       </div>
 
       <div className="w-full text-black bg-white border-t border-gray-200 shadow-inner">
-        <div className="max-w-6xl mx-auto h-full flex items-center gap-3 px-4" style={{ height: 64 }}>
-          <LocationDropdown />
-          <div className="flex items-center border rounded-lg bg-white h-10 flex-1 overflow-hidden transition hover:border-[#0077ff]">
-            <div className="flex items-center flex-1 min-w-0 px-3">
-              <input type="text" placeholder="Find anything you" className="flex-1 min-w-0 text-sm focus:outline-none cursor-text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={handleKeyDown} />
-            </div>
-            <button onClick={handleSearch} className="bg-[#002f34] text-white flex items-center justify-center gap-2 px-4 h-full rounded-r-lg hover:bg-[#004247] cursor-pointer"><FiSearch className="text-lg" /><span className="text-sm">Search</span></button>
-          </div>
-        </div>
+ 
+  {/* Changed flex-col-reverse to flex-col! */}
+  <div className="max-w-6xl mx-auto min-h-[64px] py-2 md:py-0 flex flex-col md:flex-row md:items-center gap-2 md:gap-3 px-4 z-[60]">
+    
+    {/* Swapped the order: Search Bar is now FIRST */}
+    <div className="flex items-center border rounded-lg bg-white h-10 w-full md:flex-1 overflow-hidden transition hover:border-[#0077ff] order-1 md:order-2">
+      <div className="flex items-center flex-1 min-w-0 px-3">
+        <input 
+          type="text" 
+          placeholder="Find anything you" 
+          className="flex-1 min-w-0 text-sm focus:outline-none cursor-text" 
+          value={searchQuery} 
+          onChange={(e) => setSearchQuery(e.target.value)} 
+          onKeyDown={handleKeyDown} 
+        />
       </div>
+      <button onClick={handleSearch} className="bg-[#002f34] text-white flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 h-full rounded-r-lg hover:bg-[#004247] cursor-pointer">
+        <FiSearch className="text-lg" />
+        <span className="hidden sm:inline text-sm">Search</span>
+      </button>
+    </div>
 
-      <div className="md:hidden w-full bg-[#f2f7ff] border-t border-gray-200">
-        <div className="max-w-7xl mx-auto flex items-center gap-2 px-4 py-2 overflow-auto">
-          {sections.map((section) => (
-            <button key={section.key} onClick={() => setActive(section.key)} className={`nav-item ${active === section.key ? "active" : ""}`}>{section.label}</button>
-          ))}
+    {/* Swapped the order: Location Dropdown is now SECOND */}
+    <div className="w-full md:w-[256px] order-2 md:order-1">
+      <LocationDropdown />
+    </div>
+
+  </div>
+</div>
+     {/* ===== MOBILE BOTTOM NAVIGATION BAR ===== */}
+      <div className={`${isListingPage ? 'hidden' : 'md:hidden'} fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-[100] pb-2 pt-2 px-6`}>
+        <div className="flex justify-between items-center h-14">
+          
+          {/* 1. Home */}
+          <Link href="/" className={`flex flex-col items-center gap-1 transition-colors ${pathname === "/" ? "text-[#0077ff]" : "text-gray-500 hover:text-gray-900"}`}>
+            <FiHome size={22} />
+            <span className={`text-[10px] ${pathname === "/" ? "font-bold" : "font-medium"}`}>Home</span>
+          </Link>
+
+          {/* 2. Chat/Inbox */}
+          <Link href={isLoggedIn ? "/inbox" : "/login"} className={`flex flex-col items-center gap-1 relative transition-colors ${pathname.includes("/inbox") ? "text-[#0077ff]" : "text-gray-500 hover:text-gray-900"}`}>
+            <FiMessageCircle size={22} />
+            {unreadCount > 0 && <span className="absolute -top-1 -right-1 bg-[#f62d51] text-white text-[8px] font-bold h-3 w-3 flex items-center justify-center rounded-full border border-white"></span>}
+            <span className={`text-[10px] ${pathname.includes("/inbox") ? "font-bold" : "font-medium"}`}>Chat</span>
+          </Link>
+
+          {/* 3. POST AD Floating Center Button */}
+          <div className="flex flex-col items-center relative">
+            <button onClick={() => { if (!hasMounted || (!session && !token)) router.push("/login"); else router.push("/create-listing"); }} className="absolute -top-7 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] shadow-lg transform transition hover:scale-105">
+              <div className="bg-white rounded-full w-12 h-12 flex items-center justify-center">
+                <span className="text-2xl text-black font-bold leading-none">＋</span>
+              </div>
+            </button>
+            <span className="text-[10px] font-bold text-[#002f34] mt-7">Post Ad</span>
+          </div>
+
+          {/* 4. Notifications */}
+          <Link href={isLoggedIn ? "/profile/notifications" : "/login"} className={`flex flex-col items-center gap-1 relative transition-colors ${pathname.includes("/notifications") ? "text-[#0077ff]" : "text-gray-500 hover:text-gray-900"}`}>
+            <FiBell size={22} />
+            {unreadNotifCount > 0 && <span className="absolute -top-1 -right-1 bg-[#f62d51] text-white text-[8px] font-bold h-3 w-3 flex items-center justify-center rounded-full border border-white"></span>}
+            <span className={`text-[10px] ${pathname.includes("/notifications") ? "font-bold" : "font-medium"}`}>Alerts</span>
+          </Link>
+
+          {/* 5. Profile */}
+          <div ref={mobileProfileRef} className="relative flex flex-col items-center">
+            <button 
+              onClick={() => { 
+                if (!isLoggedIn) router.push("/login"); 
+                else setShowMobileProfileMenu(!showMobileProfileMenu); 
+              }} 
+              className={`flex flex-col items-center gap-1 outline-none transition-colors ${pathname.includes("/profile") || showMobileProfileMenu ? "text-[#0077ff]" : "text-gray-500 hover:text-gray-900"}`}
+            >
+              <FiUser size={22} />
+              <span className={`text-[10px] ${pathname.includes("/profile") || showMobileProfileMenu ? "font-bold" : "font-medium"}`}>Profile</span>
+            </button>
+ {/* THE COMPLETE MOBILE OPTIONS MENU */}
+            {showMobileProfileMenu && isLoggedIn && (
+              <div className="absolute bottom-16 right-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-[110] animate-fadeIn">
+                
+                {/* --- 1. USER PROFILE HEADER --- */}
+                <div className="flex items-center gap-4 p-4 border-b border-gray-100 bg-gray-50/50">
+                  
+                  {/* Avatar WITH the Pencil Icon over it (Clicking this goes to Edit Profile) */}
+                 <Link href="/profile/edit" onClick={() => setShowMobileProfileMenu(false)} className="relative shrink-0 block cursor-pointer transition hover:opacity-80">
+                    
+                    {/* 1. Add the gradient ring based on the user's plan (Matching Desktop) */}
+                    <div className={`rounded-full ${userPlan === 'premium' ? 'p-[3px] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-md' : userPlan === 'gold' ? 'p-[3px] bg-gradient-to-tr from-yellow-500 via-yellow-200 to-yellow-600 shadow-md' : ''}`}>
+                      <div className={`relative w-12 h-12 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold overflow-visible ${userPlan !== 'free' ? 'border-2 border-white' : ''}`}>
+                        
+                        {/* 2. The Profile Image (Prioritize Context/Fetched over Session) */}
+                        {profilePhotoUrl || fetchedPhoto || session?.user?.image ? (
+                          <img 
+                            src={profilePhotoUrl || fetchedPhoto || session?.user?.image || ""} 
+                            alt="Profile" 
+                            className="w-full h-full object-cover rounded-full" 
+                          />
+                        ) : (
+                          name?.charAt(0) || authName?.charAt(0) || session?.user?.name?.charAt(0) || "U"
+                        )}
+
+                        {/* 3. Add the tiny Premium Badge overlapping the image */}
+                        {userPlan === 'premium' && (
+                          <div className="absolute -top-1 -right-1 bg-[#007bff] text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border border-white z-10 shadow-sm">
+                            👑
+                          </div>
+                        )}
+                        {userPlan === 'gold' && (
+                          <div className="absolute -top-1 -right-1 bg-[#FFD700] text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border border-white z-10 shadow-sm">
+                            ⭐
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* The overlapping pencil badge */}
+                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 border border-gray-200 text-[#0077ff] shadow-sm">
+                      <FiEdit2 size={12} />
+                    </div>
+                  </Link>
+
+                  {/* User's Name & Public Profile Link */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 truncate text-[16px] leading-tight">
+                      {name || authName || session?.user?.name || "User"}
+                    </p>
+                    <Link 
+                      href={myMongoId ? `/lender/${myMongoId}` : "/profile/my-ads"} 
+                      onClick={() => setShowMobileProfileMenu(false)} 
+                      className="text-[13px] text-[#0077ff] hover:underline block mt-0.5"
+                    >
+                      View public profile
+                    </Link>
+                  </div>
+
+                </div>
+                {/* --- 2. MENU OPTIONS --- */}
+                <div className="flex flex-col text-sm text-gray-700 font-medium">
+                  
+                  <Link href="/profile/packages" onClick={() => setShowMobileProfileMenu(false)} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex items-center gap-3 transition-colors">
+                    <FiTag size={18} className="text-gray-500" /> Buy Packages
+                  </Link>
+                  
+                  <Link href="/profile/my-ads" onClick={() => setShowMobileProfileMenu(false)} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex items-center gap-3 transition-colors">
+                    <FiLayers size={18} className="text-gray-500" /> My Ads
+                  </Link>
+                  
+                  <Link href="/profile/settings" onClick={() => setShowMobileProfileMenu(false)} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex items-center gap-3 transition-colors">
+                    <FiSettings size={18} className="text-gray-500" /> Settings
+                  </Link>
+                  
+                  <button onClick={() => { setShowMobileProfileMenu(false); if (session) signOut(); else if (token) logout(); }} className="px-4 py-3 text-red-500 hover:bg-red-50 flex items-center gap-3 text-left w-full transition-colors">
+                    <FiLogOut size={18} /> Logout
+                  </button>
+
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

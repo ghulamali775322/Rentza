@@ -299,9 +299,11 @@ export default function CreateListingPage() {
               <span className="text-gray-400">/</span>
               <h3 className="text-[22px] font-bold text-[#002f34]">Choose a Subcategory</h3>
             </div>
-            
-            <div className="flex border border-[#ebebeb] rounded bg-white min-h-[500px] overflow-hidden shadow-sm">
-              <div className="w-[40%] border-r border-[#ebebeb] bg-[#f8f9fa] overflow-y-auto max-h-[600px] custom-scrollbar">
+            {/* Added md:flex-row and flex-col */}
+            <div className="flex flex-col md:flex-row border border-[#ebebeb] rounded bg-white md:min-h-[500px] overflow-hidden shadow-sm">
+              
+              {/* Added 'hidden md:block' to hide sidebar on mobile, and 'w-full md:w-[40%]' */}
+              <div className="hidden md:block w-full md:w-[40%] border-r border-[#ebebeb] bg-[#f8f9fa] overflow-y-auto max-h-[600px] custom-scrollbar">
                 {CATEGORIES.map((cat) => {
                   const isActive = selectedMainCatId === cat.id;
                   return (
@@ -311,12 +313,12 @@ export default function CreateListingPage() {
                       className={`flex items-center px-5 py-[15px] cursor-pointer border-b border-[#eee] transition-all duration-100 border-l-[5px] hover:bg-white hover:text-[#002f34] ${isActive ? "bg-white text-[#002f34] font-bold border-l-[#002f34]" : "bg-transparent text-[#555] font-normal border-l-transparent"}`}
                     >
                      <div className="mr-4 w-[40px] h-[40px] flex items-center justify-center flex-shrink-0">
-  <img 
-    src={cat.image} 
-    alt={cat.name} 
-    className="w-full h-full object-contain drop-shadow-sm scale-125" 
-  />
-</div>
+                        <img 
+                          src={cat.image} 
+                          alt={cat.name} 
+                          className="w-full h-full object-contain drop-shadow-sm scale-125" 
+                        />
+                      </div>
                       <span className="flex-grow">{cat.name}</span>
                       {isActive && <FiChevronRight className="text-[#002f34]" />}
                     </div>
@@ -324,7 +326,7 @@ export default function CreateListingPage() {
                 })}
               </div>
 
-              <div className="w-[60%] bg-white overflow-y-auto max-h-[600px] custom-scrollbar">
+              <div className="w-full md:w-[60%] bg-white overflow-y-auto max-h-[600px] custom-scrollbar">
                 {activeCategoryData.subcategories.map((sub, index) => (
                   <div
                     key={index}
@@ -342,7 +344,7 @@ export default function CreateListingPage() {
 
         {/* --- STEP 3: DETAILS FORM --- */}
         {step === 3 && (
-          <div className="bg-white rounded p-8 border border-[#ced4d6] max-w-[800px] mx-auto shadow-sm">
+         <div className="bg-white rounded p-4 md:p-8 pb-28 md:pb-8 border border-[#ced4d6] max-w-[800px] mx-auto shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <button onClick={() => setStep(2)} className="text-[#007bff] hover:underline font-semibold text-sm">Back to Categories</button>
             </div>
@@ -479,13 +481,16 @@ export default function CreateListingPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full py-4 text-white text-lg font-bold rounded-lg transition-all ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] shadow-md hover:bg-[#004d55] hover:shadow-lg'}`}
-              >
-                {isSubmitting ? "Processing & Scanning Images..." : "Post Ad"}
-              </button>
+              {/* STICKY MOBILE BUTTON WRAPPER */}
+              <div className="fixed bottom-[70px] left-0 w-full p-3 bg-white border-t border-gray-200 z-[90] md:relative md:bottom-auto md:border-t-0 md:bg-transparent md:p-0 md:z-auto shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:shadow-none">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full py-3.5 md:py-4 text-white text-[16px] md:text-lg font-bold rounded-lg transition-all ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] shadow-md hover:bg-[#004d55] hover:shadow-lg'}`}
+                >
+                  {isSubmitting ? "Processing & Scanning..." : "Post Ad"}
+                </button>
+              </div>
             </form>
           </div>
         )}

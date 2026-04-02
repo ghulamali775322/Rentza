@@ -188,13 +188,13 @@ const LocationDropdown = () => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+   <div className="relative w-full md:w-[256px]" ref={dropdownRef}>
       
       {/* 1. THE VISIBLE BOX */}
       <div 
-        onClick={() => setIsOpen(true)}
-        className="flex items-center border border-black-300 rounded-lg px-3 w-64 bg-white h-10 transition hover:border-[#0077ff] cursor-text"
-      >
+  onClick={() => setIsOpen(true)}
+className="flex items-center border border-black-300 rounded-lg px-3 w-full md:w-[256px] bg-white h-10 transition hover:border-[#0077ff] cursor-text"
+>
         <GradientPinIcon />
         <input
           type="text"
@@ -244,8 +244,7 @@ const LocationDropdown = () => {
 
       {/* 2. THE DROPDOWN MENU */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-[350px] bg-white border border-gray-200 rounded-md shadow-lg z-50">
-          
+       <div className="absolute top-full left-0 mt-1 w-full md:w-[350px] bg-white border border-gray-200 rounded-md shadow-lg z-50">
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
             <div onClick={handleUseCurrentLocation} className="flex items-center cursor-pointer text-[#3b82f6] hover:opacity-80 transition-opacity">
               <GradientPinIcon />

@@ -14,7 +14,7 @@ export default function Footer() {
   const pathname = usePathname();
     if (pathname.startsWith("/admin")) return null;
   return (
-    <footer className="bg-[#0f172a] text-gray-100 py-12 px-10 mt-10">
+    <footer className="bg-[#0f172a] text-gray-100 py-8 md:py-12 px-5 md:px-10 mt-10">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
         {/* ===== ABOUT SECTION ===== */}
         <div>
@@ -68,7 +68,7 @@ export default function Footer() {
             Stay connected with Rentza for new listings, safety tips, and
             community updates.
           </p>
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-3 md:gap-4">
             <a
               href="#"
               className="p-2 bg-blue-500 rounded-full hover:bg-blue-400 transition"

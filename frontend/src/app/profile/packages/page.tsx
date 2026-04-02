@@ -149,7 +149,7 @@ export default function PackagesPage() {
   }
 
   return (
-    <div className="max-w-[1000px] mx-auto px-5 py-10 pt-[40px] font-['Helvetica_Neue',_Arial,_sans-serif] min-h-screen bg-[#f8f9fa]">
+   <div className="max-w-[1000px] mx-auto px-4 md:px-5 pb-28 md:pb-10 pt-[80px] md:pt-[40px] font-['Helvetica_Neue',_Arial,_sans-serif] min-h-screen bg-[#f8f9fa]">
       <div className="text-center mb-[60px]">
         <h1 className="text-[36px] font-extrabold text-[#002f34] mb-3 tracking-tight">Upgrade your plan</h1>
         <p className="text-lg text-[#666] font-medium">Sell faster with our premium exposure packages</p>
@@ -180,9 +180,9 @@ export default function PackagesPage() {
             <div 
               key={plan.id} 
               onClick={() => { if (!isFreePlan) setSelectedPlan(plan); }}
-              className={`flex-1 bg-white border rounded-2xl p-[35px] relative transition-all duration-300 ease-out 
-                ${isFreePlan ? 'cursor-default opacity-90' : 'cursor-pointer hover:-translate-y-[5px]'} 
-                ${isSelected && !isFreePlan ? 'scale-105 z-10 border-2' : 'scale-100 z-0'}`}
+              className={`flex-1 bg-white border rounded-2xl p-6 md:p-[35px] relative transition-all duration-300 ease-out 
+                ${isFreePlan ? 'cursor-default opacity-90' : 'cursor-pointer hover:-translate-y-[2px] md:hover:-translate-y-[5px]'} 
+                ${isSelected && !isFreePlan ? 'md:scale-105 z-10 border-2' : 'scale-100 z-0'}`}
               style={{
                 borderColor: isSelected && !isFreePlan ? plan.color : '#eaeaea',
                 boxShadow: isSelected && !isFreePlan ? `0 20px 40px -10px ${plan.color}55` : '0 4px 15px rgba(0,0,0,0.03)',
@@ -240,10 +240,10 @@ export default function PackagesPage() {
           <p className="text-[#555] text-lg">Total to pay: <strong className="text-black text-xl">PKR {selectedPlan.price}</strong></p>
         </div>
         
-        <button 
+       <button 
           onClick={handleCheckout}
           disabled={isProcessing || selectedPlan.id === 'free'}
-          className={`py-[16px] px-[45px] text-white text-lg font-bold border-none rounded-xl transition-all flex items-center justify-center gap-3 
+          className={`w-full md:w-auto py-[16px] px-[45px] text-white text-lg font-bold border-none rounded-xl transition-all flex items-center justify-center gap-3 
             ${isProcessing || selectedPlan.id === 'free' 
               ? 'bg-[#ccc] cursor-not-allowed' 
               : 'bg-gradient-to-r from-[#002f34] to-[#005a63] cursor-pointer hover:shadow-xl hover:-translate-y-1'}`}
