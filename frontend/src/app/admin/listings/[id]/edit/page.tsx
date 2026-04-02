@@ -139,13 +139,6 @@ export default function EditListingPage({
     <form onSubmit={handleSaveChanges} className="max-w-7xl mx-auto p-6">
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-8">
-        <Link
-          href={`/admin/listings/${listingId}`}
-          className="p-2 text-black rounded-full hover:bg-gray-100 transition"
-        >
-          <IoMdArrowBack size={24} />
-        </Link>
-
         <div>
           <h1 className="text-2xl font-bold text-[#002f34]">Edit Listing</h1>
           <p className="text-sm text-gray-500">Listing ID: {listingId}</p>

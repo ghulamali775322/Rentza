@@ -218,12 +218,6 @@ export default function ReportDetailsPage({
     <div className="w-full max-w-7xl mx-auto p-6">
       {/* --- HEADER --- */}
       <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.push(`/admin/reports?tab=${tab}`)}
-          className="inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 text-[#002f34] transition-colors"
-        >
-          <IoMdArrowBack size={28} />
-        </button>
         <h1 className="text-3xl font-bold text-[#002f34]">Report Details</h1>
       </div>
 
@@ -345,52 +339,23 @@ export default function ReportDetailsPage({
 
           {/* 🔷 REPORTED ITEM */}
           <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border border-gray-100 p-8">
-            <h3 className="text-lg font-bold text-[#002f34] mb-6">
+            <h3 className="text-lg font-bold text-[#002f34] mb-4">
               Reported Item
             </h3>
 
-            <p className="mt-1 text-sm text-blue-600 hover:underline">
-              {report.reportedItem ? (
-                <Link
-                  href={`/admin/listings/${report.reportedItem.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {report.reportedItem.name}
-                </Link>
-              ) : report.reportedUser ? (
-                <Link
-                  href={`/admin/users/${report.reportedUser.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {report.reportedUser.name}
-                </Link>
-              ) : (
-                "N/A"
-              )}
-            </p>
-
-            <p className="text-xs text-gray-400 mt-1">
-              ID:{" "}
-              {report.reportedItem ? (
-                <Link
-                  href={`/admin/listings/${report.reportedItem.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {report.reportedItem.id}
-                </Link>
-              ) : report.reportedUser ? (
-                <Link
-                  href={`/admin/users/${report.reportedUser.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {report.reportedUser.id}
-                </Link>
-              ) : (
-                "-"
-              )}
-            </p>
+            {report.reportedItem ? (
+              <Link
+                href={`/admin/listings/${report.reportedItem.id}`}
+                className="text-base font-semibold text-blue-600 hover:underline"
+              >
+                {report.reportedItem.name}
+              </Link>
+            ) : (
+              <p className="text-sm text-gray-400">No listing found</p>
+            )}
           </div>
 
+          {/* 🔷 REPORTED USER */}
           {/* 🔷 REPORTED USER */}
           {report.reportedUser && (
             <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border border-gray-100 p-6 md:p-8">
@@ -400,55 +365,56 @@ export default function ReportDetailsPage({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {/* NAME */}
-                <div>
+                <div className="min-w-0 space-y-1">
                   <p className="text-xs text-gray-400 uppercase tracking-wider">
                     Name
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-[#002f34]">
+                  <p className="text-sm font-semibold text-[#002f34] break-words">
                     {report.reportedUser.name}
                   </p>
                 </div>
 
                 {/* EMAIL */}
-                <div>
+                <div className="min-w-0 space-y-1">
                   <p className="text-xs text-gray-400 uppercase tracking-wider">
                     Email
                   </p>
-                  <p className="mt-1 text-sm text-gray-700">
+                  <p className="text-sm text-gray-700 break-all">
                     {report.reportedUser.email}
                   </p>
                 </div>
 
                 {/* PHONE */}
                 {report.reportedUser.phone && (
-                  <div>
+                  <div className="min-w-0 space-y-1">
                     <p className="text-xs text-gray-400 uppercase tracking-wider">
                       Phone
                     </p>
-                    <p className="mt-1 text-sm text-gray-700">
+                    <p className="text-sm text-gray-700 break-words">
                       {report.reportedUser.phone}
                     </p>
                   </div>
                 )}
 
                 {/* USER ID */}
-                <div>
+                <div className="min-w-0 space-y-1">
                   <p className="text-xs text-gray-400 uppercase tracking-wider">
                     User ID
                   </p>
-                  <p className="mt-1 text-sm text-blue-600 hover:underline">
-                    <Link href={`/admin/users/${report.reportedUser.id}`}>
-                      {report.reportedUser.id}
-                    </Link>
-                  </p>
+                  <Link
+                    href={`/admin/users/${report.reportedUser.id}`}
+                    className="text-sm text-blue-600 hover:underline break-all block"
+                  >
+                    {report.reportedUser.id}
+                  </Link>
                 </div>
 
                 {/* STATUS */}
-                <div>
+                <div className="min-w-0 space-y-1">
                   <p className="text-xs text-gray-400 uppercase tracking-wider">
                     Status
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-[#002f34]">
+                  <p className="text-sm font-semibold">
                     <span
                       className={`${
                         report.reportedUser.isActive
@@ -462,11 +428,11 @@ export default function ReportDetailsPage({
                 </div>
 
                 {/* TOTAL REPORTS */}
-                <div>
+                <div className="min-w-0 space-y-1">
                   <p className="text-xs text-gray-400 uppercase tracking-wider">
                     Total Reports
                   </p>
-                  <p className="mt-1 text-sm text-gray-700">
+                  <p className="text-sm text-gray-700">
                     {report.reportedUser.totalReportsAgainstUser || 0}
                   </p>
                 </div>

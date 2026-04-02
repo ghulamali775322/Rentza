@@ -153,12 +153,6 @@ export default function ListingDetailsPage({ params }: Props) {
     <div className="w-full max-w-7xl mx-auto p-6">
       {/* --- HEADER --- */}
       <div className="flex items-center gap-4 mb-8">
-        <Link
-          href={reportId ? `/admin/reports/${reportId}` : "/admin/listings"}
-          className="inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100 text-[#002f34] transition-colors"
-        >
-          <IoMdArrowBack size={28} />
-        </Link>
         <h1 className="text-3xl font-bold text-[#002f34]">
           {isPending ? "Review Pending Listing" : "Listing Details"}
         </h1>

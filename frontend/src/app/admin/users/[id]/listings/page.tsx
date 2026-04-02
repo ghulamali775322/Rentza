@@ -45,10 +45,6 @@ export default function UserListingsPage({
     <div className="w-full max-w-7xl mx-auto p-6">
       {/* --- HEADER ROW --- */}
       <div className="flex text-black items-center gap-4 mb-8">
-        {/* Back button goes back to the specific user's detail page */}
-        <Link href={`/admin/users/${userId}`}>
-          <IoMdArrowBack size={28} />
-        </Link>
         <h2 className="text-3xl font-bold text-[#002f34]">
           {userName}'s Listings
         </h2>
