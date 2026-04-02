@@ -205,7 +205,7 @@ export default function EditProfilePage() {
           Profile Photo
         </label>
 
-        <div className="flex items-center gap-5 mb-5 pb-2.5">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-5 mb-5 pb-2.5 text-center md:text-left">
           <div className="relative w-[90px] h-[90px] rounded-full bg-[#007bff] flex items-center justify-center text-white text-4xl font-bold overflow-hidden">
             {profileImageUrl ? (
               <img
@@ -218,7 +218,7 @@ export default function EditProfilePage() {
             )}
           </div>
 
-          <div className="flex flex-col gap-[5px] mt-[30px]">
+          <div className="flex flex-col items-center md:items-start gap-[5px] mt-2 md:mt-[30px]">
             <div className="flex items-center">
               <label className="bg-[#002f34] text-white rounded-md py-2.5 px-5 text-sm font-semibold cursor-pointer hover:bg-[#005861]">
                 Upload Photo
@@ -293,7 +293,7 @@ export default function EditProfilePage() {
             <p className="text-red-500 text-sm mb-3">{errors.phone}</p>
           )}
 
-          <div className="flex justify-between items-center mt-[30px]">
+         <div className="flex flex-col-reverse md:flex-row justify-between items-center mt-[30px] gap-4 pb-24 md:pb-0">
             <Link
               href="/"
               className="text-lg font-semibold text-[#002f34] underline py-3 hover:text-[#e00]"
@@ -301,10 +301,10 @@ export default function EditProfilePage() {
               Discard
             </Link>
 
-            <button
+           <button
               type="submit"
               disabled={saving}
-              className={`w-[180px] py-3 text-white font-bold rounded ${
+              className={`w-full md:w-[180px] py-3 text-white font-bold rounded ${
                 saving
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#002f34] hover:bg-[#004d55]"

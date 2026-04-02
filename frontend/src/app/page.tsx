@@ -155,7 +155,7 @@ export default function Home() {
     if (categoryItems.length === 0) return null;
 
     return (
-      <section className="px-10 py-6 bg-white">
+      <section className="px-4 md:px-10 py-6 bg-white">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-900">{mainCategoryData.name}</h2>
           <Link 
@@ -165,11 +165,15 @@ export default function Home() {
             View All
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {categoryItems.map((item) => (
-            <ListingCard key={item._id} data={item} /> 
-          ))}
-        </div>
+       {/* Notice we added 'flex md:grid' so it swipes on phones but stays a grid on laptops! */}
+<div className="flex md:grid md:grid-cols-4 gap-4 md:gap-6 overflow-x-auto pb-4 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+  {categoryItems.map((item) => (
+    /* We lock the width to 200px on mobile, but let it fill the grid automatically on desktop (md:w-auto) */
+    <div key={item._id} className="w-[200px] sm:w-[250px] md:w-auto flex-shrink-0 snap-start">
+      <ListingCard data={item} /> 
+    </div>
+  ))}
+</div>
       </section>
     );
   };
@@ -178,7 +182,7 @@ export default function Home() {
     <div className="relative border-t border-gray-200 bg-white z-10">
       
       {/* ======= CATEGORY BAR ======= */}
-      <div className="flex items-center gap-6 px-10 py-3 text-gray-800 text-[15px] font-medium overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex items-center gap-3 md:gap-6 px-4 md:px-10 py-3 text-gray-800 text-[15px] font-medium overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <button
           ref={buttonRef}
           onClick={() => setIsOpen((prev) => !prev)}
@@ -205,8 +209,8 @@ export default function Home() {
       {/* ======= DROPDOWN (Accordion Style) ======= */}
       {isOpen && (
         <div
-          ref={dropdownRef}
-          className="absolute left-10 w-[350px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-lg border border-gray-100 z-20"
+  ref={dropdownRef}
+  className="absolute left-4 md:left-10 w-[calc(100vw-32px)] md:w-[350px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-lg border border-gray-100 z-20"
           style={{ top: dropdownTop }}
         >
           <ul className="max-h-[65vh] overflow-y-auto p-2 custom-scrollbar">
@@ -253,27 +257,31 @@ export default function Home() {
         </div>
       )}
 
-      {/* ======= POPULAR CATEGORIES ======= */}
-      <section className="px-10 py-6 bg-gray-50">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {CATEGORIES_DATA.map((cat) => (
-            <Link key={cat.name} href={`/search?category=${encodeURIComponent(cat.name)}`} className="contents">
-              <div className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-500 transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:bg-blue-50">
-                {/* The container stays exactly 70px. The white card will NOT change size. */}
-<div className="w-[70px] h-[70px] mb-5 flex items-center justify-center">
-  <img 
-    src={cat.image} 
-    alt={cat.name} 
-    className="w-full h-full object-contain drop-shadow-md scale-180" 
-  />
-</div>
-                <p className="text-gray-800 font-medium text-sm text-center">{cat.name}</p>
-              </div>
-            </Link>
-          ))}
+     {/* ======= POPULAR CATEGORIES ======= */}
+      <section className="px-4 md:px-10 py-6 bg-gray-50">
+       
+<div className="grid grid-rows-2 grid-flow-col auto-cols-[110px] md:grid-rows-none md:grid-flow-row md:grid-cols-6 gap-3 md:gap-6 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 snap-x [&::-webkit-scrollbar]:hidden">
+  {CATEGORIES_DATA.map((cat) => (
+    <Link key={cat.name} href={`/search?category=${encodeURIComponent(cat.name)}`} className="snap-start h-full">
+      <div className="flex flex-col items-center justify-center bg-white p-3 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 transition-all duration-300 cursor-pointer h-full">
+        
+        {/* Responsive Icon Sizes */}
+        <div className="w-[40px] h-[40px] md:w-[70px] md:h-[70px] mb-2 md:mb-5 flex items-center justify-center">
+          <img 
+            src={cat.image} 
+            alt={cat.name} 
+            className="w-full h-full object-contain scale-125 md:scale-180" 
+          />
         </div>
-      </section>
 
+        <p className="text-gray-800 font-medium text-[10px] md:text-sm text-center leading-tight">
+          {cat.name}
+        </p>
+      </div>
+    </Link>
+  ))}
+</div>
+      </section>
       {/* ======= RECENT LISTINGS ======= */}
       {isLoading ? (
         <div 
@@ -296,7 +304,7 @@ export default function Home() {
       )}
 
       {/* ======= SAFETY GUIDELINES ======= */}
-      <section className="px-10 py-12 bg-gray-50">
+      <section className="px-4 md:px-10 py-12 bg-gray-50">
         <h2 className="text-2xl font-semibold text-center text-gray-900 mb-10">Safety Guidelines</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-500 hover:-translate-y-2 hover:bg-blue-50 transition-all duration-300">

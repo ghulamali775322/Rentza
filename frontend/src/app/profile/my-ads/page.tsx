@@ -111,9 +111,9 @@ export default function MyAdsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-[1200px] mx-auto py-10 px-5 min-h-screen pt-[30px]">
-        <div className="border-b border-[#eee] pb-[25px] mb-[30px]">
-          <h1 className="text-[32px] font-bold text-[#002f34] mb-[25px]">Manage and view your Ads</h1>
+     <div className="max-w-[1200px] mx-auto py-10 px-5 min-h-screen pt-[80px] md:pt-[30px] pb-24 md:pb-10">
+        <div className="border-b border-[#eee] pb-[20px] md:pb-[25px] mb-[20px] md:mb-[30px]">
+          <h1 className="text-[24px] md:text-[32px] font-bold text-[#002f34] mb-[20px] md:mb-[25px] leading-tight">Manage and view your Ads</h1>
 
           <div className="flex items-center max-w-[500px] mb-5 border border-[#ddd] rounded-md bg-white transition-all duration-200 hover:border-[#007bff] ">
             <FiSearch size={22} className="ml-[15px] text-black" />
@@ -126,19 +126,20 @@ export default function MyAdsPage() {
             />
           </div>
 
-          <div className="flex gap-[15px] flex-wrap">
+          {/* Changed to flex-row for BOTH mobile and desktop, with flex-1 so they sit side-by-side! */}
+          <div className="flex flex-row gap-2 sm:gap-[15px]">
             <button
               onClick={() => setActiveFilter("active")}
-              className={`${tabButtonBase} ${activeFilter === "active" ? tabButtonActive : tabButtonInactive}`}
+              className={`flex-1 sm:flex-none text-[12px] sm:text-sm px-1 sm:px-[15px] ${tabButtonBase} ${activeFilter === "active" ? tabButtonActive : tabButtonInactive}`}
             >
-              Active Ads ({activeAds.length})
+              Active ({activeAds.length})
             </button>
             <button
               onClick={() => setActiveFilter("pending")}
-              className={`${tabButtonBase} flex items-center gap-2 ${activeFilter === "pending" ? tabButtonActive : tabButtonInactive}`}
+              className={`flex-1 sm:flex-none text-[12px] sm:text-sm px-1 sm:px-[15px] flex items-center justify-center sm:justify-start gap-1 ${tabButtonBase} ${activeFilter === "pending" ? tabButtonActive : tabButtonInactive}`}
             >
-              {pendingAds.length > 0 && <FiAlertCircle className={activeFilter === "pending" ? "text-white" : "text-red-500"} />}
-              Pending / Action Required ({pendingAds.length})
+              {pendingAds.length > 0 && <FiAlertCircle size={14} className={activeFilter === "pending" ? "text-white" : "text-red-500"} />}
+              <span>Pending <span className="hidden sm:inline">/ Action</span> ({pendingAds.length})</span>
             </button>
           </div>
         </div>

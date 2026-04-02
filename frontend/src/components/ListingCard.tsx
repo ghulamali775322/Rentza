@@ -25,7 +25,7 @@ export default function ListingCard({ data }: ListingProps) {
       onClick={() => sessionStorage.setItem('homeScrollPos', window.scrollY.toString())}
     >
       <div className="border border-gray-200 rounded-md overflow-hidden hover:shadow-lg transition-shadow bg-white group cursor-pointer h-full flex flex-col">
-        <div className="relative h-40 w-full bg-gray-100 flex-shrink-0">
+        <div className="relative h-32 sm:h-40 w-full bg-gray-100 flex-shrink-0">
           <img 
             src={displayImage} 
             alt={data.title} 
@@ -33,11 +33,11 @@ export default function ListingCard({ data }: ListingProps) {
           />
           {/* The Hover Heart Button was completely removed from right here! */}
         </div>
-        <div className="p-3 flex flex-col flex-grow justify-between">
+        <div className="p-2 sm:p-3 flex flex-col flex-grow justify-between">
           <div>
-            <h3 className="font-bold text-lg text-gray-900">
-              PKR {data.price.toLocaleString()} <span className="text-sm font-normal text-gray-500">/ day</span>
-            </h3>
+            <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">
+  PKR {data.price.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal text-gray-500">/ day</span>
+</h3>
             <p className="text-gray-600 text-sm mt-1 truncate">{data.title}</p>
           </div>
           <div className="flex justify-between items-center mt-3 text-xs text-gray-400">

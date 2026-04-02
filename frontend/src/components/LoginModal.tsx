@@ -492,7 +492,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
   return createPortal(
     <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/60 flex justify-center items-center z-[999] p-5">
       {/* ModalContainer */}
-      <div className="bg-white rounded-xl w-[850px] max-w-full h-[550px] flex overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.2)] relative max-md:w-[400px] max-md:h-auto max-md:min-h-[500px]">
+      <div className="bg-white rounded-xl w-full max-w-[400px] md:max-w-none md:w-[850px] h-auto min-h-[500px] md:h-[550px] max-h-[90vh] flex overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.2)] relative">
         {/* LEFT PANEL: BRANDING */}
         <div className="flex-1 bg-gradient-to-br from-[#002f34] to-[#004d55] p-10 flex flex-col justify-center items-start text-white relative max-md:hidden">
           <h1 className="text-4xl font-extrabold mb-4 leading-tight">
@@ -516,7 +516,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
         </div>
 
         {/* RIGHT PANEL: FORM */}
-        <div className="flex-1 p-10 flex flex-col justify-start pt-[60px] relative overflow-y-auto">
+       <div className="flex-1 p-5 md:p-10 flex flex-col justify-start pt-[60px] md:pt-[60px] relative overflow-y-auto">
           <button
             onClick={() => window.history.back()}
             className="absolute top-4 right-4 z-10 bg-transparent border-none cursor-pointer p-1 w-8 h-8 flex items-center justify-center text-[28px] text-[#555] leading-none hover:text-black hover:bg-[#f5f5f5] hover:rounded-full"

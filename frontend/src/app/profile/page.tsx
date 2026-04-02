@@ -39,7 +39,7 @@ export default function PublicProfilePage() {
     <ProtectedRoute>
       // ProfileContainer: max-w-1100px, margin auto, px-5 py-10, pt-30px,
       min-h-screen, bg-gray, flex, gap-30px
-      <div className="max-w-[1100px] mx-auto px-5 py-10 pt-[30px] min-h-screen bg-[#f8f9fa] flex gap-[30px] max-md:flex-col">
+      <div className="max-w-[1100px] mx-auto px-5 pt-[100px] pb-24 md:py-10 md:pt-[30px] min-h-screen bg-[#f8f9fa] flex gap-[30px] max-md:flex-col">
         {/* --- LEFT COLUMN: User Details (UserCard) --- */}
         {/* width 350px, bg-white, border, rounded, p-30px 20px, height-fit, text-center */}
         <div className="w-[350px] bg-white border border-[#dedede] rounded p-[30px_20px] h-fit text-center max-md:w-full">
@@ -64,9 +64,9 @@ export default function PublicProfilePage() {
           <hr className=" border-t border-[#eee] my-5" />
 
           {/* ShareButton */}
-          <button
+         <button
             onClick={() => alert("Link copied to clipboard!")}
-            className="w-[80%] p-3 bg-white border border-[#002f34] text-[#002f34] font-bold rounded-md mt-[15px] flex items-center justify-center gap-[10px] cursor-pointer text-base transition-all duration-200 mx-auto hover:bg-[#002f34] hover:text-white"
+            className="w-full md:w-[80%] p-3 bg-white border border-[#002f34] text-[#002f34] font-bold rounded-md mt-[15px] flex items-center justify-center gap-[10px] cursor-pointer text-base transition-all duration-200 mx-auto hover:bg-[#002f34] hover:text-white"
           >
             <FiShare2 className="text-xl" />
             Share user profile
