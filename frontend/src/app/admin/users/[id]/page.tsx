@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { IoMdArrowBack } from "react-icons/io";
@@ -138,9 +138,6 @@ export default function UserDetailsPage({
     <div className="w-full max-w-7xl mx-auto p-6">
       {/* --- HEADER ROW --- */}
       <div className="flex text-black items-center gap-4 mb-8">
-        <Link href={reportId ? `/admin/reports/${reportId}` : "/admin/users"}>
-          <IoMdArrowBack size={28} />
-        </Link>
         <h1 className="text-3xl font-bold text-[#002f34]">User Details</h1>
       </div>
 

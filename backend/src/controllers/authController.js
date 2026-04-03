@@ -48,7 +48,10 @@ export const googleLogin = async (req, res) => {
     return res.json(result);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Server error" });
+
+    return res
+      .status(err.status || 500)
+      .json({ message: err.message || "Server error" });
   }
 };
 

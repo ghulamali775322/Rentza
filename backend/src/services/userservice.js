@@ -103,11 +103,18 @@ export const getAdminUserListingsService = async (userId) => {
 
 // Admin Panel: Suspend or Unsuspend a user
 export const updateUserStatusService = async (userId, isActiveStatus) => {
+  // 1️⃣ Update user status
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { isActive: isActiveStatus },
     { new: true },
   ).select("-passwordHash -verificationToken -resetPasswordToken");
+
+  // 2️⃣ Deactivate or reactivate user's listings
+  await Listing.updateMany(
+    { lenderId: userId },
+    { status: isActiveStatus ? "active" : "inactive" }, // Set status accordingly
+  );
 
   return updatedUser;
 };
