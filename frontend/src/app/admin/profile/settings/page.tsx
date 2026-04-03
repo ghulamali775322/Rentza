@@ -8,7 +8,12 @@ import { signOut } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function SettingsPage() {
   const { data: session } = useSession(); // Google login
 
@@ -38,11 +43,9 @@ export default function SettingsPage() {
 
   const [loading, setLoading] = useState(false);
   const [currentPasswordError, setCurrentPasswordError] = useState("");
-  const [apiError, setApiError] = useState("");
-  const [apiSuccess, setApiSuccess] = useState("");
+  
+  // 2. MODAL STATE FOR DELETING ACCOUNT
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +54,6 @@ export default function SettingsPage() {
     setCurrentPasswordError("");
     setNewPasswordError("");
     setConfirmPasswordError("");
-    setApiError("");
-    setApiSuccess("");
 
     // Frontend validations
     if (!currentPassword)
@@ -94,11 +95,11 @@ export default function SettingsPage() {
         } else if (data.message?.toLowerCase().includes("length")) {
           setNewPasswordError(data.message);
         } else {
-          setApiError(data.message || "Failed to update password");
+          toast.error(data.message || "Failed to update password"); // REPLACED INLINE ERROR
         }
       } else {
         // Success
-        setApiSuccess(data.message || "Password updated successfully");
+        toast.success(data.message || "Password updated successfully"); // REPLACED INLINE SUCCESS
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -107,16 +108,13 @@ export default function SettingsPage() {
         setShowConfirmPassword(false);
       }
     } catch (err: any) {
-      setApiError(err.message || "Server error");
+      toast.error(err.message || "Server error"); // REPLACED INLINE ERROR
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    setDeleteError("");
-    setDeleteLoading(true);
-
     try {
       let headers: any = {
         "Content-Type": "application/json",
@@ -142,7 +140,7 @@ export default function SettingsPage() {
       }
 
       // ✅ SUCCESS → LOGOUT + REDIRECT
-      alert("Account deleted successfully");
+      toast.success("Account deleted successfully"); // REPLACED ALERT WITH TOAST
 
       // Email logout
       localStorage.removeItem("token");
@@ -157,11 +155,10 @@ export default function SettingsPage() {
       // Redirect
       router.push("/");
     } catch (err: any) {
-      setDeleteError(err.message);
-    } finally {
-      setDeleteLoading(false);
+      toast.error(err.message || "Failed to delete account"); // REPLACED STATE ERROR
     }
   };
+
   // Tailwind classes
   const contentBoxClass =
     "bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.05)] mb-[30px] p-[30px]";
@@ -316,17 +313,6 @@ export default function SettingsPage() {
               </p>
             )}
 
-            {apiError && (
-              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                <FiAlertCircle size={12} /> {apiError}
-              </p>
-            )}
-
-            {apiSuccess && (
-              <p className="text-green-600 text-xs mt-1 flex items-center gap-1">
-                {apiSuccess}
-              </p>
-            )}
             <div className="flex justify-center mt-4">
               <button
                 type="submit"
@@ -365,41 +351,19 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
-            <h3 className="text-lg font-semibold text-red-600 mb-2">
-              Delete Account
-            </h3>
 
-            <p className="text-sm text-gray-600 mb-4">
-              Are you absolutely sure? This action cannot be undone. All your
-              data will be permanently deleted.
-            </p>
+      {/* 4. OUR NEW DELETE CONFIRMATION MODAL */}
+      <ConfirmModal 
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you absolutely sure? This action cannot be undone. All your data will be permanently deleted."
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDestructive={true} 
+      />
 
-            {deleteError && (
-              <p className="text-red-500 text-sm mb-3">{deleteError}</p>
-            )}
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteLoading}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:bg-gray-400"
-              >
-                {deleteLoading ? "Deleting..." : "Yes, Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

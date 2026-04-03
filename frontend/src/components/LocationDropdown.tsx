@@ -3,7 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { FiMapPin, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// 1. Your Custom Beautiful Gradient Pin!
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
+// Your Custom Beautiful Gradient Pin!
 const GradientPinIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 shrink-0">
     <defs>
@@ -29,6 +32,7 @@ const LocationDropdown = () => {
   
   // --- State for Google Maps suggestions ---
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  
   // 1. Handle clicking outside the dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,7 +61,7 @@ const LocationDropdown = () => {
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      toast.error("Geolocation is not supported by your browser."); // REPLACED ALERT
       return;
     }
 
@@ -78,7 +82,7 @@ const LocationDropdown = () => {
         
         try {
           if (googleKey) {
-            //  CALLING THE GOOGLE MAPS GEOCODING API
+            // CALLING THE GOOGLE MAPS GEOCODING API
             const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleKey}`);
             const data = await res.json();
             
@@ -134,7 +138,7 @@ const LocationDropdown = () => {
       },
       (error) => {
         if (error.code === error.PERMISSION_DENIED) {
-          alert("Please allow location access in your browser to use this feature.");
+          toast.error("Please allow location access in your browser to use this feature."); // REPLACED ALERT
           setSelectedLocation("Pakistan"); 
         }
       },
@@ -184,13 +188,13 @@ const LocationDropdown = () => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+   <div className="relative w-full md:w-[256px]" ref={dropdownRef}>
       
       {/* 1. THE VISIBLE BOX */}
       <div 
-        onClick={() => setIsOpen(true)}
-        className="flex items-center border border-black-300 rounded-lg px-3 w-64 bg-white h-10 transition hover:border-[#0077ff] cursor-text"
-      >
+  onClick={() => setIsOpen(true)}
+className="flex items-center border border-black-300 rounded-lg px-3 w-full md:w-[256px] bg-white h-10 transition hover:border-[#0077ff] cursor-text"
+>
         <GradientPinIcon />
         <input
           type="text"
@@ -240,8 +244,7 @@ const LocationDropdown = () => {
 
       {/* 2. THE DROPDOWN MENU */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-[350px] bg-white border border-gray-200 rounded-md shadow-lg z-50">
-          
+       <div className="absolute top-full left-0 mt-1 w-full md:w-[350px] bg-white border border-gray-200 rounded-md shadow-lg z-50">
           <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
             <div onClick={handleUseCurrentLocation} className="flex items-center cursor-pointer text-[#3b82f6] hover:opacity-80 transition-opacity">
               <GradientPinIcon />

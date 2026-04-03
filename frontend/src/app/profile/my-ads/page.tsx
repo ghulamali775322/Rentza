@@ -7,6 +7,10 @@ import ListingCard from "@/components/ListingCard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Link from "next/link";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 export default function MyAdsPage() {
   const { data: session } = useSession();
 
@@ -14,6 +18,10 @@ export default function MyAdsPage() {
   const [activeFilter, setActiveFilter] = useState("active");
   const [myListings, setMyListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 2. MODAL STATE FOR DELETING ADS
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMyAds = async () => {
@@ -45,8 +53,15 @@ export default function MyAdsPage() {
     fetchMyAds();
   }, [session]);
 
-  const handleDelete = async (listingId: string) => {
-    if (!window.confirm("Are you sure you want to permanently delete this ad?")) return;
+  // 3. SPLIT DELETE FUNCTION: Step A - Open Modal
+  const confirmDelete = (listingId: string) => {
+    setListingToDelete(listingId);
+    setIsDeleteModalOpen(true);
+  };
+
+  // 3. SPLIT DELETE FUNCTION: Step B - Execute Deletion
+  const executeDelete = async () => {
+    if (!listingToDelete) return;
 
     try {
       const localToken = localStorage.getItem("token");
@@ -55,7 +70,7 @@ export default function MyAdsPage() {
       if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
       else if (session?.user?.email) headers["x-google-email"] = session.user.email;
 
-      const response = await fetch(`http://localhost:5000/api/listings/${listingId}`, {
+      const response = await fetch(`http://localhost:5000/api/listings/${listingToDelete}`, {
         method: "DELETE",
         headers: headers,
         credentials: "include",
@@ -64,14 +79,16 @@ export default function MyAdsPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setMyListings((prevListings) => prevListings.filter((ad) => ad._id !== listingId));
-        alert("Ad deleted successfully!");
+        setMyListings((prevListings) => prevListings.filter((ad) => ad._id !== listingToDelete));
+        toast.success("Ad deleted successfully!"); // Replaced alert
       } else {
-        alert(result.message || "Failed to delete ad.");
+        toast.error(result.message || "Failed to delete ad."); // Replaced alert
       }
     } catch (error) {
       console.error("Error deleting ad:", error);
-      alert("An error occurred while deleting the ad.");
+      toast.error("An error occurred while deleting the ad."); // Replaced alert
+    } finally {
+      setListingToDelete(null); // Clean up state
     }
   };
 
@@ -94,9 +111,9 @@ export default function MyAdsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-[1200px] mx-auto py-10 px-5 min-h-screen pt-[30px]">
-        <div className="border-b border-[#eee] pb-[25px] mb-[30px]">
-          <h1 className="text-[32px] font-bold text-[#002f34] mb-[25px]">Manage and view your Ads</h1>
+     <div className="max-w-[1200px] mx-auto py-10 px-5 min-h-screen pt-[80px] md:pt-[30px] pb-24 md:pb-10">
+        <div className="border-b border-[#eee] pb-[20px] md:pb-[25px] mb-[20px] md:mb-[30px]">
+          <h1 className="text-[24px] md:text-[32px] font-bold text-[#002f34] mb-[20px] md:mb-[25px] leading-tight">Manage and view your Ads</h1>
 
           <div className="flex items-center max-w-[500px] mb-5 border border-[#ddd] rounded-md bg-white transition-all duration-200 hover:border-[#007bff] ">
             <FiSearch size={22} className="ml-[15px] text-black" />
@@ -109,19 +126,20 @@ export default function MyAdsPage() {
             />
           </div>
 
-          <div className="flex gap-[15px] flex-wrap">
+          {/* Changed to flex-row for BOTH mobile and desktop, with flex-1 so they sit side-by-side! */}
+          <div className="flex flex-row gap-2 sm:gap-[15px]">
             <button
               onClick={() => setActiveFilter("active")}
-              className={`${tabButtonBase} ${activeFilter === "active" ? tabButtonActive : tabButtonInactive}`}
+              className={`flex-1 sm:flex-none text-[12px] sm:text-sm px-1 sm:px-[15px] ${tabButtonBase} ${activeFilter === "active" ? tabButtonActive : tabButtonInactive}`}
             >
-              Active Ads ({activeAds.length})
+              Active ({activeAds.length})
             </button>
             <button
               onClick={() => setActiveFilter("pending")}
-              className={`${tabButtonBase} flex items-center gap-2 ${activeFilter === "pending" ? tabButtonActive : tabButtonInactive}`}
+              className={`flex-1 sm:flex-none text-[12px] sm:text-sm px-1 sm:px-[15px] flex items-center justify-center sm:justify-start gap-1 ${tabButtonBase} ${activeFilter === "pending" ? tabButtonActive : tabButtonInactive}`}
             >
-              {pendingAds.length > 0 && <FiAlertCircle className={activeFilter === "pending" ? "text-white" : "text-red-500"} />}
-              Pending / Action Required ({pendingAds.length})
+              {pendingAds.length > 0 && <FiAlertCircle size={14} className={activeFilter === "pending" ? "text-white" : "text-red-500"} />}
+              <span>Pending <span className="hidden sm:inline">/ Action</span> ({pendingAds.length})</span>
             </button>
           </div>
         </div>
@@ -152,7 +170,7 @@ export default function MyAdsPage() {
                   )}
 
                   <button
-                    onClick={() => handleDelete(item._id)}
+                    onClick={() => confirmDelete(item._id)}
                     className="mt-2 flex items-center justify-center gap-2 w-full py-2 bg-white border border-red-500 text-red-600 font-semibold rounded-md transition-colors hover:bg-red-500 hover:text-white"
                   >
                     <FiTrash2 size={18} /> Delete Ad
@@ -173,6 +191,19 @@ export default function MyAdsPage() {
           )}
         </div>
       </div>
+
+      {/* 4. OUR NEW DELETE CONFIRMATION MODAL */}
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={executeDelete}
+        title="Delete Ad"
+        message="Are you sure you want to permanently delete this ad? This action cannot be undone."
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDestructive={true} // Makes the button red!
+      />
+
     </ProtectedRoute>
   );
 }

@@ -6,7 +6,12 @@ import { IoMdArrowBack } from "react-icons/io";
 import { FiImage } from "react-icons/fi";
 
 import { getUserListings, getUserDetails } from "@/app/api/admin/users";
+
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function UserListingsPage({
   params,
 }: {
@@ -31,6 +36,8 @@ export default function UserListingsPage({
         setUserName(resUser.data?.data?.name || "User");
       } catch (err) {
         console.error("Failed to fetch listings:", err);
+        // 2. ADDED TOAST FOR API FAILURE
+        toast.error("Failed to load user listings.");
         setListings([]);
         setUserName("User");
       } finally {

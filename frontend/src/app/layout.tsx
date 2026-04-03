@@ -11,6 +11,9 @@ import { AuthProvider } from "@/context/AuthContext";
 import { UserProvider } from "@/context/UserContext";
 import UserInitializer from "@/components/UserInitializer";
 
+// 1. ADD THIS IMPORT
+import { Toaster } from "react-hot-toast"; 
+
 export const metadata: Metadata = {
   title: "Rentza - Rent Anything, Anytime",
   description:
@@ -33,6 +36,37 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <UserProvider>
             <AuthProvider>
               <Providers>
+                
+                {/* 2. ADD THE TOASTER HERE */}
+                
+<Toaster 
+  position="top-center" 
+  toastOptions={{
+    duration: 4000,
+    style: {
+      border: '1px solid #edf2f7',
+      padding: '16px 20px',
+      color: '#002f34', // Your brand text color
+      fontWeight: '600',
+      fontSize: '15px',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+      borderRadius: '12px',
+    },
+    success: {
+      iconTheme: {
+        primary: '#10b981', // A modern, vibrant green
+        secondary: '#ffffff',
+      },
+    },
+    error: {
+      iconTheme: {
+        primary: '#ef4444', // A crisp red
+        secondary: '#ffffff',
+      },
+    },
+  }} 
+/>
+
                 <UserInitializer />
                 {/* Navbar */}
                 <Navbar />

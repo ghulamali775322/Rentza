@@ -7,7 +7,12 @@ import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function SettingsPage() {
   const { data: session } = useSession(); // Google login
 
@@ -36,10 +41,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [apiError, setApiError] = useState("");
-  const [apiSuccess, setApiSuccess] = useState("");
+  
+  // 2. MODAL STATE FOR DELETING ACCOUNT
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -48,7 +53,6 @@ export default function SettingsPage() {
     setNewPasswordError("");
     setConfirmPasswordError("");
     setApiError("");
-    setApiSuccess("");
 
     // Frontend validations
     if (!currentPassword)
@@ -95,7 +99,7 @@ export default function SettingsPage() {
         }
       } else {
         // Success
-        setApiSuccess(data.message || "Password updated successfully");
+        toast.success(data.message || "Password updated successfully"); // REPLACED INLINE SUCCESS WITH TOAST
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -111,9 +115,6 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    setDeleteError("");
-    setDeleteLoading(true);
-
     try {
       let headers: any = {
         "Content-Type": "application/json",
@@ -142,7 +143,7 @@ export default function SettingsPage() {
       }
 
       // ✅ SUCCESS → LOGOUT + REDIRECT
-      alert("Account deleted successfully");
+      toast.success("Account deleted successfully"); // REPLACED ALERT WITH TOAST
 
       // Email logout
       localStorage.removeItem("token");
@@ -155,26 +156,13 @@ export default function SettingsPage() {
       // Redirect
       window.location.href = "/";
     } catch (err: any) {
-      setDeleteError(err.message);
-    } finally {
-      setDeleteLoading(false);
+      toast.error(err.message || "Failed to delete account"); // REPLACED STATE ERROR WITH TOAST
     }
   };
-  // Tailwind classes
-  const contentBoxClass =
-    "bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.05)] mb-[30px] p-[30px]";
-  const sectionTitleClass = "text-2xl font-bold text-[#002f34] mb-[25px]";
-  const inputBaseClass =
-    "w-full py-3 px-[15px] border rounded text-base box-border mb-2.5 bg-white focus:outline-none focus:border-[#007bff]";
-  const passwordToggleBtnClass =
-    "absolute top-1/2 right-3 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[#888] text-xl hover:text-[#007bff]";
-  const errorMessageClass =
-    "text-xs text-[#e30000] -mt-2 mb-[15px] flex items-center gap-[5px]";
-  const passwordReqClass = "text-xs mb-[5px] flex items-center gap-[5px]";
 
   return (
     <ProtectedRoute>
-      <div className="max-w-[900px] mx-auto px-5 py-10 bg-[#f5f5f5] min-h-[calc(100vh-80px)]">
+      <div className="max-w-[900px] mx-auto px-5 pt-[100px] pb-[100px] md:py-10 bg-[#f5f5f5] min-h-[calc(100vh-80px)]">
         {/* ---------------- SECURITY SECTION ---------------- */}
         {isEmailUser && (
           <div className="bg-white text-black rounded-xl shadow-sm border border-[#eee] mb-8 p-6">
@@ -323,16 +311,11 @@ export default function SettingsPage() {
                 </p>
               )}
 
-              {apiSuccess && (
-                <p className="text-green-600 text-xs mt-1 flex items-center gap-1">
-                  {apiSuccess}
-                </p>
-              )}
               <div className="flex justify-center mt-4">
                 <button
                   type="submit"
                   disabled={loading || !isNewPasswordValid || !passwordsMatch}
-                  className={`bg-[#002f34] text-white px-6 py-2 rounded-md font-semibold hover:bg-[#004d55] disabled:bg-gray-400`}
+                  className={`w-full md:w-auto bg-[#002f34] text-white px-6 py-3 md:py-2 rounded-md font-semibold hover:bg-[#004d55] disabled:bg-gray-400`}
                 >
                   {loading ? "Updating..." : "Update Password"}
                 </button>
@@ -352,7 +335,8 @@ export default function SettingsPage() {
             and profile information will be removed.
           </p>
 
-          <div className="border border-red-300 bg-red-50 p-4 rounded-md flex justify-between items-center">
+         
+          <div className="border border-red-300 bg-red-50 p-4 rounded-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
             <div>
               <p className="font-medium text-red-700">Delete your account</p>
               <p className="text-xs text-red-600">
@@ -369,41 +353,19 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
-              <h3 className="text-lg font-semibold text-red-600 mb-2">
-                Delete Account
-              </h3>
 
-              <p className="text-sm text-gray-600 mb-4">
-                Are you absolutely sure? This action cannot be undone. All your
-                listings and data will be permanently deleted.
-              </p>
+        {/* 4. OUR NEW DELETE CONFIRMATION MODAL */}
+        <ConfirmModal 
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteAccount}
+          title="Delete Account"
+          message="Are you absolutely sure? This action cannot be undone. All your listings and data will be permanently deleted."
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+          isDestructive={true} // Makes the button red!
+        />
 
-              {deleteError && (
-                <p className="text-red-500 text-sm mb-3">{deleteError}</p>
-              )}
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleDeleteAccount}
-                  disabled={deleteLoading}
-                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:bg-gray-400"
-                >
-                  {deleteLoading ? "Deleting..." : "Yes, Delete"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </ProtectedRoute>
   );

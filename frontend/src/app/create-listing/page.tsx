@@ -15,19 +15,23 @@ import { GiHammerNails, GiClothes } from "react-icons/gi";
 import { TbBike } from "react-icons/tb";
 import { MdOutlineDevices } from "react-icons/md";
 
+// 1. IMPORT TOAST AND OUR NEW MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 // --- MASTER DICTIONARY (Synced with Homepage/Search) ---
 const CATEGORIES = [
-  { id: "mobiles", name: "Mobiles", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
-  { id: "vehicles", name: "Vehicles", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
-  { id: "property", name: "Property for Rent", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
-  { id: "electronics", name: "Electronics & Home Appliances", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
-  { id: "bikes", name: "Bikes", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
-  { id: "business", name: "Business, Industrial & Agriculture", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
-  { id: "furniture", name: "Furniture & Home Decor", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
-  { id: "fashion", name: "Fashion & Beauty", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
-  { id: "sports", name: "Books, Sports & Hobbies", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
-  { id: "outdoor", name: "Outdoor Equipment", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
-  { id: "other", name: "Other", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous", "Events"] },
+  { id: "mobiles", name: "Mobiles", image: "/categories/mobile.png", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
+  { id: "vehicles", name: "Vehicles", image: "/categories/car.png", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
+  { id: "property", name: "Property for Rent", image: "/categories/rent.png", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
+  { id: "electronics", name: "Electronics & Home Appliances", image: "/categories/electronic.png", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
+  { id: "bikes", name: "Bikes", image: "/categories/bike.png", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
+  { id: "business", name: "Business, Industrial & Agriculture", image: "/categories/tractor.png", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
+  { id: "furniture", name: "Furniture & Home Decor", image: "/categories/furniture.png", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
+  { id: "fashion", name: "Fashion & Beauty", image: "/categories/fashion.png", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
+  { id: "sports", name: "Books, Sports & Hobbies", image: "/categories/book.png", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
+  { id: "outdoor", name: "Outdoor Equipment", image: "/categories/outdoor.png", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
+  { id: "other", name: "Other", image: "/categories/other.png", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous", "Events"] },
 ];
 
 export default function CreateListingPage() {
@@ -46,12 +50,17 @@ export default function CreateListingPage() {
     contactNumber: "",
     location: "",
   });
+  
   // --- NEW LOCATION STATE ---
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [selectedCoordinates, setSelectedCoordinates] = useState<[number, number] | null>(null);
-  const [locationError, setLocationError] = useState(""); // <-- ADD THIS LINE
+  const [locationError, setLocationError] = useState(""); 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // 2. NEW MODAL STATE
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
 
   const handleImageDelete = (indexToDelete: number) => {
     setImageFiles((current) => current.filter((_, index) => index !== indexToDelete));
@@ -101,9 +110,11 @@ export default function CreateListingPage() {
     }
     e.target.value = "";
   };
- // --- GPS: USE CURRENT LOCATION ---
+
+  // --- GPS: USE CURRENT LOCATION ---
   const handleUseCurrentLocationAd = () => {
-    if (!navigator.geolocation) return alert("Geolocation not supported.");
+    // REPLACED ALERT WITH TOAST
+    if (!navigator.geolocation) return toast.error("Geolocation not supported.");
     
     setFormData((prev) => ({ ...prev, location: "Locating..." }));
     
@@ -116,10 +127,9 @@ export default function CreateListingPage() {
         const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}`);
         const data = await res.json();
         if (data.features && data.features.length > 0) {
-          // Mapbox place_name naturally has commas (e.g., "Bhimber Road, Gujrat, Pakistan")
           const fullAddress = data.features[0].place_name.replace(", Pakistan", "");
           setFormData((prev) => ({ ...prev, location: fullAddress }));
-          setSelectedCoordinates([lng, lat]); // Save exact GPS pin!
+          setSelectedCoordinates([lng, lat]); 
           setLocationError("");
         }
       } catch (err) {
@@ -127,7 +137,8 @@ export default function CreateListingPage() {
         setLocationError("Failed to get location address.");
       }
     }, () => {
-      alert("Please allow location access in your browser.");
+      // REPLACED ALERT WITH TOAST
+      toast.error("Please allow location access in your browser.");
       setFormData((prev) => ({ ...prev, location: "" }));
     });
   };
@@ -144,16 +155,13 @@ export default function CreateListingPage() {
         throw new Error("You must be logged in to post an ad.");
       }
 
-    // 🗺️ 2. GET REAL COORDINATES
-      // If they didn't click a dropdown suggestion, block them immediately!
       if (!selectedCoordinates || selectedCoordinates.length !== 2) {
         setLocationError("⚠️ Please select a valid location from the Google dropdown suggestions.");
         setIsSubmitting(false);
-        return; // Stops the form from submitting!
+        return; 
       }
       
       let finalCoordinates = selectedCoordinates;
-     
 
       const listingData = {
         title: formData.title,
@@ -177,7 +185,6 @@ export default function CreateListingPage() {
         headers["x-google-email"] = session.user.email; 
       }
 
-      // 1. POST TEXT DATA
       const textResponse = await fetch("http://localhost:5000/api/listings", {
         method: "POST",
         headers: headers,
@@ -188,14 +195,18 @@ export default function CreateListingPage() {
       const textResult = await textResponse.json();
 
       if (!textResponse.ok) {
-        //  3. CATCH THE LIMIT ERROR AND REDIRECT 
-        if (textResult.message && textResult.message.includes("Limit Reached")) {
-          alert("⚠️ " + textResult.message + "\n\nRedirecting to Packages...");
-          router.push("/profile/packages");
-          return; // Stop everything else!
+        if (textResult.requiresUpgrade || (textResult.message && textResult.message.toLowerCase().includes("limit reached"))) {
+          // REPLACED ALERT WITH OUR NEW MODAL
+          setUpgradeMessage(textResult.message);
+          setShowUpgradeModal(true);
+          setIsSubmitting(false);
+          return; 
         }
         
-        throw new Error(textResult.message || "Failed to save listing details.");
+        // REPLACED ALERT WITH TOAST
+        toast.error(textResult.message || "Failed to save listing details.");
+        setIsSubmitting(false);
+        return; 
       }
 
       const newListingId = textResult.data._id; 
@@ -225,18 +236,21 @@ export default function CreateListingPage() {
           throw new Error(imageResult.message || "Listing created, but image upload failed.");
         }
         
-        // Grab the detailed AI moderation message from the backend!
         if (imageResult.message) {
           moderationMessage = `Ad Created!\n\nAI Moderation Results:\n${imageResult.message}`;
         }
       }
 
-      alert(moderationMessage);
-      window.location.href = "/"; 
+      // REPLACED ALERT WITH TOAST (Duration increased slightly so they can read AI results)
+      toast.success(moderationMessage, { duration: 5000 });
+      
+      // REPLACED WINDOW.LOCATION WITH NEXT.JS ROUTER (Keeps the toast alive!)
+      router.push("/"); 
 
     } catch (error: any) {
       console.error("Integration Error:", error);
-      alert(error.message);
+      // REPLACED ALERT WITH TOAST
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -263,9 +277,13 @@ export default function CreateListingPage() {
                   onClick={() => handleMainCatClick(cat.id)}
                   className="bg-white border border-[#ebebeb] rounded-lg p-5 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 text-center h-[160px] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:border-[#002f34] hover:-translate-y-1"
                 >
-                  <div className="text-[40px] mb-4" style={{ color: cat.color ? cat.color : "#002f34" }}>
-                    {cat.icon}
-                  </div>
+                  <div className="w-[70px] h-[70px] mb-6 flex items-center justify-center">
+  <img 
+    src={cat.image} 
+    alt={cat.name} 
+    className="w-full h-full object-contain drop-shadow-md scale-150" 
+  />
+</div>
                   <div className="text-[16px] font-bold text-[#002f34]">{cat.name}</div>
                 </div>
               ))}
@@ -281,9 +299,11 @@ export default function CreateListingPage() {
               <span className="text-gray-400">/</span>
               <h3 className="text-[22px] font-bold text-[#002f34]">Choose a Subcategory</h3>
             </div>
-            
-            <div className="flex border border-[#ebebeb] rounded bg-white min-h-[500px] overflow-hidden shadow-sm">
-              <div className="w-[40%] border-r border-[#ebebeb] bg-[#f8f9fa] overflow-y-auto max-h-[600px] custom-scrollbar">
+            {/* Added md:flex-row and flex-col */}
+            <div className="flex flex-col md:flex-row border border-[#ebebeb] rounded bg-white md:min-h-[500px] overflow-hidden shadow-sm">
+              
+              {/* Added 'hidden md:block' to hide sidebar on mobile, and 'w-full md:w-[40%]' */}
+              <div className="hidden md:block w-full md:w-[40%] border-r border-[#ebebeb] bg-[#f8f9fa] overflow-y-auto max-h-[600px] custom-scrollbar">
                 {CATEGORIES.map((cat) => {
                   const isActive = selectedMainCatId === cat.id;
                   return (
@@ -292,8 +312,12 @@ export default function CreateListingPage() {
                       onClick={() => handleSidebarClick(cat.id)}
                       className={`flex items-center px-5 py-[15px] cursor-pointer border-b border-[#eee] transition-all duration-100 border-l-[5px] hover:bg-white hover:text-[#002f34] ${isActive ? "bg-white text-[#002f34] font-bold border-l-[#002f34]" : "bg-transparent text-[#555] font-normal border-l-transparent"}`}
                     >
-                      <div className="mr-3 text-[20px] w-6 flex justify-center" style={{ color: cat.color }}>
-                        {cat.icon}
+                     <div className="mr-4 w-[40px] h-[40px] flex items-center justify-center flex-shrink-0">
+                        <img 
+                          src={cat.image} 
+                          alt={cat.name} 
+                          className="w-full h-full object-contain drop-shadow-sm scale-125" 
+                        />
                       </div>
                       <span className="flex-grow">{cat.name}</span>
                       {isActive && <FiChevronRight className="text-[#002f34]" />}
@@ -302,7 +326,7 @@ export default function CreateListingPage() {
                 })}
               </div>
 
-              <div className="w-[60%] bg-white overflow-y-auto max-h-[600px] custom-scrollbar">
+              <div className="w-full md:w-[60%] bg-white overflow-y-auto max-h-[600px] custom-scrollbar">
                 {activeCategoryData.subcategories.map((sub, index) => (
                   <div
                     key={index}
@@ -320,7 +344,7 @@ export default function CreateListingPage() {
 
         {/* --- STEP 3: DETAILS FORM --- */}
         {step === 3 && (
-          <div className="bg-white rounded p-8 border border-[#ced4d6] max-w-[800px] mx-auto shadow-sm">
+         <div className="bg-white rounded p-4 md:p-8 pb-28 md:pb-8 border border-[#ced4d6] max-w-[800px] mx-auto shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <button onClick={() => setStep(2)} className="text-[#007bff] hover:underline font-semibold text-sm">Back to Categories</button>
             </div>
@@ -393,14 +417,9 @@ export default function CreateListingPage() {
                   apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}
                 onPlaceSelected={(place) => {
                     if (place && place.formatted_address) {
-                      // 1. Grab the giant address (e.g., "Nawab's Cuisine, Bhimber Rd, Gujrat, Pakistan")
                       const fullAddress = place.formatted_address;
-                      
-                      // 2. Chop off everything after the first comma to get the exact place!
-                      // This gives us "Nawab's Cuisine"
                       const firstPart = fullAddress.split(',')[0].trim();
 
-                      // 3. Find the exact City name (e.g., "Gujrat")
                       const cityObj = place.address_components?.find((c: any) => 
                         c.types.includes("locality") || c.types.includes("administrative_area_level_2")
                       );
@@ -408,13 +427,10 @@ export default function CreateListingPage() {
 
                       let finalAddress = firstPart;
 
-                      // 4. Combine them! 
-                      // If the first part isn't ALREADY the city name, stick the city on the end.
                       if (cityName && firstPart.toLowerCase() !== cityName.toLowerCase()) {
                          finalAddress = `${firstPart}, ${cityName}`;
                       }
 
-                      // Save the bulletproof format to your form!
                       setFormData({ ...formData, location: finalAddress });
                     }
 
@@ -425,16 +441,15 @@ export default function CreateListingPage() {
                   }}
                   onChange={(e: any) => {
                     setFormData({ ...formData, location: e.target.value });
-                    setSelectedCoordinates(null); // Erase coordinates if they type manually!
+                    setSelectedCoordinates(null);
                   }}
                   options={{
                     types: ["geocode", "establishment"],
-                    componentRestrictions: { country: "pk" }, // Restricted to Pakistan
+                    componentRestrictions: { country: "pk" }, 
                   }}
                   defaultValue={formData.location}
                   placeholder="Start typing area (e.g. GTS Chowk, Gujrat)"
                   className={inputClasses}
-                  // To keep your "Use Current Location" pop-up working:
                   onClick={() => setShowLocationDropdown(true)}
                   onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
                 />
@@ -466,16 +481,31 @@ export default function CreateListingPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full py-4 text-white text-lg font-bold rounded-lg transition-all ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] shadow-md hover:bg-[#004d55] hover:shadow-lg'}`}
-              >
-                {isSubmitting ? "Processing & Scanning Images..." : "Post Ad"}
-              </button>
+              {/* STICKY MOBILE BUTTON WRAPPER */}
+              <div className="fixed bottom-[70px] left-0 w-full p-3 bg-white border-t border-gray-200 z-[90] md:relative md:bottom-auto md:border-t-0 md:bg-transparent md:p-0 md:z-auto shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:shadow-none">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full py-3.5 md:py-4 text-white text-[16px] md:text-lg font-bold rounded-lg transition-all ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#002f34] shadow-md hover:bg-[#004d55] hover:shadow-lg'}`}
+                >
+                  {isSubmitting ? "Processing & Scanning..." : "Post Ad"}
+                </button>
+              </div>
             </form>
           </div>
         )}
+
+        {/* 3. OUR NEW CONFIRM MODAL (Sits invisibly at the bottom until triggered) */}
+        <ConfirmModal 
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          onConfirm={() => router.push("/profile/packages")}
+          title="Ad Limit Reached"
+          message={`${upgradeMessage} Would you like to view our premium packages to continue posting?`}
+          confirmText="View Packages"
+          cancelText="Cancel"
+        />
+
       </div>
     </ProtectedRoute>
   );

@@ -6,6 +6,10 @@ import { useSession } from "next-auth/react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { FaCamera, FaMapMarkerAlt } from "react-icons/fa";
 
+// 1. IMPORT TOAST AND OUR NEW MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 // --- THE MASTER DICTIONARY ---
 const CATEGORIES_DATA = [
   { name: "Mobiles", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
@@ -47,6 +51,10 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+
+  // 2. MODAL STATE FOR DELETING IMAGES
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
 
   const totalImagesCount = existingImages.length + newImageFiles.length;
   // --- LOCATION & MAP STATE ---
@@ -147,8 +155,15 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     setNewImagePreviews(prev => prev.filter((_, i) => i !== indexToRemove));
   };
 
-  const handleDeleteExistingImage = async (imageUrl: string) => {
-    if (!window.confirm("Delete this image permanently?")) return;
+  // 3. SPLIT DELETE FUNCTION: Step A - Open Modal
+  const confirmDeleteImage = (imageUrl: string) => {
+    setImageToDelete(imageUrl);
+    setIsDeleteModalOpen(true);
+  };
+
+  // 3. SPLIT DELETE FUNCTION: Step B - Execute Deletion
+  const executeDeleteExistingImage = async () => {
+    if (!imageToDelete) return;
 
     try {
       const localToken = localStorage.getItem("token");
@@ -156,25 +171,26 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
       if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
       else if (session?.user?.email) headers["x-google-email"] = session.user.email;
 
-      // Ping backend DELETE image route
       const response = await fetch(`http://localhost:5000/api/listings/${id}/images`, {
         method: "DELETE",
         headers: headers,
         credentials: "include",
-        body: JSON.stringify({ imageUrl }),
+        body: JSON.stringify({ imageUrl: imageToDelete }),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Remove from UI instantly
-        setExistingImages(prev => prev.filter(img => img.url !== imageUrl));
+        setExistingImages(prev => prev.filter(img => img.url !== imageToDelete));
+        toast.success("Image deleted successfully");
       } else {
-        alert(result.message || "Failed to delete image.");
+        toast.error(result.message || "Failed to delete image.");
       }
     } catch (error) {
       console.error("Error deleting image:", error);
-      alert("An error occurred while deleting the image.");
+      toast.error("An error occurred while deleting the image.");
+    } finally {
+      setImageToDelete(null); // Clean up
     }
   };
 
@@ -182,8 +198,8 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLocationSelected) {
-      alert("Please select a valid location from the dropdown suggestions.");
-      return; // Stop the form from submitting!
+      toast.error("Please select a valid location from the dropdown suggestions.");
+      return; 
     }
     setIsSubmitting(true);
 
@@ -193,8 +209,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
       if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
       else if (session?.user?.email) headers["x-google-email"] = session.user.email;
 
-      // 1. UPDATE TEXT DATA (Checks against backend textFilter)
-     const updatedData: Record<string, any> = {
+      const updatedData: Record<string, any> = {
         title: formData.title,
         description: formData.description,
         price: Number(formData.price),
@@ -202,7 +217,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         address: formData.address,
         category: selectedSubCat || selectedMainCat, 
       };
-      // Attach new GPS coordinates if the user updated the location
+      
       if (lat !== null && lng !== null) {
         updatedData.location = {
           type: "Point",
@@ -220,19 +235,17 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
       const textResult = await textResponse.json();
 
       if (!textResponse.ok || !textResult.success) {
-        alert(textResult.message || "Failed to update ad details (Profanity check failed?).");
+        toast.error(textResult.message || "Failed to update ad details (Profanity check failed?).");
         setIsSubmitting(false);
-        return; // Stop here if text validation failed!
+        return; 
       }
 
-      // 2. UPLOAD NEW IMAGES (Checks against backend AI Moderation)
       if (newImageFiles.length > 0) {
         const imageFormData = new FormData();
         newImageFiles.forEach((file) => {
           imageFormData.append("images", file); 
         });
 
-        // Don't set Content-Type for FormData, the browser handles the boundaries automatically
         const imageHeaders: HeadersInit = {};
         if (localToken) imageHeaders["Authorization"] = `Bearer ${localToken}`;
         else if (session?.user?.email) imageHeaders["x-google-email"] = session.user.email;
@@ -247,20 +260,19 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         const imageResult = await imageResponse.json();
 
         if (!imageResponse.ok || !imageResult.success) {
-          alert(imageResult.message || "Ad text updated, but new images were rejected by moderation.");
+          toast.error(imageResult.message || "Ad text updated, but new images were rejected by moderation.", { duration: 5000 });
         } else {
-          // If images had mixed statuses, backend might return a specific message
-          alert("Ad details and images updated successfully!\n" + (imageResult.message || ""));
+          toast.success("Ad details and images updated successfully!\n" + (imageResult.message || ""), { duration: 5000 });
         }
       } else {
-        alert("Ad updated successfully!");
+        toast.success("Ad updated successfully!");
       }
 
       router.replace(`/listings/${id}`); 
 
     } catch (error) {
       console.error("Error updating ad:", error);
-      alert("An error occurred while updating the ad.");
+      toast.error("An error occurred while updating the ad.");
     } finally {
       setIsSubmitting(false);
     }
@@ -338,7 +350,6 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                   name="address" 
                   value={formData.address} 
                   autoComplete="off"
-                  // 👇 This makes the dropdown open immediately when you click the box! 👇
                   onFocus={() => setIsLocationOpen(true)} 
                   onChange={(e) => {
                     const val = e.target.value;
@@ -387,13 +398,11 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                               setLat(currentLat);
                               setLng(currentLng);
                               
-                              // Translate GPS back into a real address text!
                               const googleObj = (window as any).google;
                               if (googleObj && googleObj.maps) {
                                 const geocoder = new googleObj.maps.Geocoder();
                                 geocoder.geocode({ location: { lat: currentLat, lng: currentLng } }, (results: any, status: any) => {
                                   if (status === "OK" && results[0]) {
-                                    // --- ADDRESS SHORTENING LOGIC ---
                                     const fullAddress = results[0].formatted_address;
                                     const firstPart = fullAddress.split(',')[0].trim();
                                     
@@ -416,11 +425,11 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                             },
                             (error) => {
                               console.error("Error getting location", error);
-                              alert("Please allow location access in your browser to use this feature.");
+                              toast.error("Please allow location access in your browser to use this feature.");
                             }
                           );
                         } else {
-                          alert("Geolocation is not supported by your browser.");
+                          toast.error("Geolocation is not supported by your browser.");
                         }
                       }}
                       className="px-4 py-3 text-sm text-blue-600 font-bold hover:bg-blue-50 cursor-pointer border-b border-gray-100 flex items-center gap-2"
@@ -434,21 +443,17 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                       <div 
                         key={loc}
                         onClick={() => {
-                          // Close dropdown and unlock form
                           setIsLocationOpen(false);
                           setIsLocationSelected(true);
                           
-                          // Convert selected text into GPS coordinates AND a clean address
                           const googleObj = (window as any).google;
                           if (googleObj && googleObj.maps) {
                             const geocoder = new googleObj.maps.Geocoder();
                             geocoder.geocode({ address: loc }, (results: any, status: any) => {
                               if (status === "OK" && results[0]) {
-                                // Save GPS Coordinates
                                 setLat(results[0].geometry.location.lat());
                                 setLng(results[0].geometry.location.lng());
 
-                                // --- ADDRESS SHORTENING LOGIC ---
                                 const fullAddress = results[0].formatted_address;
                                 const firstPart = fullAddress.split(',')[0].trim();
                                 
@@ -462,10 +467,8 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                                   finalAddress = `${firstPart}, ${cityName}`;
                                 }
                                 
-                                // Update text box with clean address instead of the giant one!
                                 setFormData(prev => ({ ...prev, address: finalAddress }));
                               } else {
-                                // Fallback just in case
                                 setFormData(prev => ({ ...prev, address: loc }));
                               }
                             });
@@ -498,7 +501,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
                     <img src={`http://localhost:5000${img.url}`} alt="Existing" className="w-full h-full object-cover rounded-md" />
                     <button 
                       type="button" 
-                      onClick={() => handleDeleteExistingImage(img.url)}
+                      onClick={() => confirmDeleteImage(img.url)}
                       className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       ✕
@@ -565,6 +568,19 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
 
           </form>
         </div>
+
+        {/* --- OUR NEW DELETE CONFIRMATION MODAL --- */}
+        <ConfirmModal 
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={executeDeleteExistingImage}
+          title="Delete Image"
+          message="Are you sure you want to delete this image permanently? This action cannot be undone."
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+          isDestructive={true} // Automatically makes the confirm button red!
+        />
+
       </div>
     </ProtectedRoute>
   );

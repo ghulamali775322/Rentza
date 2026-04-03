@@ -7,6 +7,9 @@ import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export default function EditProfilePage() {
   const [profileData, setProfileData] = useState({
@@ -20,7 +23,6 @@ export default function EditProfilePage() {
   const [profileImageUrl, setProfileImageUrl] = useState("");
   const [loading, setLoading] = useState(true); // ONLY for initial fetch
   const [saving, setSaving] = useState(false); // ✅ NEW (for save button)
-  const [successMessage, setSuccessMessage] = useState(""); // ✅ NEW
   const { setName, setProfilePhotoUrl } = useUser();
 
   const [errors, setErrors] = useState<{ name: string; phone: string }>({
@@ -64,7 +66,7 @@ export default function EditProfilePage() {
         );
       } catch (err) {
         console.error(err);
-        alert("Failed to load profile. Please login again.");
+        toast.error("Failed to load profile. Please login again.");
       } finally {
         setLoading(false);
       }
@@ -118,7 +120,6 @@ export default function EditProfilePage() {
     setErrors({ name: "", phone: "" });
 
     setSaving(true);
-    setSuccessMessage("");
 
     try {
       const formDataToSend = new FormData();
@@ -166,7 +167,6 @@ export default function EditProfilePage() {
       // ✅ Update global name (Navbar will update instantly)
       setName(updatedData.user.name || "");
 
-      // ✅ Handle profile photo
       // ✅ Handle profile photo (fix for email login)
       const photoUrl = updatedData.user.profilePhotoPath
         ? `${API_URL}${updatedData.user.profilePhotoPath}?t=${Date.now()}`
@@ -178,11 +178,11 @@ export default function EditProfilePage() {
       // Reset removePhoto flag after successful update
       setRemovePhoto(false);
 
-      // ✅ SUCCESS MESSAGE (NO ALERT)
-      setSuccessMessage("Profile updated successfully!");
+      // 2. REPLACED INLINE MESSAGE WITH TOAST
+      toast.success("Profile updated successfully!");
     } catch (err: any) {
       console.error("Update error:", err);
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -198,13 +198,6 @@ export default function EditProfilePage() {
           Edit profile
         </h1>
 
-        {/* ✅ SUCCESS MESSAGE */}
-        {successMessage && (
-          <div className="text-green-600 font-semibold mb-3">
-            {successMessage}
-          </div>
-        )}
-
         <div className="w-full border-t border-[#eee] mb-0" />
 
         {/* Profile Photo */}
@@ -212,7 +205,7 @@ export default function EditProfilePage() {
           Profile Photo
         </label>
 
-        <div className="flex items-center gap-5 mb-5 pb-2.5">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-5 mb-5 pb-2.5 text-center md:text-left">
           <div className="relative w-[90px] h-[90px] rounded-full bg-[#007bff] flex items-center justify-center text-white text-4xl font-bold overflow-hidden">
             {profileImageUrl ? (
               <img
@@ -225,7 +218,7 @@ export default function EditProfilePage() {
             )}
           </div>
 
-          <div className="flex flex-col gap-[5px] mt-[30px]">
+          <div className="flex flex-col items-center md:items-start gap-[5px] mt-2 md:mt-[30px]">
             <div className="flex items-center">
               <label className="bg-[#002f34] text-white rounded-md py-2.5 px-5 text-sm font-semibold cursor-pointer hover:bg-[#005861]">
                 Upload Photo
@@ -300,7 +293,7 @@ export default function EditProfilePage() {
             <p className="text-red-500 text-sm mb-3">{errors.phone}</p>
           )}
 
-          <div className="flex justify-between items-center mt-[30px]">
+         <div className="flex flex-col-reverse md:flex-row justify-between items-center mt-[30px] gap-4 pb-24 md:pb-0">
             <Link
               href="/"
               className="text-lg font-semibold text-[#002f34] underline py-3 hover:text-[#e00]"
@@ -308,10 +301,10 @@ export default function EditProfilePage() {
               Discard
             </Link>
 
-            <button
+           <button
               type="submit"
               disabled={saving}
-              className={`w-[180px] py-3 text-white font-bold rounded ${
+              className={`w-full md:w-[180px] py-3 text-white font-bold rounded ${
                 saving
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#002f34] hover:bg-[#004d55]"

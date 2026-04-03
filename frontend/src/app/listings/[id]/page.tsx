@@ -21,6 +21,10 @@ import {
   FiTrash2
 } from "react-icons/fi";
 
+// 1. IMPORT TOAST AND CONFIRM MODAL
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/modals/ConfirmModal";
+
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id; 
@@ -42,6 +46,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0); 
+
+  // 2. MODAL STATES
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // --- 1. GET USER ID ---
   useEffect(() => {
@@ -96,12 +104,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     fetchSingleListing();
   }, [id]);
 
-  // --- DELETE HANDLER ---
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to permanently delete this ad?")) {
-      return;
-    }
+  // --- DELETE HANDLER (Split into Open Modal & Execute) ---
+  const confirmDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
 
+  const executeDelete = async () => {
     try {
       const localToken = localStorage.getItem("token");
       const headers: HeadersInit = {
@@ -120,14 +128,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("Ad deleted successfully!");
+        toast.success("Ad deleted successfully!");
         router.replace("/profile/my-ads"); 
       } else {
-        alert(result.message || "Failed to delete ad.");
+        toast.error(result.message || "Failed to delete ad.");
       }
     } catch (error) {
       console.error("Error deleting ad:", error);
-      alert("An error occurred while deleting the ad.");
+      toast.error("An error occurred while deleting the ad.");
     }
   };
 
@@ -137,7 +145,6 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     const shareText = `Check out "${listing.title}" on Rentza!\n\n${currentUrl}`;
 
     try {
-      // Use the native mobile sharing menu if the browser supports it
       if (navigator.share) {
         await navigator.share({
           title: listing.title,
@@ -145,9 +152,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           url: currentUrl,
         });
       } else {
-        // Fallback for desktop: Copy nicely formatted text to clipboard
         await navigator.clipboard.writeText(shareText);
-        alert("Link copied to clipboard!");
+        toast.success("Link copied to clipboard!");
       }
     } catch (err) {
       console.error("Error sharing:", err);
@@ -158,8 +164,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const handleShowPhoneClick = () => {
     const localToken = localStorage.getItem("token");
     if (!session && !localToken) {
-      alert("Please log in to view the phone number.");
-      router.push("/login");
+      setIsLoginModalOpen(true); // Replaces alert + instant redirect
       return;
     }
     setShowPhone(true);
@@ -168,13 +173,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   // --- CHAT HANDLER ---
   const handleChatClick = async () => {
     if (!myMongoId) {
-      alert("Please log in to start a chat.");
-      router.push("/login");
+      setIsLoginModalOpen(true); // Replaces alert + instant redirect
       return;
     }
 
     if (myMongoId === listing.lenderId?._id) {
-      alert("You cannot chat with yourself!");
+      toast.error("You cannot chat with yourself!");
       return;
     }
 
@@ -194,10 +198,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       if (data.success) {
         router.push(`/inbox?open=${data.data._id}`); 
       } else {
-        alert("Could not start chat.");
+        toast.error("Could not start chat.");
       }
     } catch (error) {
       console.error("Chat error:", error);
+      toast.error("An error occurred while starting the chat.");
     }
   };
 
@@ -205,14 +210,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const handleReportClick = () => {
     const localToken = localStorage.getItem("token");
     
-    // Check if the user is logged in
     if (!session && !localToken) {
-      alert("Please log in to report this ad.");
-      router.push("/login");
+      setIsLoginModalOpen(true); // Replaces alert + instant redirect
       return;
     }
 
-    // If logged in, open the modal
     setIsReportOpen(true);
   };
 
@@ -251,7 +253,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const isOwner = myMongoId === listing.lenderId?._id;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[50px] pb-10">
+    <div className="min-h-screen bg-gray-50 pt-[50px] pb-24 md:pb-10">
       
      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
         <p className="text-base text-gray-500 flex items-center">
@@ -266,7 +268,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <div className="bg-black rounded-lg overflow-hidden flex items-center justify-center h-[400px] relative group">
+           <div className="bg-black rounded-lg overflow-hidden flex items-center justify-center h-[250px] md:h-[400px] relative group">
               <img 
                 src={listing.images && listing.images.length > 0 ? `http://localhost:5000${listing.images[activeImageIndex].url}` : "https://via.placeholder.com/600?text=No+Image"} 
                 alt={listing.title} 
@@ -362,44 +364,47 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          <div className="space-y-3">
+         {/* --- MOBILE STICKY ACTION BAR (OLX STYLE) --- */}
+          <div className="fixed bottom-0 left-0 w-full z-50 bg-white p-3 border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex flex-row gap-3 md:relative md:bottom-auto md:left-auto md:w-auto md:border-t-0 md:shadow-none md:bg-transparent md:p-0 md:flex-col md:z-auto">
+            
             {isOwner ? (
-              // OWNER VIEW: Edit and Delete Buttons
               <>
-                <Link 
-                  href={`/edit-listing/${listing._id}`} 
-                  className="w-full bg-[#007bff] text-white font-bold py-3 rounded flex items-center justify-center gap-2 transition hover:bg-[#0056b3]"
-                >
-                  <FiEdit2 size={20} />
-                  Edit Ad
-                </Link>
+              {/* EDIT BUTTON (For Owner) */}
                 <button 
-                  onClick={handleDelete}
-                  className="w-full border-2 border-red-500 text-red-600 font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-red-50 transition"
+                  onClick={() => router.push(`/edit-listing/${listing._id}`)}
+                  className="flex-1 w-full border-2 border-[#002f34] text-[#002f34] bg-white font-bold py-2.5 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer text-[15px]"
                 >
-                  <FiTrash2 size={20} />
-                  Delete Ad
+                  <FiEdit2 size={18} className="shrink-0" />
+                  <span>Edit Ad</span>
+                </button>
+
+                {/* DELETE BUTTON (For Owner) */}
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 w-full font-bold py-2.5 rounded flex items-center justify-center gap-2 transition text-[15px] bg-red-600 text-white hover:bg-red-700"
+                >
+                  <FiTrash2 size={18} className="shrink-0" />
+                  <span>Delete Ad</span>
                 </button>
               </>
             ) : (
-              // RENTER VIEW: Phone and Chat Buttons
               <>
-                <button 
-                  onClick={handleShowPhoneClick}
-                  className={`w-full font-bold py-3 rounded flex items-center justify-center gap-2 transition ${
-                    showPhone ? "bg-green-600 text-white" : "bg-[#002f34] text-white hover:bg-[#004247]"
-                  }`}
-                >
-                  <FiPhone size={20} />
-                  {showPhone ? listing.contactNumber : "Show Phone Number"}
-                </button>
-
+                {/* CHAT BUTTON (For Renters) */}
                 <button 
                   onClick={handleChatClick}
-                  className="w-full border-2 border-[#002f34] text-[#002f34] font-bold py-3 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer"
+                  className="flex-1 w-full border-2 border-[#002f34] text-[#002f34] bg-white font-bold py-2.5 rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition cursor-pointer text-[15px]"
                 >
-                  <FiMessageCircle size={20} />
-                  Chat
+                  <FiMessageCircle size={18} className="shrink-0" />
+                  <span>Chat</span>
+                </button>
+
+                {/* CALL BUTTON (For Renters) */}
+                <button 
+                  onClick={handleShowPhoneClick}
+                  className="flex-1 w-full font-bold py-2.5 rounded flex items-center justify-center gap-2 transition text-[15px] bg-[#002f34] text-white hover:bg-[#004247]"
+                >
+                  <FiPhone size={18} className="shrink-0" />
+                  <span className="truncate">{showPhone ? listing.contactNumber : "Call"}</span>
                 </button>
               </>
             )}
@@ -409,7 +414,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-2">Location</h3>
             <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${listing.location?.coordinates[1]},${listing.location?.coordinates[0]}`}
+              href={`https://www.google.com/maps?q=${listing.location?.coordinates[1]},${listing.location?.coordinates[0]}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline text-sm mb-3 w-fit transition-colors cursor-pointer"
@@ -458,6 +463,29 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         onClose={() => setIsReportOpen(false)}
         type="ad"
         id={listing._id}
+      />
+
+      {/* --- OUR NEW DELETE CONFIRMATION MODAL --- */}
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={executeDelete}
+        title="Delete Ad"
+        message="Are you sure you want to permanently delete this ad? This action cannot be undone."
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDestructive={true} 
+      />
+
+      {/* --- OUR NEW LOGIN REQUIRED MODAL --- */}
+      <ConfirmModal 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onConfirm={() => router.push("/login")}
+        title="Login Required"
+        message="You need an account to view phone numbers, chat with lenders, or report ads. Would you like to log in now?"
+        confirmText="Go to Login"
+        cancelText="Cancel"
       />
     </div>
   );
