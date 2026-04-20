@@ -148,8 +148,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
   const submitButtonBase =
     "w-full p-3.5 rounded-md border-none text-base font-bold bg-[#002f34] text-white cursor-pointer transition hover:bg-[#004d55] disabled:bg-[#ccc] disabled:cursor-not-allowed";
 
-  const socialButtonClass =
-    "flex items-center justify-center w-full py-3 px-5 mb-4 rounded border border-[#c9cbcd] bg-white text-base font-semibold text-[#002f34] cursor-pointer transition hover:border-black hover:shadow-[0_0_0_1px_#000]";
+ const socialButtonClass =
+    "relative flex items-center justify-center w-full h-[40px] mb-4 rounded border border-[#dadce0] bg-white text-[14px] font-medium text-[#3c4043] cursor-pointer transition-colors hover:bg-[#e8f0fe]";
 
   const renderViewContent = () => {
     switch (modalView) {
@@ -165,13 +165,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
             <div className="flex items-center justify-center text-center my-4 text-black text-sm font-medium">
               OR
             </div>
-            <button
+           <button
               onClick={() => setModalView("emailLogin")}
               className={socialButtonClass}
               type="button"
             >
-              <MdOutlineEmail className="text-[28px] mr-2 text-[#007bff]" />{" "}
-              Login with Email
+              <MdOutlineEmail className="absolute left-3 text-[20px] text-[#007bff]" />
+              <span>Login with Email</span>
             </button>
             <Link
               href="#"
@@ -203,8 +203,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
               className={socialButtonClass}
               type="button"
             >
-              <MdOutlineEmail className="text-[28px] mr-2 text-[#007bff]" />{" "}
-              Join with Email
+              <MdOutlineEmail className="absolute left-3 text-[20px] text-[#007bff]" />
+              <span>Join with Email</span>
             </button>
             <Link
               href="#"
