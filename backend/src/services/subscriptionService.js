@@ -4,8 +4,8 @@ import Payment from "../models/payment.js";
 
 export const upgradePlanService = async (userId, planType, transactionId, amount) => {
   let totalListing = 1;
-  if (planType === "gold") totalListing = 2;
-  else if (planType === "premium") totalListing = 3;
+  if (planType === "gold") totalListing = 5;
+  else if (planType === "premium") totalListing = 10;
 
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 30); 

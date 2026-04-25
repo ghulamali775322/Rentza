@@ -113,3 +113,39 @@ export const paymentCallback = async (req, res) => {
     return res.redirect(`http://localhost:3000/profile/packages?payment=failed`);
   }
 };
+export const checkPaymentStatus = async (req, res) => {
+  const { trackerToken, userId, planType } = req.query;
+
+  try {
+    const response = await fetch(`https://sandbox.api.getsafepay.com/order/v1/${trackerToken}`);
+    const data = await response.json();
+
+    if (data.data && (data.data.state === "TRACKER_ENDED" || data.data.state === "PAID")) {
+      
+      // 1. Determine the exact amount for the database record
+      let amount = 0;
+      if (planType === 'gold') amount = 1500;
+      if (planType === 'premium') amount = 3000;
+
+      const transactionId = data.data.reference || `TXN-${Date.now()}`;
+
+      // 2. 🔥 THE FIX: Call your official service instead of the shortcut!
+      // This will update the User AND create the Subscription receipt.
+      await subscriptionService.upgradePlanService(
+        userId, 
+        planType, 
+        transactionId, 
+        amount
+      );
+
+      console.log(`✅ POLLING SUCCESS: ${planType.toUpperCase()} Subscription record created!`);
+      return res.json({ status: "SUCCESS" });
+    }
+
+    return res.json({ status: "PENDING" });
+
+  } catch (error) {
+    console.error("🚨 Polling Error:", error);
+    return res.status(500).json({ error: "Check failed" });
+  }
+};

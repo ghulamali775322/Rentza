@@ -31,8 +31,8 @@ export const checkAdLimit = async (req, res, next) => {
 
     // 3. SET MAX LIMITS
     let maxAdsAllowed = 1; // Free users get 1
-    if (currentPlan === "gold") maxAdsAllowed = 2; // Gold gets 2
-    if (currentPlan === "premium") maxAdsAllowed = 3; // Premium gets 3
+    if (currentPlan === "gold") maxAdsAllowed = 5; // Gold gets 5
+    if (currentPlan === "premium") maxAdsAllowed = 10; // Premium gets 10
 
     // 4. BLOCK IF THEY HIT THE LIMIT
     if (postedCount >= maxAdsAllowed) {

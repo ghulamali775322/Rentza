@@ -10,8 +10,8 @@ import toast from "react-hot-toast";
 
 const PACKAGES = [
   { id: 'free', name: 'Free', price: 0, duration: ' month', features: ['Post 1 Ad', 'Valid for 30 days'], color: '#A0A0A0', popular: false },
-  { id: 'gold', name: 'Gold', price: 1500, duration: 'month', features: ['Post 2 Ads ', 'Valid for 30 days'], color: '#FFD700', popular: true },
-  { id: 'premium', name: 'Premium', price: 3000, duration: 'month', features: ['Post 3 Ads' ,'Valid for 30 days '], color: '#007bff', popular: false }
+  { id: 'gold', name: 'Gold', price: 1500, duration: 'month', features: ['Post 5 Ads ', 'Valid for 30 days'], color: '#FFD700', popular: true },
+  { id: 'premium', name: 'Premium', price: 3000, duration: 'month', features: ['Post 10 Ads' ,'Valid for 30 days '], color: '#007bff', popular: false }
 ];
 
 export default function PackagesPage() {
@@ -105,17 +105,9 @@ export default function PackagesPage() {
     checkPendingPayment();
   }, []);
 
-  // --- 4. CHECKOUT CONNECTION ---
   const handleCheckout = async () => {
     if (selectedPlan.id === 'free' || !currentUserId) return;
     setIsProcessing(true);
-    
-    // 🔥 SAVE THE DATA BEFORE WE LEAVE FOR SAFEPAY
-    localStorage.setItem('rentza_pending_payment', JSON.stringify({
-      userId: currentUserId,
-      planType: selectedPlan.id,
-      amount: selectedPlan.price
-    }));
     
     try {
       const res = await fetch(`${BACKEND_URL}/api/subscriptions/init-payment`, {
@@ -131,7 +123,33 @@ export default function PackagesPage() {
       const data = await res.json();
 
       if (data.success && data.gatewayUrl) {
-        window.location.href = data.gatewayUrl; 
+        
+        // 1. 🕵️‍♀️ Extract the secret Safepay tracker token from the URL
+        const urlParams = new URLSearchParams(data.gatewayUrl.split('?')[1]);
+        const trackerToken = urlParams.get('beacon');
+
+        // 2. 🪟 Open Safepay in a NEW TAB so this website stays open to check the status!
+        window.open(data.gatewayUrl, '_blank');
+
+        // 3. ⏱️ Start the Polling Loop (Ask the backend every 3 seconds)
+        console.log("⏱️ Polling started... waiting for user to pay in the other tab.");
+        
+        const checkInterval = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`${BACKEND_URL}/api/subscriptions/check-status?trackerToken=${trackerToken}&userId=${currentUserId}&planType=${selectedPlan.id}`);
+            const statusData = await statusRes.json();
+
+            if (statusData.status === "SUCCESS") {
+              clearInterval(checkInterval); // Stop asking
+              setIsProcessing(false);
+              alert("✅ Payment Successful! Your account has been upgraded.");
+              window.location.href = "/?payment=success"; // Send them to the Home Page
+            }
+          } catch (e) {
+            console.error("Polling check failed", e);
+          }
+        }, 3000); // 3000 milliseconds = 3 seconds
+
       } else {
         // REPLACED ALERT WITH TOAST
         toast.error(data.message || "Failed to initiate payment.");
