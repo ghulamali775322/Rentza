@@ -150,6 +150,8 @@ export default function Home() {
   const renderListings = (mainCategoryData: typeof CATEGORIES_DATA[0]) => {
     const categoryItems = realListings
       .filter((item) => mainCategoryData.subcategories.includes(item.category) || item.category === mainCategoryData.name)
+      // ADDED: Sort by newest 'createdAt' date before slicing!
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 4);
 
     if (categoryItems.length === 0) return null;
