@@ -322,7 +322,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Description</h3>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line break-words w-full overflow-hidden">
               {listing.description}
             </p>
           </div>

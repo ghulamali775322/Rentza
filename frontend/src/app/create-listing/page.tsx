@@ -147,6 +147,13 @@ export default function CreateListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    // --- NEW VALIDATION: Check for exactly 11 digits starting with 03 ---
+    const phoneRegex = /^03\d{9}$/;
+    if (!phoneRegex.test(formData.contactNumber)) {
+      toast.error("Please enter a valid 11-digit mobile number (e.g., 03001234567).");
+      setIsSubmitting(false);
+      return; // Stop the form submission
+    }
 
     try {
       const localToken = localStorage.getItem("token"); 
@@ -405,7 +412,7 @@ export default function CreateListingPage() {
 
               <div>
                 <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Description</label>
-                <textarea name="description" placeholder="Describe what you are renting out..." value={formData.description} onChange={handleChange} required className={`${inputClasses} min-h-[140px] resize-y`} />
+                <textarea name="description" placeholder="Describe what you are renting out..." value={formData.description} onChange={handleChange} required className={`${inputClasses} h-[140px] resize-none overflow-y-auto`} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -477,7 +484,7 @@ export default function CreateListingPage() {
               </div>
                 <div>
                   <label className="block text-[15px] text-[#002f34] mb-2 font-semibold">Contact No</label>
-                  <input type="tel" name="contactNumber" placeholder="03XX XXXXXXX" value={formData.contactNumber} onChange={handleChange} required className={inputClasses} />
+                  <input type="tel" name="contactNumber" placeholder="03XX XXXXXXX" value={formData.contactNumber} onChange={handleChange} required maxLength={11} className={inputClasses} />
                 </div>
               </div>
 
