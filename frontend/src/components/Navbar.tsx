@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useUser } from "@/context/UserContext";
 import { IoMdArrowBack } from "react-icons/io";
 import Pusher from 'pusher-js';
+import toast from "react-hot-toast";
 import {
   FiHome,
   FiBell,
@@ -59,7 +60,7 @@ export default function Navbar() {
 
  const handleSearch = () => {
     if (!searchQuery || searchQuery.trim() === "") {
-      alert("Please enter an item or category (e.g., 'cars', 'bike') before searching.");
+     toast.error("Please enter an item or category (e.g., 'cars', 'bike') before searching.");
       return; 
     }
     const params = new URLSearchParams(searchParams?.toString() || "");
@@ -512,7 +513,14 @@ const isListingPage = pathname?.includes("/listings/");
 
           {/* 3. POST AD Floating Center Button */}
           <div className="flex flex-col items-center relative">
-            <button onClick={() => { if (!hasMounted || (!session && !token)) router.push("/login"); else router.push("/create-listing"); }} className="absolute -top-7 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] shadow-lg transform transition hover:scale-105">
+           <button 
+              onClick={() => { 
+                sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
+                if (!hasMounted || (!session && !token)) router.push("/login"); 
+                else router.push("/create-listing"); 
+              }} 
+              className="absolute -top-7 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] shadow-lg transform transition hover:scale-105"
+            >
               <div className="bg-white rounded-full w-12 h-12 flex items-center justify-center">
                 <span className="text-2xl text-black font-bold leading-none">＋</span>
               </div>
