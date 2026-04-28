@@ -161,7 +161,8 @@ export default function Home() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-900">{mainCategoryData.name}</h2>
           <Link 
-            href={`/search?category=${encodeURIComponent(mainCategoryData.name)}`} 
+            href={`/search?category=${encodeURIComponent(mainCategoryData.name)}`}
+            onClick={() => sessionStorage.setItem('homeScrollPos', window.scrollY.toString())} 
             className="text-blue-600 hover:underline font-medium"
           >
             View All
