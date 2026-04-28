@@ -65,4 +65,7 @@ const listingSchema = new mongoose.Schema(
 
 listingSchema.index({ location: "2dsphere" });
 
-export default mongoose.model("Listing", listingSchema);
+// Check if the model already exists before creating a new one!
+const Listing = mongoose.models.Listing || mongoose.model("Listing", listingSchema);
+
+export default Listing;

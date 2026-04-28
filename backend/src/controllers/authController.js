@@ -9,6 +9,8 @@ import {
   resetPasswordService,
 } from "../services/authService.js";
 
+import User from "../models/user.js";
+
 export const signup = async (req, res) => {
   try {
     const result = await signupUser(req.body);
@@ -21,6 +23,11 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const result = await loginUser(req.body);
+    // NEW: Update lastActive time
+    const userId = result?.user?._id || result?.user?.id;
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { lastActive: new Date() });
+    }
     res.json(result);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -33,10 +40,18 @@ export const googleLogin = async (req, res) => {
     if (!token) return res.status(400).json({ message: "Token missing" });
 
     const result = await googleLoginUser(token); // ✅ call correct function
+    // NEW: Update lastActive time
+    const userId = result?.user?._id || result?.user?.id;
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { lastActive: new Date() });
+    }
     return res.json(result);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Server error" });
+
+    return res
+      .status(err.status || 500)
+      .json({ message: err.message || "Server error" });
   }
 };
 

@@ -14,8 +14,8 @@ export default function Footer() {
   const pathname = usePathname();
     if (pathname.startsWith("/admin")) return null;
   return (
-    <footer className="bg-[#0f172a] text-gray-100 py-12 px-10 mt-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+    <footer className="bg-[#0f172a] text-gray-100 py-8 md:py-12 px-5 md:px-10 mt-10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
         {/* ===== ABOUT SECTION ===== */}
         <div>
           <h3 className="text-xl font-semibold mb-4 text-white">
@@ -68,7 +68,7 @@ export default function Footer() {
             Stay connected with Rentza for new listings, safety tips, and
             community updates.
           </p>
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-3 md:gap-4">
             <a
               href="#"
               className="p-2 bg-blue-500 rounded-full hover:bg-blue-400 transition"
@@ -100,6 +100,25 @@ export default function Footer() {
               <FaYoutube size={16} />
             </a>
           </div>
+        </div>
+       {/* ===== CONTACT / SUPPORT ===== */}
+        <div>
+          <h3 className="text-xl font-semibold mb-4 text-white">Contact Support</h3>
+          <p className="text-sm text-gray-200 mb-4">
+            Have a complaint or need help? Our support team is available 24/7.
+          </p>
+          
+          {/* Clean, minimalistic Email Link */}
+          <a 
+            href="mailto:ghulamali5322@gmail.com?subject=Rentza%20Support%20Request" 
+            className="flex items-center gap-3 text-gray-300 hover:text-blue-400 transition-colors duration-300 w-fit mt-2"
+          >
+            {/* Simple Envelope Icon */}
+            <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"></path>
+            </svg>
+            <span className="text-base font-medium tracking-wide">ghulamali5322@gmail.com</span>
+          </a>
         </div>
       </div>
 

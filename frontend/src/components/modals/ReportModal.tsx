@@ -1,30 +1,35 @@
 "use client";
-import React, { useState, useEffect } from "react"; // Add useEffect
-import { createPortal } from "react-dom"; // Add createPortal
+import React, { useState, useEffect } from "react"; 
+import { createPortal } from "react-dom"; 
 import { FiX } from "react-icons/fi";
+import { useSession } from "next-auth/react"; // NEEDED FOR AUTH CHECK
+
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: "ad" | "user"; // This determines what options to show
-  id?: number | string; // The ID of the Ad or the User being reported
+  type: "ad" | "user"; 
+  id?: number | string; 
 }
 
 export default function ReportModal({ isOpen, onClose, type, id }: ReportModalProps) {
+  const { data: session } = useSession(); // Grab session data
+  
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
-
+  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent spam clicking
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if(isOpen) document.body.style.overflow = 'hidden'; // Optional: Lock scroll
+    if(isOpen) document.body.style.overflow = 'hidden'; 
     return () => { document.body.style.overflow = 'unset'; }
   }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
 
-  // --- 1. DIFFERENT OPTIONS BASED ON TYPE ---
   const adReasons = [
     "Offensive content", "Fraud", "Duplicate ad", 
     "Wrong category", "Product unavailable", "Fake product", "Other"
@@ -38,17 +43,77 @@ export default function ReportModal({ isOpen, onClose, type, id }: ReportModalPr
   const currentReasons = type === "ad" ? adReasons : userReasons;
   const title = type === "ad" ? "Report this Ad" : "Report this User";
 
-  const handleSubmit = () => {
-    // In a real app, you would send this data to your backend
-    console.log(`Reporting ${type} ID: ${id}`, { reason, comment });
-    alert("Report submitted successfully!");
-    onClose();
-    setReason("");
-    setComment("");
+  // --- THE FIX: REAL BACKEND INTEGRATION ---
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      // 1. Securely fetch the Reporter's MongoDB ID
+      let reporterId = (session?.user as any)?.id || (session?.user as any)?._id;
+      const localToken = localStorage.getItem("token");
+      
+      if (!reporterId && localToken) {
+        try {
+          const payload = JSON.parse(atob(localToken.split(".")[1]));
+          reporterId = payload._id || payload.id || payload.userId;
+        } catch (e) {}
+      }
+
+      if (!reporterId && (localToken || session?.user?.email)) {
+        try {
+          const headers: HeadersInit = {};
+          if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
+          else if (session?.user?.email) headers["x-google-email"] = session.user.email;
+          const profileRes = await fetch("http://localhost:5000/profile", { headers });
+          const profileData = await profileRes.json();
+          reporterId = profileData?.user?._id;
+        } catch (e) {}
+      }
+
+      // If they somehow bypassed the UI to click report without being logged in
+      if (!reporterId) {
+        toast.error("You must be logged in to submit a report."); // REPLACED ALERT
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Package the exact payload your backend expects
+      const payload = {
+        reporterId: reporterId,
+        reportedListingId: id,
+        reason: reason,
+        additionalComments: comment
+      };
+
+      // 3. Send it to the database
+      const response = await fetch("http://localhost:5000/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.success("Report submitted successfully!"); // REPLACED ALERT
+        onClose();
+        setReason("");
+        setComment("");
+      } else {
+        toast.error(result.message || "Failed to submit report."); // REPLACED ALERT
+      }
+
+    } catch (error) {
+      console.error("Report submission error:", error);
+      toast.error("An error occurred while submitting the report."); // REPLACED ALERT
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
+    // 3. FIXED Z-INDEX SO TOASTS APPEAR ON TOP
+    <div className="fixed inset-0 bg-black/50 z-[999] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-sm rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
         
         {/* Header */}
@@ -93,17 +158,17 @@ export default function ReportModal({ isOpen, onClose, type, id }: ReportModalPr
         <div className="p-4 pt-0">
           <button 
             onClick={handleSubmit}
-            disabled={!reason}
+            disabled={!reason || isSubmitting}
             className={`w-full font-bold py-3 rounded transition ${
-                reason ? "bg-[#002f34] text-white hover:bg-[#004247]" : "bg-gray-200 text-gray-400"
+                reason && !isSubmitting ? "bg-[#002f34] text-white hover:bg-[#004247]" : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
           >
-            Send Report
+            {isSubmitting ? "Sending..." : "Send Report"}
           </button>
         </div>
 
       </div>
     </div>,
-    document.body // <--- 3. ADD THIS LINE (Attaches modal to the body tag)
+    document.body 
   );
 }

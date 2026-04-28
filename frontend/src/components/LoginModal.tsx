@@ -13,6 +13,9 @@ import { login, signup, forgotPassword } from "@/lib/authApi";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
+// 1. IMPORT TOAST
+import toast from "react-hot-toast";
+
 type ModalView =
   | "loginOptions"
   | "signupOptions"
@@ -82,7 +85,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
         }
       }
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message); // REPLACED ALERT WITH TOAST
     }
   };
 
@@ -101,10 +104,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
         password,
       });
 
-      alert(res.message); // "Signup successful. Please verify your email."
+      toast.success(res.message); // REPLACED ALERT WITH TOAST
       setModalView("loginOptions");
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message); // REPLACED ALERT WITH TOAST
     }
   };
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -113,11 +116,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
     try {
       const res = await forgotPassword(email);
 
-      alert(res.message || "Password reset link sent");
+      toast.success(res.message || "Password reset link sent"); // REPLACED ALERT WITH TOAST
 
       setModalView("loginOptions");
     } catch (err: any) {
-      alert(err.message || "Something went wrong");
+      toast.error(err.message || "Something went wrong"); // REPLACED ALERT WITH TOAST
     }
   };
   const getBackButtonDestination = (): ModalView => {
@@ -145,8 +148,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
   const submitButtonBase =
     "w-full p-3.5 rounded-md border-none text-base font-bold bg-[#002f34] text-white cursor-pointer transition hover:bg-[#004d55] disabled:bg-[#ccc] disabled:cursor-not-allowed";
 
-  const socialButtonClass =
-    "flex items-center justify-center w-full py-3 px-5 mb-4 rounded border border-[#c9cbcd] bg-white text-base font-semibold text-[#002f34] cursor-pointer transition hover:border-black hover:shadow-[0_0_0_1px_#000]";
+ const socialButtonClass =
+    "relative flex items-center justify-center w-full h-[40px] mb-4 rounded border border-[#dadce0] bg-white text-[14px] font-medium text-[#3c4043] cursor-pointer transition-colors hover:bg-[#e8f0fe]";
 
   const renderViewContent = () => {
     switch (modalView) {
@@ -162,13 +165,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
             <div className="flex items-center justify-center text-center my-4 text-black text-sm font-medium">
               OR
             </div>
-            <button
+           <button
               onClick={() => setModalView("emailLogin")}
               className={socialButtonClass}
               type="button"
             >
-              <MdOutlineEmail className="text-[28px] mr-2 text-[#007bff]" />{" "}
-              Login with Email
+              <MdOutlineEmail className="absolute left-3 text-[20px] text-[#007bff]" />
+              <span>Login with Email</span>
             </button>
             <Link
               href="#"
@@ -200,8 +203,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
               className={socialButtonClass}
               type="button"
             >
-              <MdOutlineEmail className="text-[28px] mr-2 text-[#007bff]" />{" "}
-              Join with Email
+              <MdOutlineEmail className="absolute left-3 text-[20px] text-[#007bff]" />
+              <span>Join with Email</span>
             </button>
             <Link
               href="#"
@@ -487,9 +490,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
   if (!mounted) return null;
   // 4. Use createPortal to move modal to document.body (this fixes the z-index issue)
   return createPortal(
-    <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/60 flex justify-center items-center z-[9999] p-5">
+    <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/60 flex justify-center items-center z-[999] p-5">
       {/* ModalContainer */}
-      <div className="bg-white rounded-xl w-[850px] max-w-full h-[550px] flex overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.2)] relative max-md:w-[400px] max-md:h-auto max-md:min-h-[500px]">
+      <div className="bg-white rounded-xl w-full max-w-[400px] md:max-w-none md:w-[850px] h-auto min-h-[500px] md:h-[550px] max-h-[90vh] flex overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.2)] relative">
         {/* LEFT PANEL: BRANDING */}
         <div className="flex-1 bg-gradient-to-br from-[#002f34] to-[#004d55] p-10 flex flex-col justify-center items-start text-white relative max-md:hidden">
           <h1 className="text-4xl font-extrabold mb-4 leading-tight">
@@ -513,7 +516,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ view, callbackUrl = "/" }) => {
         </div>
 
         {/* RIGHT PANEL: FORM */}
-        <div className="flex-1 p-10 flex flex-col justify-start pt-[60px] relative overflow-y-auto">
+       <div className="flex-1 p-5 md:p-10 flex flex-col justify-start pt-[60px] md:pt-[60px] relative overflow-y-auto">
           <button
             onClick={() => window.history.back()}
             className="absolute top-4 right-4 z-10 bg-transparent border-none cursor-pointer p-1 w-8 h-8 flex items-center justify-center text-[28px] text-[#555] leading-none hover:text-black hover:bg-[#f5f5f5] hover:rounded-full"

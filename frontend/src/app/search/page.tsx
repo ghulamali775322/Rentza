@@ -49,7 +49,7 @@ export default function SearchPage() {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-
+ const [activeFilterModal, setActiveFilterModal] = useState<string | null>(null);
   const sortOptions = ["Newly listed", "Lowest price", "Highest price"];
  useEffect(() => {
     if (typeof window !== "undefined" && !(window as any).google) {
@@ -189,19 +189,168 @@ export default function SearchPage() {
     return realListings.filter(item => item.category === subCatName).length;
   };
 
-  return (
+ return (
     <div className="relative">
-      <div className="min-h-screen bg-gray-50 pt-[40px] pb-10">
+      <div className="min-h-screen bg-gray-50 pt-[70px] md:pt-[40px] pb-24 md:pb-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">
-            {categoryParam ? `${categoryParam} in Pakistan` : queryParam ? `Results for "${queryParam}"` : "All Listings"}
-          </h1>
+          <div className="mb-4">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-3">
+              {categoryParam ? `${categoryParam}` : queryParam ? `"${queryParam}"` : "All Listings"}
+            </h1>
+            
+            {/* OLX-STYLE HORIZONTAL FILTER BAR (MOBILE ONLY) */}
+            <div className="md:hidden relative z-30">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 snap-x [&::-webkit-scrollbar]:hidden">
+                
+                {/* Category Pill */}
+                <button onClick={() => setActiveFilterModal(activeFilterModal === 'category' ? null : 'category')} className={`shrink-0 snap-start flex items-center gap-1 border rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${activeFilterModal === 'category' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 bg-white text-gray-700'}`}>
+                  {categoryParam || "All Categories"} <FiChevronDown className={activeFilterModal === 'category' ? 'rotate-180' : ''} />
+                </button>
 
+                {/* Price Pill */}
+                <button onClick={() => setActiveFilterModal(activeFilterModal === 'price' ? null : 'price')} className={`shrink-0 snap-start flex items-center gap-1 border rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${activeFilterModal === 'price' || minPrice || maxPrice ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 bg-white text-gray-700'}`}>
+                  {minPrice || maxPrice ? `Rs ${minPrice || 0} - ${maxPrice || 'Max'}` : "Price"} <FiChevronDown className={activeFilterModal === 'price' ? 'rotate-180' : ''} />
+                </button>
+
+                {/* Location Pill */}
+                <button onClick={() => setActiveFilterModal(activeFilterModal === 'location' ? null : 'location')} className={`shrink-0 snap-start flex items-center gap-1 border rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${activeFilterModal === 'location' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 bg-white text-gray-700'}`}>
+                  {selectedLocation !== "Pakistan" ? selectedLocation : "Location"} <FiChevronDown className={activeFilterModal === 'location' ? 'rotate-180' : ''} />
+                </button>
+              </div>
+
+             {/* --- DROPDOWN MODALS --- */}
+              
+              {/* PRICE MODAL */}
+              {activeFilterModal === 'price' && (
+                <div className="absolute top-full left-0 w-[90vw] max-w-[350px] bg-white border border-gray-200 rounded-lg shadow-xl p-4 mt-1 z-50">
+                  <h3 className="font-bold text-gray-800 mb-3">Set Price</h3>
+                  <div className="flex items-center gap-2">
+                    <input type="number" placeholder="Min" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className="w-full border p-2 text-sm rounded focus:border-blue-500 outline-none bg-gray-50" />
+                    <span className="text-gray-500">to</span>
+                    <input type="number" placeholder="Max" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="w-full border p-2 text-sm rounded focus:border-blue-500 outline-none bg-gray-50" />
+                  </div>
+                  <button onClick={() => setActiveFilterModal(null)} className="mt-4 w-full bg-[#0077ff] hover:bg-blue-700 text-white py-2 rounded-md font-bold transition-colors">Apply Price</button>
+                </div>
+              )}
+
+              {/* LOCATION MODAL (This was missing!) */}
+              {activeFilterModal === 'location' && (
+                <div className="absolute top-full left-0 w-[90vw] max-w-[350px] bg-white border border-gray-200 rounded-lg shadow-xl p-4 mt-1 z-50">
+                  <h3 className="font-bold text-gray-800 mb-3">Location</h3>
+                  <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white focus-within:border-blue-500 transition-colors">
+                    <FiMapPin className="text-gray-500 mr-2 text-lg" />
+                    <input
+                      type="text"
+                      value={selectedLocation}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedLocation(val);
+                        if (val.trim() === "") {
+                          setSuggestions([]);
+                          return;
+                        }
+                        const googleObj = (window as any).google;
+                        if (googleObj && googleObj.maps && googleObj.maps.places) {
+                          const service = new googleObj.maps.places.AutocompleteService();
+                          service.getPlacePredictions({
+                            input: val,
+                            componentRestrictions: { country: "pk" },
+                          }, (predictions: any, status: any) => {
+                            if (status === googleObj.maps.places.PlacesServiceStatus.OK && predictions) {
+                              setSuggestions(predictions.map((p: any) => p.description));
+                            } else {
+                              setSuggestions([]);
+                            }
+                          });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          setActiveFilterModal(null);
+                          const params = new URLSearchParams(window.location.search);
+                          params.set("location", selectedLocation);
+                          window.history.pushState({}, "", `?${params.toString()}`);
+                        }
+                      }}
+                      placeholder="Type location..."
+                      className="w-full text-sm outline-none text-gray-900 bg-transparent"
+                    />
+                  </div>
+                  
+                  {/* Location Suggestions */}
+                  {suggestions.length > 0 && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-100 rounded-md">
+                      {suggestions.map((loc) => (
+                        <div 
+                          key={loc}
+                          onClick={() => {
+                            setSelectedLocation(loc);
+                            setActiveFilterModal(null);
+                            const params = new URLSearchParams(window.location.search);
+                            params.set("location", loc);
+                            window.history.pushState({}, "", `?${params.toString()}`);
+                          }}
+                          className="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer flex items-center gap-2 border-b border-gray-50 last:border-0"
+                        >
+                          <FiMapPin className="text-gray-400 shrink-0" />
+                          <span className="truncate">{loc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* CATEGORY MODAL (Now with Subcategories!) */}
+              {activeFilterModal === 'category' && (
+                <div className="absolute top-full left-0 w-[90vw] max-w-[300px] bg-white border border-gray-200 rounded-lg shadow-xl mt-1 max-h-[60vh] overflow-y-auto z-50">
+                  <Link href="/search" onClick={() => setActiveFilterModal(null)} className="block p-4 text-sm font-bold text-blue-600 border-b border-gray-100 bg-gray-50">
+                    All Categories
+                  </Link>
+                  {CATEGORIES_DATA.map(mainCat => {
+                    const isExpanded = expandedSidebarCats.includes(mainCat.name);
+                    return (
+                      <div key={mainCat.name} className="border-b border-gray-100 last:border-0">
+                        <div className="flex justify-between items-center p-4 hover:bg-gray-50">
+                          <Link 
+                            href={`/search?category=${encodeURIComponent(mainCat.name)}`} 
+                            onClick={() => setActiveFilterModal(null)}
+                            className="font-bold text-gray-800 text-sm flex-grow"
+                          >
+                            {mainCat.name}
+                          </Link>
+                          <button onClick={() => toggleSidebarCat(mainCat.name)} className="p-1">
+                            <FiChevronDown className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        </div>
+                        
+                        {/* The Subcategories Dropdown */}
+                        {isExpanded && (
+                          <div className="bg-gray-50 pl-4 py-2 border-t border-gray-100">
+                            {mainCat.subcategories.map(subCat => (
+                              <Link
+                                key={subCat}
+                                href={`/search?category=${encodeURIComponent(subCat)}`}
+                                onClick={() => setActiveFilterModal(null)}
+                                className="block py-2 px-4 text-sm text-gray-600 hover:text-blue-600"
+                              >
+                                {subCat}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+           </div>
           <div className="flex flex-col md:flex-row gap-6">
             
             {/* === LEFT SIDEBAR === */}
-            <aside className="w-full md:w-1/4 space-y-4">
+          <aside className="hidden md:block w-full md:w-1/4 space-y-4">
               
               {/* Nested Categories Filter */}
               <div className="bg-white p-4 rounded border border-gray-200">
@@ -388,7 +537,7 @@ export default function SearchPage() {
               {isLoading ? (
                 <div className="text-center py-20 text-gray-500 font-bold animate-pulse">Loading listings...</div>
               ) : sortedListings.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   {sortedListings.map((item) => (
                     <ListingCard key={item._id} data={item} />
                   ))}

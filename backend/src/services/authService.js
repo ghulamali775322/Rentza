@@ -57,6 +57,11 @@ export const loginUser = async ({ email, password }) => {
   if (!user.emailVerified) {
     throw new Error("Please verify your email first");
   }
+  if (!user.isActive) {
+    throw new Error(
+      "Your account is suspended, contact the admin for more justification.",
+    );
+  }
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "7d",
@@ -83,6 +88,9 @@ export const googleLoginUser = async (token) => {
       emailVerified: true,
       profilePhotoPath: picture,
     });
+  }
+  if (!user.isActive) {
+    throw { status: 403, message: "Your account is suspended" };
   }
 
   const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {

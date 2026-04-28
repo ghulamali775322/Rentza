@@ -38,6 +38,9 @@ const userSchema = new mongoose.Schema(
 
     isActive: { type: Boolean, default: true },
 
+    //  NEW: This tracks exactly when they were last online!
+    lastActive: { type: Date, default: Date.now },
+
     // used when user signs up with email
     verificationToken: {
       type: String,
@@ -55,6 +58,12 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    
+    planType: { type: String, enum: ['free', 'gold', 'premium'], default: 'free' },
+    planExpiresAt: { type: Date, default: null },
+    adsPostedCount: { type: Number, default: 0 },
+    
   },
   {
     timestamps: true,

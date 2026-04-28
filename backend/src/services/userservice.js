@@ -14,23 +14,22 @@ export const getActiveUsersCountService = async () => {
   return count;
 };
 
-
 // Admin Panel: Get users filtered by status AND/OR search term, with total listings count
 export const getAdminUsersService = async (isActiveFilter, searchTerm) => {
   let matchStage = { role: "user" };
 
   // 2. Tab Filter: (Active vs Inactive)
   if (isActiveFilter !== undefined) {
-    matchStage.isActive = isActiveFilter === 'true'; // Converts the string "true" to a real boolean
+    matchStage.isActive = isActiveFilter === "true"; // Converts the string "true" to a real boolean
   }
 
   // 3. Search Bar Filter
   if (searchTerm) {
     const isMongoId = mongoose.Types.ObjectId.isValid(searchTerm);
-    
+
     let searchConditions = [
       { name: { $regex: searchTerm, $options: "i" } },
-      { email: { $regex: searchTerm, $options: "i" } }
+      { email: { $regex: searchTerm, $options: "i" } },
     ];
 
     if (isMongoId) {
@@ -42,21 +41,21 @@ export const getAdminUsersService = async (isActiveFilter, searchTerm) => {
 
   // 4. The Aggregation Pipeline (The Magic Trick)
   const users = await User.aggregate([
-    { $match: matchStage }, 
+    { $match: matchStage },
     {
       // Look inside the 'listings' collection and find all listings owned by this user
       $lookup: {
-        from: "listings", 
+        from: "listings",
         localField: "_id",
         foreignField: "lenderId",
-        as: "userListings"
-      }
+        as: "userListings",
+      },
     },
     {
       // Count how many listings we found and create a new "totalListings" field
       $addFields: {
-        totalListings: { $size: "$userListings" }
-      }
+        totalListings: { $size: "$userListings" },
+      },
     },
     {
       // Security: Strip out passwords and tokens, and remove the bulky listings array
@@ -64,10 +63,10 @@ export const getAdminUsersService = async (isActiveFilter, searchTerm) => {
         passwordHash: 0,
         verificationToken: 0,
         resetPasswordToken: 0,
-        userListings: 0 
-      }
+        userListings: 0,
+      },
     },
-    { $sort: { createdAt: -1 } } 
+    { $sort: { createdAt: -1 } },
   ]);
 
   return users;
@@ -75,26 +74,48 @@ export const getAdminUsersService = async (isActiveFilter, searchTerm) => {
 
 // Admin Panel: Get full details of a single user
 export const getAdminUserDetailsService = async (userId) => {
-  const user = await User.findById(userId).select("-passwordHash -verificationToken -resetPasswordToken");
-  return user;
+  const user = await User.findById(userId).select(
+    "-passwordHash -verificationToken -resetPasswordToken",
+  );
+
+  if (!user) return null;
+
+  // ✅ Count listings separately
+  const totalListings = await Listing.countDocuments({
+    lenderId: userId,
+  });
+
+  // ✅ Convert to object and attach new field
+  const userObj = user.toObject();
+  userObj.totalListings = totalListings;
+
+  return userObj;
 };
 
 // Admin Panel: Get all listings owned by a specific user
 export const getAdminUserListingsService = async (userId) => {
-  const userListings = await Listing.find({ lenderId: userId })
-    .sort({ createdAt: -1 }); 
-    
+  const userListings = await Listing.find({ lenderId: userId }).sort({
+    createdAt: -1,
+  });
+
   return userListings;
 };
 
 // Admin Panel: Suspend or Unsuspend a user
 export const updateUserStatusService = async (userId, isActiveStatus) => {
+  // 1️⃣ Update user status
   const updatedUser = await User.findByIdAndUpdate(
-    userId, 
-    { isActive: isActiveStatus }, 
-    { new: true }
+    userId,
+    { isActive: isActiveStatus },
+    { new: true },
   ).select("-passwordHash -verificationToken -resetPasswordToken");
-  
+
+  // 2️⃣ Deactivate or reactivate user's listings
+  await Listing.updateMany(
+    { lenderId: userId },
+    { status: isActiveStatus ? "active" : "inactive" }, // Set status accordingly
+  );
+
   return updatedUser;
 };
 
