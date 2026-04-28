@@ -1,7 +1,7 @@
 "use client";
 import Autocomplete from "react-google-autocomplete";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -57,6 +57,9 @@ export default function CreateListingPage() {
   const [selectedCoordinates, setSelectedCoordinates] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState(""); 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
 
   // 2. NEW MODAL STATE
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
