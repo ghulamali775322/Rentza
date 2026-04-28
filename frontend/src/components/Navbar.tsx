@@ -33,6 +33,16 @@ export default function Navbar() {
   const pathname = usePathname();
   const [active, setActive] = useState("home");
 
+  useEffect(() => {
+    if (pathname === "/") {
+      setActive("home");
+    } else if (pathname.startsWith("/about")) {
+      setActive("about");
+    } else {
+      setActive(""); // Removes the shadow if you are on Search, Create Listing, etc.
+    }
+  }, [pathname]);
+
   const { data: session } = useSession();
   const { token, name: authName } = useAuth();
   const { name, profilePhotoUrl } = useUser();
