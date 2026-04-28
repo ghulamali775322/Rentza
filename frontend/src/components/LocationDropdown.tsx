@@ -163,14 +163,42 @@ const LocationDropdown = () => {
   const handleSelectCity = (city: string) => {
     setSelectedLocation(city);
     setIsOpen(false);
-
-    const params = new URLSearchParams(window.location.search);
-    params.delete("lat");
-    params.delete("lng");
-    params.delete("radius");
-    params.set("location", city); 
-
-   router.push(`${pathname}?${params.toString()}`);
+    
+    const googleObj = (window as any).google;
+    
+    if (googleObj && googleObj.maps) {
+      const geocoder = new googleObj.maps.Geocoder();
+      
+      // Ask Google for the coordinates of the city
+      geocoder.geocode({ address: city + ", Pakistan" }, (results: any, status: any) => {
+        const params = new URLSearchParams(window.location.search);
+        
+        if (status === "OK" && results[0]) {
+          // ✅ Success! Grab the math coordinates for Near-to-Far sorting
+          const lat = results[0].geometry.location.lat();
+          const lng = results[0].geometry.location.lng();
+          
+          params.set("lat", lat.toString());
+          params.set("lng", lng.toString());
+        } else {
+          // Fallback if Google fails
+          params.delete("lat");
+          params.delete("lng");
+        }
+        
+        params.delete("radius");
+        params.set("location", city); 
+        router.push(`${pathname}?${params.toString()}`);
+      });
+    } else {
+      // Fallback if script hasn't loaded
+      const params = new URLSearchParams(window.location.search);
+      params.delete("lat");
+      params.delete("lng");
+      params.delete("radius");
+      params.set("location", city); 
+      router.push(`${pathname}?${params.toString()}`);
+    }
   };
 
   // --- Only show Google suggestions ---
