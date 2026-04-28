@@ -1,5 +1,6 @@
 "use client";
 import LocationDropdown from "./LocationDropdown";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
@@ -25,6 +26,7 @@ import {
 
 export default function Navbar() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const pathname = usePathname();
   const [active, setActive] = useState("home");
 
@@ -43,12 +45,15 @@ export default function Navbar() {
   // --- NEW: STATE TO HOLD MONGODB ID ---
   const [myMongoId, setMyMongoId] = useState<string | null>(null);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      router.push(`/search?query=${encodeURIComponent(searchQuery)}`);
+ const handleSearch = () => {
+    if (!searchQuery || searchQuery.trim() === "") {
+      alert("Please enter an item or category (e.g., 'cars', 'bike') before searching.");
+      return; 
     }
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    params.set("query", searchQuery);
+    router.push(`/search?${params.toString()}`);
   };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();

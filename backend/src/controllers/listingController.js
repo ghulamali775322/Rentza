@@ -5,6 +5,7 @@ import { getListingsByLenderService } from "../services/listingService.js";
 import { updateListingService } from "../services/listingService.js";
 import { deleteListingService } from "../services/listingService.js";
 import { deleteListingImageService } from "../services/listingService.js";
+import { searchListingsService } from "../services/listingService.js";
 import { validateText } from "../utils/textFilter.js";
 import fs from "fs"; 
 import { moderateImage } from "../utils/moderation.js"; 
@@ -274,6 +275,35 @@ export const deleteListingImage = async (req, res) => {
     });
 
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+export const searchListings = async (req, res) => {
+  try {
+    // 1. Grab everything the frontend sent
+    const { keyword, lat, lng, category, location } = req.query;
+    
+    // 2. Pass it to the Service
+    const listings = await searchListingsService(keyword, lat, lng, category, location);
+
+    // 3. Filter out any unapproved images for safety
+    const safeListings = listings.map(listing => {
+      const listingData = listing.toObject ? listing.toObject() : listing;
+      if (listingData.images) {
+        listingData.images = listingData.images.filter(img => img.status === 'approved');
+      }
+      return listingData;
+    });
+
+    // 4. Send the data back to Next.js
+    res.status(200).json({
+      success: true,
+      count: safeListings.length,
+      data: safeListings,
+    });
+
+  } catch (error) {
+    console.error("🚨 Search Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

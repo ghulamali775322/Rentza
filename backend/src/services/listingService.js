@@ -127,3 +127,38 @@ export const updateListingStatusAdminService = async (listingId, newStatus) => {
   );
   return updatedListing;
 };
+// Search listings (with keyword, category, and location)
+export const searchListingsService = async (keyword, lat, lng, category, locationString) => {
+  let dbQuery = {};
+
+  // 1. Keyword matching (checks both title and category)
+  if (keyword) {
+    dbQuery.$or = [
+      { title: { $regex: keyword, $options: "i" } },
+      { category: { $regex: keyword, $options: "i" } }
+    ];
+  }
+
+  // 2. Exact Category matching
+  if (category) {
+    dbQuery.category = category;
+  }
+
+  // 3. Location matching
+  if (lat && lng) {
+    // If GPS is provided, sort Near to Far!
+    dbQuery.location = {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: [parseFloat(lng), parseFloat(lat)] // [Longitude, Latitude]
+        }
+      }
+    };
+  } else if (locationString && locationString !== "Pakistan") {
+    const cityName = locationString.split(',')[0].trim();
+    dbQuery.address = { $regex: cityName, $options: "i" };
+  }
+  const listings = await Listing.find(dbQuery);
+  return listings;
+};

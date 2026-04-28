@@ -67,8 +67,29 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchListings = async () => {
       setIsLoading(true);
+
+      
+      const hasSpecificLocation = latParam || lngParam || (locationParam && locationParam !== "Pakistan");
+      
+      if (hasSpecificLocation && !queryParam && !categoryParam) {
+        setRealListings([]); // Keep the listings empty
+        setIsLoading(false);
+        return; // Stop the function completely so it doesn't crash the database!
+      }
+
       try {
-        const response = await fetch("http://localhost:5000/api/listings");
+        const params = new URLSearchParams();
+        if (queryParam) params.append("keyword", queryParam);
+        if (latParam) params.append("lat", latParam);
+        if (lngParam) params.append("lng", lngParam);
+        if (categoryParam) params.append("category", categoryParam);
+
+        let fetchUrl = "http://localhost:5000/api/listings";
+        if (params.toString()) {
+          fetchUrl = `http://localhost:5000/api/listings/search?${params.toString()}`; 
+        }
+
+        const response = await fetch(fetchUrl);
         const result = await response.json();
         if (result.success) {
           setRealListings(result.data);
@@ -79,8 +100,9 @@ export default function SearchPage() {
         setIsLoading(false);
       }
     };
+    
     fetchListings();
-  }, []);
+  }, [queryParam, latParam, lngParam, categoryParam, locationParam]); 
 
   // Automatically expand the sidebar category family if the user lands on it from the homepage
   useEffect(() => {

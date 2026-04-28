@@ -5,6 +5,7 @@ import { getLenderListings } from "../controllers/listingController.js";
 import { getSingleListing } from "../controllers/listingController.js";
 import { updateListing } from "../controllers/listingController.js";
 import { deleteListing } from "../controllers/listingController.js";
+import { searchListings } from "../controllers/listingController.js";
 import upload from "../middlewares/uploadMiddleware.js";
 import { uploadListingImages } from "../controllers/listingController.js";
 import { deleteListingImage } from "../controllers/listingController.js";
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.post("/", protect, createListing);
 router.get("/", getListings);
+router.get("/search", searchListings);
 router.get("/lender/:lenderId", getLenderListings);
 router.get("/:id", getSingleListing);
 router.put("/:id", protect, updateListing);

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { FiMapPin, FiChevronDown, FiChevronUp } from "react-icons/fi";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname} from "next/navigation";
 
 // 1. Your Custom Beautiful Gradient Pin!
 const GradientPinIcon = () => (
@@ -20,6 +20,7 @@ const GradientPinIcon = () => (
 const LocationDropdown = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Read location from URL if it exists, otherwise default to "Pakistan"
@@ -130,7 +131,7 @@ const LocationDropdown = () => {
         params.delete("location"); // Clear text location
         params.set("lat", lat.toString());
         params.set("lng", lng.toString());
-        router.push(`/search?${params.toString()}`);
+        router.push(`${pathname}?${params.toString()}`);
       },
       (error) => {
         if (error.code === error.PERMISSION_DENIED) {
@@ -152,7 +153,7 @@ const LocationDropdown = () => {
     params.delete("radius");
     params.delete("location");
 
-    router.push(`/search?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleSelectCity = (city: string) => {
@@ -165,7 +166,7 @@ const LocationDropdown = () => {
     params.delete("radius");
     params.set("location", city); 
 
-    router.push(`/search?${params.toString()}`);
+   router.push(`${pathname}?${params.toString()}`);
   };
 
   // --- Only show Google suggestions ---
