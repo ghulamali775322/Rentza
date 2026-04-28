@@ -447,7 +447,14 @@ const isListingPage = pathname?.includes("/listings/");
             <Link href="/login" className="text-[#0077ff] font-semibold px-4 py-2 rounded-lg border border-[#0077ff] hover:bg-[#0077ff] hover:text-white transition">Login</Link>
           )}
 
-          <button onClick={() => { if (!hasMounted || (!session && !token)) router.push("/login"); else router.push("/create-listing"); }} className="hidden md:flex relative items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg">
+          <button 
+            onClick={() => { 
+              sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
+              if (!hasMounted || (!session && !token)) router.push("/login"); 
+              else router.push("/create-listing"); 
+            }} 
+            className="hidden md:flex relative items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 via-green-400 to-blue-500 p-[3px] transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          >
             <div className="bg-white rounded-full px-3 sm:px-6 py-2 flex items-center gap-1 sm:gap-2 transition-all duration-300 hover:bg-[#f9fafb]">
   <span className="text-2xl text-black font-bold leading-none">＋</span>
   <span className="hidden sm:inline font-bold text-[#002f34] tracking-wide">POST AD</span>

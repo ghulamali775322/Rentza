@@ -10,7 +10,6 @@ import { getListingDetails, updateListing } from "@/app/api/admin/listings";
 // 1. IMPORT TOAST
 import toast from "react-hot-toast";
 
-// --- MOCK DATABASE ---
 
 export default function EditListingPage({
   params,
