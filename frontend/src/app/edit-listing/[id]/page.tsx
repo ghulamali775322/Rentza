@@ -13,7 +13,7 @@ import ConfirmModal from "@/components/modals/ConfirmModal";
 // --- THE MASTER DICTIONARY ---
 const CATEGORIES_DATA = [
   { name: "Mobiles", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
-  { name: "Vehicles", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
+  { name: "Vehicles", subcategories: ["Cars", "Spare Parts"] },
   { name: "Property for Rent", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
   { name: "Electronics & Home Appliances", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
   { name: "Bikes", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
