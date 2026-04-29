@@ -160,26 +160,32 @@ export const updateListingStatusAdminService = async (listingId, newStatus) => {
   );
   return updatedListing;
 };
-// Search listings (with keyword, category, and location)
-export const searchListingsService = async (keyword, lat, lng, category, locationString) => {
- let dbQuery = { status: "active" };
+// Search listings (Now supports subCategories and flexible text searching!)
+export const searchListingsService = async (keyword, lat, lng, category, subCategory, locationString) => {
+  let dbQuery = {};
 
-  // 1. Keyword matching (checks both title and category)
+  // 2. Keyword matching (checks title, category, AND subcategory)
   if (keyword) {
     dbQuery.$or = [
       { title: { $regex: keyword, $options: "i" } },
-      { category: { $regex: keyword, $options: "i" } }
+      { category: { $regex: keyword, $options: "i" } },
+      { subCategory: { $regex: keyword, $options: "i" } }
     ];
   }
 
-  // 2. Exact Category matching
+  // 3. Flexible Category matching (Fixes the "Electronics & Home Appliances" bug)
   if (category) {
-    dbQuery.category = category;
+    dbQuery.category = { $regex: category, $options: "i" };
   }
 
-  // 3. Location matching
+  // 4. NEW: Subcategory matching (Fixes the Mobile Phones clicking bug)
+  if (subCategory) {
+    dbQuery.subCategory = { $regex: subCategory, $options: "i" };
+  }
+
+  // 5. Location matching
   if (lat && lng) {
-    // If GPS is provided, sort Near to Far!
+    // GPS IS ACTIVE: Sort Near to Far
     dbQuery.location = {
       $near: {
         $geometry: {
@@ -189,9 +195,12 @@ export const searchListingsService = async (keyword, lat, lng, category, locatio
       }
     };
   } else if (locationString && locationString !== "Pakistan") {
-    const cityName = locationString.split(',')[0].trim();
+    // TEXT FALLBACK: Removes the word "City" just in case Google adds it (e.g., "Lahore City" -> "Lahore")
+    const cityName = locationString.split(',')[0].replace(" City", "").trim();
     dbQuery.address = { $regex: cityName, $options: "i" };
   }
+
+  // Return all matching listings
   const listings = await Listing.find(dbQuery);
   return listings;
 };

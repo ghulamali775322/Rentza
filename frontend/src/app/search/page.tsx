@@ -67,22 +67,31 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchListings = async () => {
       setIsLoading(true);
-
-      
-      const hasSpecificLocation = latParam || lngParam || (locationParam && locationParam !== "Pakistan");
-      
-      if (hasSpecificLocation && !queryParam && !categoryParam) {
-        setRealListings([]); // Keep the listings empty
-        setIsLoading(false);
-        return; // Stop the function completely so it doesn't crash the database!
-      }
-
       try {
         const params = new URLSearchParams();
-        if (queryParam) params.append("keyword", queryParam);
-        if (latParam) params.append("lat", latParam);
-        if (lngParam) params.append("lng", lngParam);
-        if (categoryParam) params.append("category", categoryParam);
+        let finalCategory = categoryParam;
+        let finalQuery = queryParam;
+
+        // 🧠 SMART SEARCH: If user typed "Vehicles", treat it like a category!
+        if (queryParam && !categoryParam) {
+          const matchedMainCat = CATEGORIES_DATA.find(c => c.name.toLowerCase() === queryParam.toLowerCase());
+          if (matchedMainCat) {
+            finalCategory = matchedMainCat.name;
+            finalQuery = null; // Clear keyword, use category instead
+          }
+        }
+
+        if (finalQuery) params.append("keyword", finalQuery);
+        if (!finalQuery && !finalCategory && latParam) params.append("lat", latParam);
+        if (!finalQuery && !finalCategory && lngParam) params.append("lng", lngParam);
+
+        // 🛡️ SUBCATEGORY PROTECTION: Don't send "Vehicles" to DB, only send "Cars"
+        if (finalCategory) {
+          const isMainCategory = CATEGORIES_DATA.some(c => c.name === finalCategory);
+          if (!isMainCategory) {
+            params.append("category", finalCategory); 
+          }
+        }
 
         let fetchUrl = "http://localhost:5000/api/listings";
         if (params.toString()) {
@@ -119,6 +128,28 @@ export default function SearchPage() {
       prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
     );
   };
+  // 🧠 GPS TEXT-STEALER LOGIC: Finds the closest city text if using Current Location!
+  let autoLocationText = "";
+  if (latParam && lngParam && !locationParam) {
+    let nearestAd: any = null;
+    let minDistance = Infinity;
+
+    realListings.forEach((item) => {
+      if (item.location?.coordinates?.length === 2) {
+        const itemLng = item.location.coordinates[0];
+        const itemLat = item.location.coordinates[1];
+        const d = calculateDistance(parseFloat(latParam), parseFloat(lngParam), itemLat, itemLng);
+        if (d < minDistance) {
+          minDistance = d;
+          nearestAd = item;
+        }
+      }
+    });
+
+    if (nearestAd && minDistance < 50) {
+      autoLocationText = nearestAd.address;
+    }
+  }
 
   const filteredListings = realListings.map((item: any) => {
     // 1. First, calculate distance if GPS is active
@@ -131,43 +162,59 @@ export default function SearchPage() {
     return { ...item, distance }; 
 
   }).filter((item: any) => {
-    // 2. Category & Query Filters
-    let validSubcategories: string[] = [];
-    if (categoryParam) {
-      const mainCatMatch = CATEGORIES_DATA.find(c => c.name === categoryParam);
-      if (mainCatMatch) {
-        validSubcategories = mainCatMatch.subcategories;
-      } else {
-        validSubcategories = [categoryParam];
+    
+    let finalCategory = categoryParam;
+    let finalQuery = queryParam;
+
+    // 🧠 SMART SEARCH AGAIN (For the frontend filter)
+    if (queryParam && !categoryParam) {
+      const matchedMainCat = CATEGORIES_DATA.find(c => c.name.toLowerCase() === queryParam.toLowerCase());
+      if (matchedMainCat) {
+        finalCategory = matchedMainCat.name;
+        finalQuery = null;
       }
     }
-    const matchCategory = validSubcategories.length > 0 ? validSubcategories.includes(item.category) || item.category === categoryParam : true; 
-    const matchQuery = queryParam ? item.title.toLowerCase().includes(queryParam.toLowerCase()) || item.category.toLowerCase().includes(queryParam.toLowerCase()) : true;
+
+    // 🛡️ CATEGORY FILTER: Safely group "Cars" and "Motorcycles" into "Vehicles"
+    let matchCategory = true;
+    if (finalCategory) {
+      const mainCatMatch = CATEGORIES_DATA.find(c => c.name === finalCategory);
+      if (mainCatMatch) {
+        // It is a main category like "Vehicles", so check its subcategories!
+        matchCategory = mainCatMatch.subcategories.includes(item.category) || item.category === finalCategory;
+      } else {
+        // It is a specific subcategory like "Cars"
+        matchCategory = item.category === finalCategory;
+      }
+    }
+
+    const matchQuery = finalQuery ? item.title.toLowerCase().includes(finalQuery.toLowerCase()) || item.category.toLowerCase().includes(finalQuery.toLowerCase()) : true;
     const min = minPrice ? parseInt(minPrice) : 0;
     const max = maxPrice ? parseInt(maxPrice) : Infinity;
     const matchPrice = item.price >= min && item.price <= max;
 
-    // 3. Location Filter
+   // 3. Location Filter (Strict City Match, NO Radius)
     let matchLocation = true;
-   if (latParam && lngParam) {
-      matchLocation = true; 
-    } else {
-      // If NO GPS is used, run the Highly Forgiving Text Match
-      const activeLocation = locationParam || selectedLocation || "Pakistan";
-      if (activeLocation !== "Pakistan" && activeLocation !== "") {
-        const dbAddr = (item.address || "").toLowerCase();
-        const searchAddr = activeLocation.toLowerCase();
+    if (!queryParam && !categoryParam) {
+    
+    // This safely grabs "Lahore" whether it came from the dropdown or the GPS button!
+    const activeLocation = locationParam || autoLocationText || selectedLocation || "Pakistan";
+    
+    if (activeLocation !== "Pakistan" && activeLocation !== "") {
+      const dbAddr = (item.address || "").toLowerCase();
+      const searchAddr = activeLocation.toLowerCase();
+      
+      if (dbAddr.includes(searchAddr) || searchAddr.includes(dbAddr)) {
+        matchLocation = true;
+      } else {
+        const searchParts = searchAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
+        const dbParts = dbAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
         
-        if (dbAddr.includes(searchAddr) || searchAddr.includes(dbAddr)) {
-          matchLocation = true;
-        } else {
-          const searchParts = searchAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
-          const dbParts = dbAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
-          matchLocation = searchParts.some((searchPart: string) => dbParts.some((dbPart: string) => dbPart.includes(searchPart) || searchPart.includes(dbPart)));
-        }
+        // If the city name matches, show it. If not, hide it instantly.
+        matchLocation = searchParts.some((searchPart: string) => dbParts.some((dbPart: string) => dbPart.includes(searchPart) || searchPart.includes(dbPart)));
       }
     }
-
+    }
     return matchCategory && matchQuery && matchLocation && matchPrice; 
   });
 
@@ -176,12 +223,10 @@ export default function SearchPage() {
     if (selectedSort === "Lowest price") return a.price - b.price;
     if (selectedSort === "Highest price") return b.price - a.price;
 
-    // 2. GPS FALLBACK: If they didn't choose a price filter, AND GPS is active, sort by nearest
-    if (latParam && lngParam) {
+    
+    if (latParam && lngParam && (queryParam || categoryParam)) {
       return a.distance - b.distance; 
     }
-
-    // 3. DEFAULT: If no GPS and no price filter, sort by Newly Listed
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 

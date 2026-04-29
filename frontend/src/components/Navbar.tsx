@@ -69,14 +69,14 @@ export default function Navbar() {
   const [fetchedPhoto, setFetchedPhoto] = useState<string | null>(null);
 
  const handleSearch = () => {
-    if (!searchQuery || searchQuery.trim() === "") {
-     toast.error("Please enter an item or category (e.g., 'cars', 'bike') before searching.");
-      return; 
-    }
-    const params = new URLSearchParams(searchParams?.toString() || "");
-    params.set("query", searchQuery);
-    router.push(`/search?${params.toString()}`);
-  };
+  const params = new URLSearchParams(searchParams?.toString() || "");
+  if (searchQuery && searchQuery.trim() !== "") {
+    params.set("query", searchQuery.trim());
+  } else {
+    params.delete("query"); 
+  }
+  router.push(`/search?${params.toString()}`);
+};
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
@@ -484,7 +484,7 @@ const isListingPage = pathname?.includes("/listings/");
       <div className="flex items-center flex-1 min-w-0 px-3">
         <input 
           type="text" 
-          placeholder="Find anything you" 
+          placeholder="Find anything you need" 
           className="flex-1 min-w-0 text-sm focus:outline-none cursor-text" 
           value={searchQuery} 
           onChange={(e) => setSearchQuery(e.target.value)} 

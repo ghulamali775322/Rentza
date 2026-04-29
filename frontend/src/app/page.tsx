@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect, useLayoutEffect, JSX } from "react";
 import { FiChevronDown, FiSmartphone, FiHome, FiMenu } from "react-icons/fi";
 import { FaCarSide, FaCouch, FaFootballBall, FaEllipsisH } from "react-icons/fa";
@@ -80,6 +81,14 @@ const CATEGORIES_DATA = [
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null); 
+  const searchParams = useSearchParams();
+  const buildCategoryUrl = (catName: string | null) => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (catName) {
+      params.set("category", catName);
+    }
+    return `/search?${params.toString()}`;
+  };
   
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -161,7 +170,7 @@ export default function Home() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-900">{mainCategoryData.name}</h2>
           <Link 
-            href={`/search?category=${encodeURIComponent(mainCategoryData.name)}`}
+           href={buildCategoryUrl(mainCategoryData.name)}
             onClick={() => sessionStorage.setItem('homeScrollPos', window.scrollY.toString())} 
             className="text-blue-600 hover:underline font-medium"
           >
@@ -201,7 +210,7 @@ export default function Home() {
         {CATEGORIES_DATA.map((cat) => (
           <Link
             key={cat.name}
-            href={`/search?category=${encodeURIComponent(cat.name)}`}
+           href={buildCategoryUrl(cat.name)}
             className="cursor-pointer hover:text-[#0077ff] transition-colors whitespace-nowrap"
           >
             {cat.name}
@@ -224,7 +233,7 @@ export default function Home() {
                 <li key={mainCat.name} className="border-b border-gray-50 last:border-0">
                   <div className="flex justify-between items-center px-3 py-3 hover:bg-gray-50 rounded-md transition-colors">
                     <Link 
-                      href={`/search?category=${encodeURIComponent(mainCat.name)}`}
+                      href={buildCategoryUrl(mainCat.name)}
                       onClick={() => setIsOpen(false)}
                       className="font-semibold text-gray-800 hover:text-[#0077ff] flex-grow"
                     >
@@ -243,7 +252,7 @@ export default function Home() {
                       {mainCat.subcategories.map(subCat => (
                         <li key={subCat}>
                           <Link
-                            href={`/search?category=${encodeURIComponent(subCat)}`}
+                           href={buildCategoryUrl(subCat)}
                             onClick={() => setIsOpen(false)}
                             className="block text-sm text-gray-600 hover:text-[#0077ff] py-1.5 px-2 rounded-md hover:bg-blue-50/50"
                           >
@@ -265,7 +274,7 @@ export default function Home() {
        
 <div className="grid grid-rows-2 grid-flow-col auto-cols-[110px] md:grid-rows-none md:grid-flow-row md:grid-cols-6 gap-3 md:gap-6 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 snap-x [&::-webkit-scrollbar]:hidden">
   {CATEGORIES_DATA.map((cat) => (
-    <Link key={cat.name} href={`/search?category=${encodeURIComponent(cat.name)}`} className="snap-start h-full">
+    <Link key={cat.name} href={buildCategoryUrl(cat.name)} className="snap-start h-full">
       <div className="flex flex-col items-center justify-center bg-white p-3 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 transition-all duration-300 cursor-pointer h-full">
         
         {/* Responsive Icon Sizes */}
