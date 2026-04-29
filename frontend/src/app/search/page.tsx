@@ -44,7 +44,9 @@ export default function SearchPage() {
   const [expandedSidebarCats, setExpandedSidebarCats] = useState<string[]>([]);
 
   const [isSortOpen, setIsSortOpen] = useState(false);
-  const [selectedSort, setSelectedSort] = useState("Newly listed");
+ const [selectedSort, setSelectedSort] = useState(
+    latParam && lngParam && (queryParam || categoryParam) ? "" : "Newly listed"
+  );
   const [selectedLocation, setSelectedLocation] = useState(locationParam || "Pakistan");
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [minPrice, setMinPrice] = useState("");
@@ -223,7 +225,9 @@ export default function SearchPage() {
     // 1. PRICE TAKES PRIORITY: If the user explicitly chose a price filter, respect it first!
     if (selectedSort === "Lowest price") return a.price - b.price;
     if (selectedSort === "Highest price") return b.price - a.price;
-
+    if (selectedSort === "Newly listed") {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
     
     if (latParam && lngParam && (queryParam || categoryParam)) {
       return a.distance - b.distance; 
@@ -233,6 +237,15 @@ export default function SearchPage() {
 
   const getSubcategoryCount = (subCatName: string) => {
     return realListings.filter(item => item.category === subCatName).length;
+  };
+  const getCategoryUrl = (catName: string) => {
+    const params = new URLSearchParams();
+    if (catName) params.set("category", catName);
+    if (queryParam) params.set("query", queryParam);
+    if (locationParam) params.set("location", locationParam);
+    if (latParam) params.set("lat", latParam);
+    if (lngParam) params.set("lng", lngParam);
+    return `/search?${params.toString()}`;
   };
 
  return (
@@ -405,10 +418,7 @@ export default function SearchPage() {
                 </div>
                 <ul className="text-sm space-y-1">
                   <li className="mb-3">
-                    <Link 
-                      href="/search" 
-                      className={!categoryParam ? "font-bold text-blue-600 block" : "text-gray-800 font-bold hover:text-blue-500 block"}
-                    >
+                    <Link href={getCategoryUrl("")} className={!categoryParam ? "font-bold text-blue-600 block" : "text-gray-800 font-bold hover:text-blue-500 block"}>
                       All Categories
                     </Link>
                   </li>
@@ -422,9 +432,9 @@ export default function SearchPage() {
                         <div className="flex justify-between items-center py-1.5 rounded-md transition-colors hover:bg-gray-50">
                           {/* Main Category Link */}
                           <Link 
-                            href={`/search?category=${encodeURIComponent(mainCat.name)}${queryParam ? `&query=${queryParam}` : ''}`}
-                            className={`block flex-grow font-semibold ${isMainActive ? "text-blue-600" : "text-gray-700 hover:text-blue-500"}`}
-                          >
+    href={getCategoryUrl(mainCat.name)}
+    className={`block flex-grow font-semibold ${isMainActive ? "text-blue-600" : "text-gray-700 hover:text-blue-500"}`}
+  >
                             {mainCat.name}
                           </Link>
                           
@@ -445,9 +455,9 @@ export default function SearchPage() {
                               return (
                                 <li key={subCat}>
                                   <Link 
-                                    href={`/search?category=${encodeURIComponent(subCat)}${queryParam ? `&query=${queryParam}` : ''}`}
-                                    className={`block text-[13px] py-1 px-2 rounded-md hover:bg-blue-50/50 ${categoryParam === subCat ? "text-blue-600 font-bold" : "text-gray-500 hover:text-blue-600"}`}
-                                  >
+    href={getCategoryUrl(subCat)}
+    className={`block text-[13px] py-1 px-2 rounded-md hover:bg-blue-50/50 ${categoryParam === subCat ? "text-blue-600 font-bold" : "text-gray-500 hover:text-blue-600"}`}
+  >
                                     {subCat} <span className="text-gray-400">({count})</span>
                                   </Link>
                                 </li>
@@ -459,85 +469,6 @@ export default function SearchPage() {
                     );
                   })}
                 </ul>
-              </div>
-
-             {/* Location Filter */}
-              <div className="bg-white p-4 rounded border border-gray-200">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-gray-800">Locations</h3>
-                </div>
-                <div className="relative">
-                  {/* Now an input field so they can type! */}
-                  <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white focus-within:border-blue-500 transition-colors">
-                    <FiMapPin className="text-gray-500 mr-2 text-lg" />
-                    <input
-                      type="text"
-                      value={selectedLocation}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSelectedLocation(val);
-                        setIsLocationOpen(true);
-
-                        if (val.trim() === "") {
-                          setSuggestions([]);
-                          return;
-                        }
-
-                        const googleObj = (window as any).google;
-                        if (googleObj && googleObj.maps && googleObj.maps.places) {
-                          const service = new googleObj.maps.places.AutocompleteService();
-                          service.getPlacePredictions({
-                            input: val,
-                            componentRestrictions: { country: "pk" },
-                          }, (predictions: any, status: any) => {
-                            if (status === googleObj.maps.places.PlacesServiceStatus.OK && predictions) {
-                              setSuggestions(predictions.map((p: any) => p.description));
-                            } else {
-                              setSuggestions([]);
-                            }
-                          });
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        // When they press enter, it pushes the typed location to the URL!
-                        if (e.key === "Enter") {
-                          setIsLocationOpen(false);
-                          const params = new URLSearchParams(window.location.search);
-                          params.set("location", selectedLocation);
-                          window.history.pushState({}, "", `?${params.toString()}`);
-                        }
-                      }}
-                      placeholder="Select or type location"
-                      className="w-full text-sm outline-none text-gray-900 bg-transparent"
-                    />
-                    <FiChevronDown 
-                      onClick={() => setIsLocationOpen(!isLocationOpen)}
-                      className={`text-gray-500 ml-2 text-lg transition-transform cursor-pointer ${isLocationOpen ? 'rotate-180' : ''}`} 
-                    />
-                  </div>
-                  
-                  {/* The Dropdown List for the sidebar */}
-                  {isLocationOpen && suggestions.length > 0 && (
-                    <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 z-10 max-h-48 overflow-y-auto">
-                      {suggestions.map((loc) => (
-                        <div 
-                          key={loc}
-                          onClick={() => {
-                            setSelectedLocation(loc);
-                            setIsLocationOpen(false);
-                            const params = new URLSearchParams(window.location.search);
-                            params.set("location", loc);
-                            window.history.pushState({}, "", `?${params.toString()}`);
-                          }}
-                          className="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 cursor-pointer flex items-center gap-2"
-                        >
-                          <FiMapPin className="text-gray-400 shrink-0" />
-                          <span className="truncate">{loc}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Price Range */}
