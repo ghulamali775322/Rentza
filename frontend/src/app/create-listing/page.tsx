@@ -22,7 +22,7 @@ import ConfirmModal from "@/components/modals/ConfirmModal";
 // --- MASTER DICTIONARY (Synced with Homepage/Search) ---
 const CATEGORIES = [
   { id: "mobiles", name: "Mobiles", image: "/categories/mobile.png", icon: <FiSmartphone />, color: "#ffce32", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
-  { id: "vehicles", name: "Vehicles", image: "/categories/car.png", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
+  { id: "vehicles", name: "Vehicles", image: "/categories/car.png", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Spare Parts"] },
   { id: "property", name: "Property for Rent", image: "/categories/rent.png", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
   { id: "electronics", name: "Electronics & Home Appliances", image: "/categories/electronic.png", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
   { id: "bikes", name: "Bikes", image: "/categories/bike.png", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },

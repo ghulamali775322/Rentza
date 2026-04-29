@@ -20,7 +20,7 @@ const CATEGORIES_DATA = [
     name: "Vehicles", 
     image: "/categories/car.png", 
     icon: <FaCarSide className="text-blue-600 text-3xl" />, 
-    subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] 
+    subcategories: ["Cars", "Spare Parts"] 
   },
   { 
     name: "Property for Rent", 
