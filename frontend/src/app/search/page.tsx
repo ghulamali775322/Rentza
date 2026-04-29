@@ -204,20 +204,20 @@ export default function SearchPage() {
       const dbAddr = (item.address || "").toLowerCase();
       const searchAddr = activeLocation.toLowerCase();
       
-      if (dbAddr.includes(searchAddr) || searchAddr.includes(dbAddr)) {
-        matchLocation = true;
-      } else {
-        const searchParts = searchAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
-        const dbParts = dbAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
-        
-        // If the city name matches, show it. If not, hide it instantly.
-        matchLocation = searchParts.some((searchPart: string) => dbParts.some((dbPart: string) => dbPart.includes(searchPart) || searchPart.includes(dbPart)));
-      }
-    }
-    }
-    const matchStatus = item.status !== "pending";
-    return matchCategory && matchQuery && matchLocation && matchPrice && matchStatus; 
-  });
+
+      const searchParts = searchAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
+       const dbParts = dbAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
+       
+  
+       matchLocation = searchParts.every((searchPart: string) => 
+         dbParts.some((dbPart: string) => dbPart.includes(searchPart) || searchPart.includes(dbPart))
+       );
+     }
+   }
+   const matchStatus = item.status !== "pending";
+   return matchCategory && matchQuery && matchLocation && matchPrice && matchStatus; 
+
+ });
 
   const sortedListings = [...filteredListings].sort((a, b) => {
     // 1. PRICE TAKES PRIORITY: If the user explicitly chose a price filter, respect it first!
