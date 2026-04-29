@@ -7,7 +7,7 @@ import { FiChevronDown, FiFilter, FiMapPin, FiCheck } from "react-icons/fi";
 
 const CATEGORIES_DATA = [
   { name: "Mobiles", subcategories: ["Mobile Phones", "Power Bank", "Tablets", "Mobile Charger "] },
-  { name: "Vehicles", subcategories: ["Cars", "Motorcycles", "Bicycles", "Spare Parts"] },
+  { name: "Vehicles", subcategories: ["Cars", "Spare Parts"] },
   { name: "Property for Rent", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
   { name: "Electronics & Home Appliances", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
   { name: "Bikes", subcategories: ["Motorcycles", "Scooters", "Spare Parts", "Bicycles", "Bike Acessories"] },
@@ -204,6 +204,7 @@ export default function SearchPage() {
       const dbAddr = (item.address || "").toLowerCase();
       const searchAddr = activeLocation.toLowerCase();
       
+
       const searchParts = searchAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
        const dbParts = dbAddr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== "pakistan" && s !== "");
        
@@ -213,8 +214,10 @@ export default function SearchPage() {
        );
      }
    }
-    return matchCategory && matchQuery && matchLocation && matchPrice; 
-  });
+   const matchStatus = item.status !== "pending";
+   return matchCategory && matchQuery && matchLocation && matchPrice && matchStatus; 
+
+ });
 
   const sortedListings = [...filteredListings].sort((a, b) => {
     // 1. PRICE TAKES PRIORITY: If the user explicitly chose a price filter, respect it first!
