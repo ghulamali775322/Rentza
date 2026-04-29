@@ -215,7 +215,8 @@ export default function SearchPage() {
       }
     }
     }
-    return matchCategory && matchQuery && matchLocation && matchPrice; 
+    const matchStatus = item.status !== "pending";
+    return matchCategory && matchQuery && matchLocation && matchPrice && matchStatus; 
   });
 
   const sortedListings = [...filteredListings].sort((a, b) => {
