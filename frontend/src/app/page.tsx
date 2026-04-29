@@ -86,7 +86,21 @@ export default function Home() {
     const params = new URLSearchParams(searchParams?.toString() || "");
     if (catName) {
       params.set("category", catName);
+    } else {
+      params.delete("category");
     }
+
+    // 🚀 NEW: Explicitly grab location parameters to carry them over!
+    if (searchParams) {
+      const currentLoc = searchParams.get("location");
+      const currentLat = searchParams.get("lat");
+      const currentLng = searchParams.get("lng");
+      
+      if (currentLoc) params.set("location", currentLoc);
+      if (currentLat) params.set("lat", currentLat);
+      if (currentLng) params.set("lng", currentLng);
+    }
+
     return `/search?${params.toString()}`;
   };
   
