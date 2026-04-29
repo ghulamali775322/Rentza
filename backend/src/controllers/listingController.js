@@ -343,13 +343,16 @@ export const getMyOwnListings = async (req, res) => {
 };
 export const searchListings = async (req, res) => {
   try {
-    // 1. Grab everything the frontend sent
-    const { keyword, lat, lng, category, location } = req.query;
+    // 1. Grab everything the frontend sent (Added 'query' and 'subCategory'!)
+    const { keyword, query, lat, lng, category, subCategory, location } = req.query;
     
-    // 2. Pass it to the Service
-    const listings = await searchListingsService(keyword, lat, lng, category, location);
+    // 2. Some frontends use 'query', some use 'keyword'. This makes both work!
+    const searchWord = keyword || query;
 
-    // 3. Filter out any unapproved images for safety
+    // 3. Pass ALL variables to the Service
+    const listings = await searchListingsService(searchWord, lat, lng, category, subCategory, location);
+
+    // 4. Filter out any unapproved images for safety
     const safeListings = listings.map(listing => {
       const listingData = listing.toObject ? listing.toObject() : listing;
       if (listingData.images) {
@@ -358,7 +361,6 @@ export const searchListings = async (req, res) => {
       return listingData;
     });
 
-    // 4. Send the data back to Next.js
     res.status(200).json({
       success: true,
       count: safeListings.length,
