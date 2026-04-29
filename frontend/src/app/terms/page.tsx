@@ -26,7 +26,6 @@ export default function TermsAndConditionsPage() {
       
       {/* List: disc style, left margin 20px (ml-5), mb 15px */}
       <ul className="list-disc ml-5 mb-[15px]">
-        <li className="mb-[5px]">You must be at least 18 years old to use Rentza.</li>
         <li className="mb-[5px]">
           You agree that all information provided (such as name, contact, and
           product details) is accurate, complete, and up to date.
@@ -61,8 +60,7 @@ export default function TermsAndConditionsPage() {
           listings.
         </li>
         <li className="mb-[5px]">
-          By submitting a listing, you grant Rentza permission to display and
-          promote your content (e.g., on social media) for marketing purposes.
+          By submitting a listing, you grant Rentza permission to display adds.
         </li>
       </ul>
 
@@ -111,20 +109,12 @@ export default function TermsAndConditionsPage() {
       <h2 className="text-[1.5rem] font-bold mt-[30px] mb-2.5 text-[#002f34]">5. Limitation of Liability</h2>
       <ul className="list-disc ml-5 mb-[15px]">
         <li className="mb-[5px]">
-          Rentza provides the platform “as is” and does not guarantee
-          uninterrupted or error-free service.
-        </li>
-        <li className="mb-[5px]">
           Rentza is not liable for product quality, delivery issues, damages,
           or user disputes.
         </li>
         <li className="mb-[5px]">
           Since Rentza does not charge service fees, our total liability to
           users is zero.
-        </li>
-        <li className="mb-[5px]">
-          Users agree to use the platform at their own risk and verify the
-          authenticity of listings and users independently.
         </li>
       </ul>
 
@@ -136,8 +126,8 @@ export default function TermsAndConditionsPage() {
         </li>
         <li className="mb-[5px]">
           By uploading content, users grant Rentza a non-exclusive,
-          royalty-free license to display and promote their listings on the
-          platform and social media for marketing purposes.
+          royalty-free license to display their listings on the
+          platform.
         </li>
         <li className="mb-[5px]">
           The Rentza logo, name, and platform design are owned by Rentza and

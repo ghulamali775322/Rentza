@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
       
       {/* Date: size 0.9rem, color #666, mb 20px */}
       <p className="text-[0.9rem] text-[#666] mb-5">
-        Last Updated: October 2025
+        Last Updated: March 2026
       </p>
 
       {/* Paragraphs: mb 15px */}
@@ -58,10 +58,6 @@ export default function PrivacyPolicyPage() {
         <li className="mb-[5px]">
           Ensure safety through AI-powered moderation for all uploaded content.
         </li>
-        <li className="mb-[5px]">
-          Offer secure premium features such as paid promotion or visibility
-          packages.
-        </li>
       </ul>
       <p className="mb-[15px]">
         Rentza acts solely as a facilitator, not as a party to any rental
@@ -91,7 +87,6 @@ export default function PrivacyPolicyPage() {
       <ul className="list-disc ml-5 mb-[15px]">
         <li className="mb-[5px]">Product title, description, and price</li>
         <li className="mb-[5px]">Uploaded images and media</li>
-        <li className="mb-[5px]">Rental duration and availability</li>
       </ul>
       <p className="mb-[15px]">
         All media uploaded to Rentza undergoes AI-based moderation to detect
@@ -115,7 +110,7 @@ export default function PrivacyPolicyPage() {
           Monitor listings using AI tools to maintain safety.
         </li>
         <li className="mb-[5px]">
-          Process and manage payments related to paid or premium listing
+          Process and manage payments related to paid premium listing
           packages.
         </li>
         <li className="mb-[5px]">
@@ -133,11 +128,10 @@ export default function PrivacyPolicyPage() {
         4. Payments
       </h2>
       <p className="mb-[15px]">
-        Rentza allows users to purchase premium or paid packages for enhanced
-        visibility of listings.
+        Rentza allows users to purchase paid packages for enhanced listings limits.
       </p>
       <p className="mb-[15px]">
-        Online transactions are only applicable to these paid features.
+        Online transactions are only applicable to these paid Packages.
       </p>
       <p className="mb-[15px]">
         All other rental payments between lenders and renters are handled
