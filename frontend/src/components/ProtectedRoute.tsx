@@ -15,6 +15,7 @@ export default function ProtectedRoute({ children }: Props) {
 
   const [authChecked, setAuthChecked] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const savedRole = localStorage.getItem("role");
@@ -29,20 +30,19 @@ export default function ProtectedRoute({ children }: Props) {
   useEffect(() => {
     if (status === "loading" || !authChecked) return;
 
-    if (role === "admin") {
-      router.replace("/admin");
-      return;
-    }
+    // 🔥 DO NOT TOUCH ADMIN ROUTES
+    if (pathname.startsWith("/admin")) return;
 
     if (!session && role !== "user") {
       router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
     }
   }, [status, session, role, authChecked, router, pathname]);
-  // ✅ wait until everything is checked
+
+  if (pathname.startsWith("/admin")) return <>{children}</>;
+
   if (status === "loading" || !authChecked) return null;
 
-  if (role === "admin") return null;
-
   if (!session && role !== "user") return null;
+
   return <>{children}</>;
 }
