@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { use, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -23,7 +23,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function ListingDetailsPage({ params }: Props) {
   const router = useRouter();
-  const listingId = params.id;
+
+  // ✅ FIX: unwrap params
+  const { id: listingId } = use(params);
+
   const searchParams = useSearchParams();
   const reportId = searchParams.get("reportId");
   const [actionLoading, setActionLoading] = useState(false);

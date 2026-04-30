@@ -32,9 +32,10 @@ interface User {
 export default function UserDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const userId = params.id;
+  const { id: userId } = use(params);
+
   const searchParams = useSearchParams();
   const reportId = searchParams.get("reportId");
   const userType = searchParams.get("type");
