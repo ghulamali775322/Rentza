@@ -14,6 +14,15 @@ export const getActiveUsersCountService = async () => {
   return count;
 };
 
+export const getInactiveUsersCountService = async () => {
+  const count = await User.countDocuments({
+    role: "user",
+    isActive: false,
+  });
+
+  return count;
+};
+
 // Admin Panel: Get users filtered by status AND/OR search term, with total listings count
 export const getAdminUsersService = async (isActiveFilter, searchTerm) => {
   let matchStage = { role: "user" };

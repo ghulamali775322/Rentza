@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FiSearch, FiEye } from "react-icons/fi";
 import { getReports } from "@/app/api/admin/reports";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // 1. IMPORT TOAST
 import toast from "react-hot-toast";
@@ -33,12 +35,35 @@ interface Report {
 }
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState<
-    "All" | "Resolved" | "Pending" | "Dismissed"
-  >("All");
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get("status");
+  const router = useRouter();
+
+  const initialTab =
+    statusParam === "resolved"
+      ? "Resolved"
+      : statusParam === "pending"
+        ? "Pending"
+        : statusParam === "dismissed"
+          ? "Dismissed"
+          : "All";
+
+  const [activeTab, setActiveTab] = useState(initialTab);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!statusParam) return;
+
+    const formatted =
+      statusParam.charAt(0).toUpperCase() + statusParam.slice(1).toLowerCase();
+
+    if (["All", "Resolved", "Pending", "Dismissed"].includes(formatted)) {
+      setActiveTab(formatted as any);
+    }
+  }, [statusParam]);
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -67,6 +92,16 @@ export default function ReportsPage() {
 
   const filteredReports = reports;
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as any);
+
+    if (tab === "All") {
+      router.push("/admin/reports");
+    } else {
+      router.push(`/admin/reports?status=${tab.toLowerCase()}`);
+    }
+  };
+
   if (loading) {
     return <p className="p-6">Loading reports...</p>;
   }
@@ -77,7 +112,7 @@ export default function ReportsPage() {
         {["All", "Resolved", "Pending", "Dismissed"].map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab as any)}
+            onClick={() => handleTabChange(tab)}
             className={`w-44 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200
               ${
                 activeTab === tab
