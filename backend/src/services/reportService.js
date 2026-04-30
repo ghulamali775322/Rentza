@@ -29,6 +29,16 @@ export const getPendingReportsCountService = async () => {
   return count;
 };
 
+export const getTotalReportsCountService = async () => {
+  const count = await Report.countDocuments();
+  return count;
+};
+
+export const getResolvedReportsCountService = async () => {
+  const count = await Report.countDocuments({ status: "resolved" });
+  return count;
+};
+
 // Admin Panel: Get reports filtered by status AND/OR search term
 export const getAdminReportsService = async (statusFilter, searchTerm) => {
   let query = {};

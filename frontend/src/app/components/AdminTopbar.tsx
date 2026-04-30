@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 
 import Link from "next/link";
@@ -24,7 +24,7 @@ export default function AdminTopbar() {
   const { role, logout } = useAuth();
   const { data: session } = useSession();
   const { token, name: authName } = useAuth();
-const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // Define titles for each path
+  const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser(); // Define titles for each path
   const pageTitles: { [key: string]: string } = {
     "/admin/dashboard": "Dashboard",
     "/admin/users": "Users",
@@ -37,31 +37,58 @@ const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // De
 
   // Get the title for the current path, or default to 'Admin Panel'
   const displayTitle = pageTitles[pathname] || "Dashboard";
+  const [underlineWidth, setUnderlineWidth] = useState(0);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
+  useLayoutEffect(() => {
+    setUnderlineWidth(0); // reset first
+
+    requestAnimationFrame(() => {
+      if (titleRef.current) {
+        setUnderlineWidth(titleRef.current.getBoundingClientRect().width);
+      }
+    });
+  }, [displayTitle, pathname]);
   useEffect(() => {
-  const loadAdminProfile = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    const measure = () => {
+      if (!titleRef.current) return;
 
-    const res = await fetch("http://localhost:5000/api/user/profile", {
-      headers: { Authorization: `Bearer ${token}` },
+      const width = titleRef.current.getBoundingClientRect().width;
+      setUnderlineWidth(width);
+    };
+
+    // wait for layout + fonts
+    requestAnimationFrame(() => {
+      requestAnimationFrame(measure);
     });
 
-    const data = await res.json();
-
-    if (data.profilePhotoPath) {
-      setProfilePhotoUrl(
-        `http://localhost:5000${data.profilePhotoPath}`
-      );
+    // also re-run after fonts load (important fix)
+    if (document.fonts) {
+      document.fonts.ready.then(measure);
     }
+  }, [displayTitle]);
+  useEffect(() => {
+    const loadAdminProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-    if (data.name) {
-      setName(data.name);
-    }
-  };
+      const res = await fetch("http://localhost:5000/api/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  loadAdminProfile();
-}, []);
+      const data = await res.json();
+
+      if (data.profilePhotoPath) {
+        setProfilePhotoUrl(`http://localhost:5000${data.profilePhotoPath}`);
+      }
+
+      if (data.name) {
+        setName(data.name);
+      }
+    };
+
+    loadAdminProfile();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -85,17 +112,58 @@ const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // De
   }
 
   return (
-    <header className="h-[90px] bg-[#f2f7ff] border-b border-[#eee] flex items-center justify-between px-10 w-[calc(100vw-260px)] ml-auto">
-      {/* --- DYNAMIC PAGE TITLE --- */}
-      <h2 className="text-2xl font-bold text-[#002f34]">{displayTitle}</h2>
+    <header
+      className="
+  h-[90px]
+  w-[calc(100vw-260px)]
+  ml-auto
+  flex items-center justify-between px-10
 
+  border-b border-white/10
+
+  bg-gradient-to-r from-[#f8fbff] via-white to-[#f3f7ff]
+
+  backdrop-blur-2xl
+  shadow-[0_8px_30px_rgb(0,0,0,0.04)]
+
+  relative z-50 overflow-visible
+"
+    >
+      <div className="absolute inset-0 opacity-40 pointer-events-none">
+        <div className="absolute -top-32 left-20 w-96 h-96 bg-blue-400/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute top-10 right-10 w-96 h-96 bg-indigo-400/10 rounded-full blur-[120px] animate-pulse" />
+      </div>{" "}
+      {/* --- DYNAMIC PAGE TITLE --- */}
+      <div className="flex flex-col items-start">
+        <h2
+          ref={titleRef}
+          className="text-2xl font-bold tracking-tight text-gray-900"
+        >
+          {displayTitle}
+        </h2>
+
+        <div
+          className="mt-1 h-[3px] rounded-full bg-gradient-to-r from-[#1d4ed8] to-[#6366f1] transition-all duration-300"
+          style={{ width: underlineWidth }}
+        />
+      </div>
       {/* --- PROFILE DROPDOWN AREA --- */}
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="flex items-center gap-3 focus:outline-none"
         >
-          <div className="w-10 h-10 rounded-full bg-[#1d4ed8] flex items-center justify-center text-white shadow-md transition-transform hover:scale-105">
+          <div
+            className="
+  w-10 h-10 rounded-full
+  bg-gradient-to-br from-[#1d4ed8] to-[#6366f1]
+  flex items-center justify-center text-white
+  shadow-md shadow-blue-500/20
+  transition-all duration-300
+  hover:scale-110 hover:rotate-2
+"
+          >
+            {" "}
             {profilePhotoUrl ? (
               <img
                 src={profilePhotoUrl}
@@ -115,11 +183,30 @@ const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // De
         </button>
 
         {isDropdownOpen && (
-          <div className="absolute right-0 top-14 w-56 bg-white border border-[#eee] rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <div
+            className="
+  absolute right-0 top-14 w-56
+  bg-white/90 backdrop-blur-xl
+  border border-gray-100
+  rounded-xl
+  shadow-xl shadow-black/5
+  py-2 z-[9999]
+"
+          >
+            {" "}
             {/* Avatar + Name container */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-[#f5f5f5] mb-1">
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#0077ff] text-white font-bold">
+              <div
+                className="
+w-10 h-10 rounded-full
+bg-gradient-to-br from-[#1d4ed8] to-[#6366f1]
+flex items-center justify-center text-white
+shadow-md shadow-blue-500/20
+transition-all duration-300
+hover:scale-110 hover:rotate-2
+"
+              >
                 {profilePhotoUrl ? (
                   <img
                     src={profilePhotoUrl}
@@ -138,7 +225,6 @@ const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // De
                 {name || authName || session?.user?.name || "User"}
               </p>
             </div>
-
             <Link
               href="/admin/profile/edit"
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-[#f8f9fa] hover:text-[#007bff] transition-colors"
@@ -146,7 +232,6 @@ const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // De
             >
               <FiEdit2 size={16} /> Edit Profile
             </Link>
-
             <Link
               href="/admin/profile/settings"
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-[#f8f9fa] hover:text-[#007bff] transition-colors"
@@ -154,9 +239,7 @@ const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // De
             >
               <FiSettings size={16} /> Settings
             </Link>
-
             <div className="my-1 border-t border-[#f5f5f5]"></div>
-
             <button
               onClick={() => {
                 logout(); // <-- log out from AuthContext

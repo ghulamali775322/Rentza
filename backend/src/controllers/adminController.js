@@ -1,5 +1,5 @@
-import { getTotalUsersCountService } from "../services/userService.js";
-import { getActiveUsersCountService } from "../services/userService.js";
+import { getTotalUsersCountService ,  getActiveUsersCountService,
+  getInactiveUsersCountService, } from "../services/userService.js";
 import { getAdminUsersService } from "../services/userService.js";
 import { getAdminUserDetailsService } from "../services/userService.js";
 import { getAdminUserListingsService } from "../services/userService.js"
@@ -14,7 +14,9 @@ import { updateListingStatusAdminService } from "../services/listingService.js";
 import {deleteListingService } from "../services/listingService.js";
 import { updateListingService } from "../services/listingService.js";
 import { createNotificationService } from "../services/notificationService.js";
-import { getPendingReportsCountService } from "../services/reportService.js";
+import {  getPendingReportsCountService,
+  getTotalReportsCountService,
+  getResolvedReportsCountService, } from "../services/reportService.js";
 import { getAdminReportsService } from "../services/reportService.js";
 import { getAdminReportByIdService } from "../services/reportService.js";
 import User from "../models/user.js";
@@ -26,23 +28,33 @@ import { getUserGrowthService } from "../services/analyticsService.js";
 export const getDashboardStats = async (req, res) => {
   try {
   
-    const totalListings = await getTotalListingsCountService();
+     const totalListings = await getTotalListingsCountService();
     const activeListings = await getActiveListingsCountService();
     const pendingListings = await getPendingListingsCountService();
+
     const pendingReports = await getPendingReportsCountService();
+    const totalReports = await getTotalReportsCountService();
+    const resolvedReports = await getResolvedReportsCountService();
+
     const totalUsers = await getTotalUsersCountService();
     const activeUsers = await getActiveUsersCountService();
+    const inactiveUsers = await getInactiveUsersCountService();
 
 
     res.status(200).json({
       success: true,
       data: {
-        totalListings: totalListings,
-        activeListings: activeListings,
-        pendingListings: pendingListings,
-        pendingReports: pendingReports,
-        totalUsers: totalUsers, 
-        activeUsers: activeUsers
+        totalListings,
+        activeListings,
+        pendingListings,
+
+        pendingReports,
+        totalReports,
+        resolvedReports,
+
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
       }
     });
   } catch (error) {
