@@ -21,9 +21,9 @@ export default function AdminTopbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter(); // <-- router for logout redirect
-  const { role, logout } = useAuth();
+
   const { data: session } = useSession();
-  const { token, name: authName } = useAuth();
+  const { role, logout, token, name: authName } = useAuth();
   const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser(); // Define titles for each path
   const pageTitles: { [key: string]: string } = {
     "/admin/dashboard": "Dashboard",
@@ -33,6 +33,14 @@ export default function AdminTopbar() {
     "/admin/analytics": "Analytics",
     "/admin/profile/edit": "Edit Profile",
     "/admin/profile/settings": "Settings",
+  };
+  const { clearUser } = useUser();
+
+  const handleLogout = () => {
+    logout();
+    clearUser();
+    setIsDropdownOpen(false);
+    router.push("/");
   };
 
   // Get the title for the current path, or default to 'Admin Panel'
@@ -88,7 +96,7 @@ export default function AdminTopbar() {
     };
 
     loadAdminProfile();
-  }, []);
+  }, [token]); // ✅ important
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -241,11 +249,7 @@ hover:scale-110 hover:rotate-2
             </Link>
             <div className="my-1 border-t border-[#f5f5f5]"></div>
             <button
-              onClick={() => {
-                logout(); // <-- log out from AuthContext
-                setIsDropdownOpen(false);
-                router.push("/"); // <-- redirect to user home
-              }}
+              onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
             >
               <FiLogOut size={16} /> Logout
