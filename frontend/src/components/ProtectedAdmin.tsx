@@ -14,12 +14,15 @@ const ProtectedAdmin: React.FC<Props> = ({ children }) => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!loadingAuth) {
-      if (!token || role !== "admin") {
-        router.push("/"); // redirect if not admin
-      } else {
-        setReady(true); // show admin page
-      }
+    if (loadingAuth) return;
+
+    // 🚫 Do nothing until BOTH values exist
+    if (!token || !role) return;
+
+    if (role !== "admin") {
+      router.replace("/"); // use replace (important)
+    } else {
+      setReady(true);
     }
   }, [token, role, loadingAuth, router]);
 

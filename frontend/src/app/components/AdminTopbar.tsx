@@ -24,8 +24,7 @@ export default function AdminTopbar() {
   const { role, logout } = useAuth();
   const { data: session } = useSession();
   const { token, name: authName } = useAuth();
-  const { name, profilePhotoUrl } = useUser();
-  // Define titles for each path
+const { name, profilePhotoUrl, setName, setProfilePhotoUrl } = useUser();  // Define titles for each path
   const pageTitles: { [key: string]: string } = {
     "/admin/dashboard": "Dashboard",
     "/admin/users": "Users",
@@ -38,6 +37,31 @@ export default function AdminTopbar() {
 
   // Get the title for the current path, or default to 'Admin Panel'
   const displayTitle = pageTitles[pathname] || "Dashboard";
+
+  useEffect(() => {
+  const loadAdminProfile = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const res = await fetch("http://localhost:5000/api/user/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+
+    if (data.profilePhotoPath) {
+      setProfilePhotoUrl(
+        `http://localhost:5000${data.profilePhotoPath}`
+      );
+    }
+
+    if (data.name) {
+      setName(data.name);
+    }
+  };
+
+  loadAdminProfile();
+}, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {

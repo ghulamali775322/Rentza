@@ -11,7 +11,7 @@ const faqs = [
   {
     question: "Is it free to use?",
     answer:
-      "Yes, Rentza is free to use in terms of transactions. We don't take any commission or service fee since all transactions are handled directly between users. However, we follow a freemium model means lenders can list up to two items per month for free, and if they want to list more, they can upgrade to a premium package.",
+      "Yes, Rentza is free to use in terms of transactions. We don't take any commission or service fee since all transactions are handled directly between users. However, we follow a freemium model means lenders can list up to one item per month for free, and if they want to list more, they can upgrade to a premium package.",
   },
   {
     question: "How do I rent an item?",

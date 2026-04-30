@@ -44,6 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("token", t);
     localStorage.setItem("name", n);
     localStorage.setItem("role", r);
+
+    // 🔥 REQUIRED for middleware
+    document.cookie = `role=${r}; path=/`;
   };
 
   const logout = () => {
@@ -53,6 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.removeItem("token");
     localStorage.removeItem("name");
     localStorage.removeItem("role");
+
+    document.cookie = "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
   };
 
   return (
