@@ -170,7 +170,7 @@ export default function PackagesPage() {
    <div className="max-w-[1000px] mx-auto px-4 md:px-5 pb-28 md:pb-10 pt-[80px] md:pt-[40px] font-['Helvetica_Neue',_Arial,_sans-serif] min-h-screen bg-[#f8f9fa]">
       <div className="text-center mb-[60px]">
         <h1 className="text-[36px] font-extrabold text-[#002f34] mb-3 tracking-tight">Upgrade your plan</h1>
-        <p className="text-lg text-[#666] font-medium">Rent faster with our premium exposure packages</p>
+        <p className="text-lg text-[#666] font-medium">Sell faster with our premium exposure packages</p>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-[30px] mb-[60px] items-center">
