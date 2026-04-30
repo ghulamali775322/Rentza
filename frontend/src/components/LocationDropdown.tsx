@@ -35,16 +35,16 @@ const LocationDropdown = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   
   // 1. Handle clicking outside the dropdown
+ // 🚀 THE FIX: This forces the Dropdown text and Memory to perfectly match the URL at all times
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        if (selectedLocation.trim() === "") setSelectedLocation("Pakistan");
+    const currentUrlLoc = searchParams.get("location");
+    if (currentUrlLoc) {
+      setSelectedLocation(currentUrlLoc);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("savedLocation", currentUrlLoc);
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selectedLocation]);
+    }
+  }, [searchParams]);
 
   // 2. Load Google Maps Script secretly in the background
   useEffect(() => {
@@ -157,7 +157,7 @@ const LocationDropdown = () => {
     params.delete("radius");
     params.delete("location");
 
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleSelectCity = (city: string) => {
