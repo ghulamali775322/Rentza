@@ -14,26 +14,35 @@ export default function ProtectedRoute({ children }: Props) {
   const pathname = usePathname();
 
   const [authChecked, setAuthChecked] = useState(false);
-  const [hasLocalToken, setHasLocalToken] = useState(false);
-
+  const [role, setRole] = useState<string | null>(null);
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) setHasLocalToken(true);
-    setAuthChecked(true); // ✅ mark local check done
+    const savedRole = localStorage.getItem("role");
+
+    if (token && savedRole) {
+      setRole(savedRole);
+    }
+
+    setAuthChecked(true);
   }, []);
 
   useEffect(() => {
     if (status === "loading" || !authChecked) return;
 
-    if (!session && !hasLocalToken) {
-      router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+    if (role === "admin") {
+      router.replace("/admin");
+      return;
     }
-  }, [status, session, hasLocalToken, authChecked, router, pathname]);
 
+    if (!session && role !== "user") {
+      router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+  }, [status, session, role, authChecked, router, pathname]);
   // ✅ wait until everything is checked
   if (status === "loading" || !authChecked) return null;
 
-  if (!session && !hasLocalToken) return null;
+  if (role === "admin") return null;
 
+  if (!session && role !== "user") return null;
   return <>{children}</>;
 }
