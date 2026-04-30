@@ -160,11 +160,11 @@ export const updateListingStatusAdminService = async (listingId, newStatus) => {
   );
   return updatedListing;
 };
-// Search listings (Now supports subCategories and flexible text searching!)
+// Search listings (Strictly using MongoDB Geospatial $geoNear, zero logic removed)
 export const searchListingsService = async (keyword, lat, lng, category, subCategory, locationString) => {
   let dbQuery = {};
 
-  // 2. Keyword matching (checks title, category, AND subcategory)
+  // 1. Keyword matching (checks title, category, AND subcategory)
   if (keyword) {
     dbQuery.$or = [
       { title: { $regex: keyword, $options: "i" } },
@@ -173,34 +173,41 @@ export const searchListingsService = async (keyword, lat, lng, category, subCate
     ];
   }
 
-  // 3. Flexible Category matching (Fixes the "Electronics & Home Appliances" bug)
+  // 2. Flexible Category matching
   if (category) {
     dbQuery.category = { $regex: category, $options: "i" };
   }
 
-  // 4. NEW: Subcategory matching (Fixes the Mobile Phones clicking bug)
+  // 3. Subcategory matching
   if (subCategory) {
     dbQuery.subCategory = { $regex: subCategory, $options: "i" };
   }
 
-  // 5. Location matching
+  // 4. Location matching & Geospatial Sorting
   if (lat && lng) {
-    // GPS IS ACTIVE: Sort Near to Far
-    dbQuery.location = {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: [parseFloat(lng), parseFloat(lat)] // [Longitude, Latitude]
+    // GPS IS ACTIVE: Sort Near to Far using MongoDB Geospatial Queries
+    const listings = await Listing.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)] // [Longitude, Latitude]
+          },
+          distanceField: "distance", 
+          distanceMultiplier: 0.001, // Converts the output to Kilometers
+          spherical: true,
+          query: dbQuery // This passes ALL your exact keyword/category logic inside!
         }
       }
-    };
+    ]);
+    return listings;
   } else if (locationString && locationString !== "Pakistan") {
-    // TEXT FALLBACK: Removes the word "City" just in case Google adds it (e.g., "Lahore City" -> "Lahore")
+    // TEXT FALLBACK: Removes the word "City" just in case Google adds it
     const cityName = locationString.split(',')[0].replace(" City", "").trim();
     dbQuery.address = { $regex: cityName, $options: "i" };
   }
 
-  // Return all matching listings
+  // Return all matching listings if no GPS was provided
   const listings = await Listing.find(dbQuery);
   return listings;
 };
