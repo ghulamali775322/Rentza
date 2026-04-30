@@ -139,14 +139,14 @@ export default function MyAdsPage() {
               className={`flex-1 sm:flex-none text-[12px] sm:text-sm px-1 sm:px-[15px] flex items-center justify-center sm:justify-start gap-1 ${tabButtonBase} ${activeFilter === "pending" ? tabButtonActive : tabButtonInactive}`}
             >
               {pendingAds.length > 0 && <FiAlertCircle size={14} className={activeFilter === "pending" ? "text-white" : "text-red-500"} />}
-              <span>Pending <span className="hidden sm:inline">/ Inactive</span> ({pendingAds.length})</span>
+              <span>Pending <span className="hidden sm:inline">/ Action</span> ({pendingAds.length})</span>
             </button>
           </div>
         </div>
 
         <div className="mt-10">
           <h3 className="text-[18px] font-bold mb-5 text-[#002f34]">
-            {activeFilter === "active" ? "Your Active Listings" : "Ads with pending Approval, missing Images or suspended by admin."}
+            {activeFilter === "active" ? "Your Active Listings" : "Ads Pending Approval or Missing Images"}
           </h3>
 
           {isLoading ? (
@@ -160,7 +160,7 @@ export default function MyAdsPage() {
                      <div className="relative border border-orange-300 rounded-md overflow-hidden bg-orange-50/30 p-4 flex flex-col items-center justify-center text-center h-full">
                        <FiAlertCircle size={40} className="text-orange-500 mb-3" />
                        <h4 className="font-bold text-gray-800 mb-1">{item.title}</h4>
-                       <p className="text-xs text-gray-600 mb-4">This ad is pending/inactive. It may be missing images, waiting for AI or admin approval or suspended by admin.</p>
+                       <p className="text-xs text-gray-600 mb-4">This ad is inactive. It may be missing images or waiting for AI approval.</p>
                        <Link href={`/edit-listing/${item._id}`} className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 w-full transition-colors block text-center">
                          Edit Ad to Fix
                        </Link>

@@ -131,9 +131,6 @@ export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
   const searchParams = useSearchParams();
-const buildCategoryUrl = (catName: string | null) => {
-    const params = new URLSearchParams();
-
 
   const { role } = useAuth();
   const router = useRouter();
@@ -147,30 +144,19 @@ const buildCategoryUrl = (catName: string | null) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
     if (catName) {
       params.set("category", catName);
+    } else {
+      params.delete("category");
     }
 
-// 🚀 MERGED LOGIC: Use URL params first (if they exist), 
-    // otherwise fallback to localStorage memory.
-    const currentLoc = searchParams?.get("location");
-    const currentLat = searchParams?.get("lat");
-    const currentLng = searchParams?.get("lng");
+    // 🚀 NEW: Explicitly grab location parameters to carry them over!
+    if (searchParams) {
+      const currentLoc = searchParams.get("location");
+      const currentLat = searchParams.get("lat");
+      const currentLng = searchParams.get("lng");
 
-    if (currentLoc && currentLoc !== "Pakistan") {
-      params.set("location", currentLoc);
+      if (currentLoc) params.set("location", currentLoc);
       if (currentLat) params.set("lat", currentLat);
       if (currentLng) params.set("lng", currentLng);
-    } else if (typeof window !== "undefined") {
-      // Fallback to localStorage only if URL is missing the info
-      const savedLoc = localStorage.getItem("savedLocation");
-      const savedLat = localStorage.getItem("savedLat");
-      const savedLng = localStorage.getItem("savedLng");
-
-      if (savedLoc && savedLoc !== "Pakistan") {
-        params.set("location", savedLoc);
-        if (savedLat) params.set("lat", savedLat);
-        if (savedLng) params.set("lng", savedLng);
-      }
-    }
     }
 
     return `/search?${params.toString()}`;
