@@ -104,6 +104,7 @@ const CATEGORIES_DATA = [
     image: "/categories/book.png",
     icon: <FaFootballBall className="text-blue-600 text-3xl" />,
     subcategories: [
+      "Books",
       "Musical Instruments",
       "Sports Equipment",
       "Gym & Fitness",

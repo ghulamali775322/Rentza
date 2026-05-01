@@ -29,7 +29,7 @@ const CATEGORIES = [
   { id: "business", name: "Agriculture Machinery & Tools", image: "/categories/tractor.png", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Agriculture Tools"] },
   { id: "furniture", name: "Furniture & Home Decor", image: "/categories/furniture.png", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
   { id: "fashion", name: "Fashion & Beauty", image: "/categories/fashion.png", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
-  { id: "sports", name: "Books, Sports & Hobbies", image: "/categories/book.png", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
+  { id: "sports", name: "Books, Sports & Hobbies", image: "/categories/book.png", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
   { id: "outdoor", name: "Outdoor Equipment", image: "/categories/outdoor.png", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
   { id: "other", name: "Other", image: "/categories/other.png", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous"] },
 ];

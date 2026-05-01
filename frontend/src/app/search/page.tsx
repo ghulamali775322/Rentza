@@ -14,7 +14,7 @@ const CATEGORIES_DATA = [
   { name: "Agriculture Machinery & Tools", subcategories: ["Machinery", "Tractors", "Agriculture Tools"] },
   { name: "Furniture & Home Decor", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
   { name: "Fashion & Beauty", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
-  { name: "Books, Sports & Hobbies", subcategories: ["Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
+  { name: "Books, Sports & Hobbies", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
   { name: "Outdoor Equipment", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
   { name: "Other", subcategories: ["Miscellaneous"] }
 ];
