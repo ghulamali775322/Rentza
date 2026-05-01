@@ -26,16 +26,7 @@ export default function SearchPage() {
   const locationParam = searchParams.get("location");
   const latParam = searchParams.get("lat");
   const lngParam = searchParams.get("lng");
-  // This is the Haversine formula! It calculates actual kilometers between two GPS pins.
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-  };
+
   const [realListings, setRealListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -84,8 +75,8 @@ export default function SearchPage() {
         }
 
         if (finalQuery) params.append("keyword", finalQuery);
-        if (!finalQuery && !finalCategory && latParam) params.append("lat", latParam);
-        if (!finalQuery && !finalCategory && lngParam) params.append("lng", lngParam);
+       if (latParam) params.append("lat", latParam);
+if (lngParam) params.append("lng", lngParam);
 
         // 🛡️ SUBCATEGORY PROTECTION: Don't send "Vehicles" to DB, only send "Cars"
         if (finalCategory) {
@@ -130,40 +121,12 @@ export default function SearchPage() {
       prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
     );
   };
-  // 🧠 GPS TEXT-STEALER LOGIC: Finds the closest city text if using Current Location!
   let autoLocationText = "";
-  if (latParam && lngParam && !locationParam) {
-    let nearestAd: any = null;
-    let minDistance = Infinity;
-
-    realListings.forEach((item) => {
-      if (item.location?.coordinates?.length === 2) {
-        const itemLng = item.location.coordinates[0];
-        const itemLat = item.location.coordinates[1];
-        const d = calculateDistance(parseFloat(latParam), parseFloat(lngParam), itemLat, itemLng);
-        if (d < minDistance) {
-          minDistance = d;
-          nearestAd = item;
-        }
-      }
-    });
-
-    if (nearestAd && minDistance < 50) {
-      autoLocationText = nearestAd.address;
-    }
+  if (latParam && lngParam && !locationParam && realListings.length > 0) {
+    autoLocationText = realListings[0].address || "";
   }
 
-  const filteredListings = realListings.map((item: any) => {
-    // 1. First, calculate distance if GPS is active
-    let distance = Infinity;
-    if (latParam && lngParam && item.location?.coordinates?.length === 2) {
-      const itemLng = item.location.coordinates[0]; 
-      const itemLat = item.location.coordinates[1];
-      distance = calculateDistance(parseFloat(latParam), parseFloat(lngParam), itemLat, itemLng);
-    }
-    return { ...item, distance }; 
-
-  }).filter((item: any) => {
+  const filteredListings = realListings.filter((item: any) => {
     
     let finalCategory = categoryParam;
     let finalQuery = queryParam;
@@ -230,7 +193,7 @@ export default function SearchPage() {
     }
     
     if (latParam && lngParam && (queryParam || categoryParam)) {
-      return a.distance - b.distance; 
+      return 0; 
     }
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });

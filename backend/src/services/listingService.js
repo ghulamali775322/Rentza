@@ -160,47 +160,73 @@ export const updateListingStatusAdminService = async (listingId, newStatus) => {
   );
   return updatedListing;
 };
-// Search listings (Now supports subCategories and flexible text searching!)
+// Search listings (Strictly using MongoDB Geospatial $geoNear)
 export const searchListingsService = async (keyword, lat, lng, category, subCategory, locationString) => {
-  let dbQuery = {};
+  let pipeline = [];
 
-  // 2. Keyword matching (checks title, category, AND subcategory)
+  // 1. MUST BE FIRST: Geospatial $geoNear query
+  if (lat && lng) {
+    pipeline.push({
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [parseFloat(lng), parseFloat(lat)] // [Longitude, Latitude]
+        },
+        distanceField: "distance", 
+        spherical: true,
+        distanceMultiplier: 0.001 
+      }
+    });
+  }
+
+  // 2. Build standard filters
+  // 🛡️ CRITICAL: Always filter by "active" so pending ads don't show up!
+  let matchStage = { status: "active" };
+
   if (keyword) {
-    dbQuery.$or = [
+    matchStage.$or = [
       { title: { $regex: keyword, $options: "i" } },
       { category: { $regex: keyword, $options: "i" } },
       { subCategory: { $regex: keyword, $options: "i" } }
     ];
   }
 
-  // 3. Flexible Category matching (Fixes the "Electronics & Home Appliances" bug)
   if (category) {
-    dbQuery.category = { $regex: category, $options: "i" };
+    matchStage.category = { $regex: category, $options: "i" };
   }
 
-  // 4. NEW: Subcategory matching (Fixes the Mobile Phones clicking bug)
   if (subCategory) {
-    dbQuery.subCategory = { $regex: subCategory, $options: "i" };
+    matchStage.subCategory = { $regex: subCategory, $options: "i" };
   }
 
-  // 5. Location matching
-  if (lat && lng) {
-    // GPS IS ACTIVE: Sort Near to Far
-    dbQuery.location = {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: [parseFloat(lng), parseFloat(lat)] // [Longitude, Latitude]
-        }
-      }
-    };
-  } else if (locationString && locationString !== "Pakistan") {
-    // TEXT FALLBACK: Removes the word "City" just in case Google adds it (e.g., "Lahore City" -> "Lahore")
+  // Fallback text location if NO GPS is provided
+  if (!lat && !lng && locationString && locationString !== "Pakistan") {
     const cityName = locationString.split(',')[0].replace(" City", "").trim();
-    dbQuery.address = { $regex: cityName, $options: "i" };
+    matchStage.address = { $regex: cityName, $options: "i" };
   }
 
-  // Return all matching listings
-  const listings = await Listing.find(dbQuery);
+  // Always push the match stage
+  pipeline.push({ $match: matchStage });
+
+  // 3. 🚀 THE FIX: Mimic .populate("lenderId") so the frontend doesn't crash!
+  pipeline.push({
+    $lookup: {
+      from: "users", // Looks inside your Users collection
+      localField: "lenderId",
+      foreignField: "_id",
+      as: "lenderId"
+    }
+  });
+
+  // Flattens the array so it acts exactly like a normal populated object
+  pipeline.push({
+    $unwind: {
+      path: "$lenderId",
+      preserveNullAndEmptyArrays: true
+    }
+  });
+
+  // Execute the pipeline!
+  const listings = await Listing.aggregate(pipeline);
   return listings;
 };
