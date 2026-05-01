@@ -24,7 +24,8 @@ export default function ListingCard({ data }: ListingProps) {
     const now = new Date().getTime();
     const diffInDays = Math.floor((now - postDate) / (1000 * 60 * 60 * 24));
 
-    if (diffInDays < 3) return "New";
+    if (diffInDays < 2) return "New";
+    if (diffInDays === 2) return "2 days ago";
     if (diffInDays === 3) return "3 days ago";
     if (diffInDays < 7) return `${diffInDays} days ago`;
     if (diffInDays < 14) return "1 week ago";
