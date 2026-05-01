@@ -157,7 +157,7 @@ const LocationDropdown = () => {
     params.delete("radius");
     params.delete("location");
 
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleSelectCity = (city: string) => {

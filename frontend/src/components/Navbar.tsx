@@ -33,15 +33,31 @@ export default function Navbar() {
   const pathname = usePathname();
   const [active, setActive] = useState("home");
 
+ // 🚀 THE FIX: Sync search bar text with the current page URL
   useEffect(() => {
+    // 1. Handle Active Nav Links
     if (pathname === "/") {
       setActive("home");
     } else if (pathname.startsWith("/about")) {
       setActive("about");
     } else {
-      setActive(""); // Removes the shadow if you are on Search, Create Listing, etc.
+      setActive(""); 
     }
-  }, [pathname]);
+
+    // 2. Handle Search Bar Text
+    if (pathname === "/") {
+      // If we are on the Home page, ALWAYS clear the search text!
+      setSearchQuery("");
+    } else {
+      // If we are on the Search page, sync the text box with the URL word
+      const currentQuery = searchParams?.get("query");
+      if (currentQuery) {
+        setSearchQuery(currentQuery);
+      } else {
+        setSearchQuery("");
+      }
+    }
+  }, [pathname, searchParams]);
 
   const { data: session } = useSession();
   const { token, name: authName } = useAuth();

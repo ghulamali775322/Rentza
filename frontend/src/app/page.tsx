@@ -140,26 +140,41 @@ export default function Home() {
       router.replace("/admin");
     }
   }, [role, router]);
-  const buildCategoryUrl = (catName: string | null) => {
+  const handleCategoryClick = (e: React.MouseEvent, catName: string | null) => {
+    e.preventDefault(); 
+    
     const params = new URLSearchParams(searchParams?.toString() || "");
+    
     if (catName) {
       params.set("category", catName);
     } else {
       params.delete("category");
     }
 
-    // 🚀 NEW: Explicitly grab location parameters to carry them over!
-    if (searchParams) {
-      const currentLoc = searchParams.get("location");
-      const currentLat = searchParams.get("lat");
-      const currentLng = searchParams.get("lng");
+    const currentLoc = searchParams?.get("location");
+    const currentLat = searchParams?.get("lat");
+    const currentLng = searchParams?.get("lng");
 
-      if (currentLoc) params.set("location", currentLoc);
+    if (currentLoc && currentLoc !== "Pakistan") {
+      params.set("location", currentLoc);
       if (currentLat) params.set("lat", currentLat);
       if (currentLng) params.set("lng", currentLng);
+    } 
+    // Fallback: ALWAYS read fresh memory right when clicked
+    else if (typeof window !== "undefined") {
+      const savedLoc = localStorage.getItem("savedLocation");
+      const savedLat = localStorage.getItem("savedLat");
+      const savedLng = localStorage.getItem("savedLng");
+
+      if (savedLoc && savedLoc !== "Pakistan") {
+        params.set("location", savedLoc);
+        if (savedLat) params.set("lat", savedLat);
+        if (savedLng) params.set("lng", savedLng);
+      }
     }
 
-    return `/search?${params.toString()}`;
+    // Navigate instantly!
+    router.push(`/search?${params.toString()}`);
   };
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -251,14 +266,15 @@ export default function Home() {
             {mainCategoryData.name}
           </h2>
           <Link
-            href={buildCategoryUrl(mainCategoryData.name)}
-            onClick={() =>
-              sessionStorage.setItem("homeScrollPos", window.scrollY.toString())
-            }
-            className="text-blue-600 hover:underline font-medium"
-          >
-            View All
-          </Link>
+  href={`/search?category=${mainCategoryData.name}`}
+  onClick={(e) => {
+    sessionStorage.setItem("homeScrollPos", window.scrollY.toString());
+    handleCategoryClick(e, mainCategoryData.name); // <--- THIS IS REQUIRED
+  }}
+  className="text-blue-600 hover:underline font-medium"
+>
+  View All
+</Link>
         </div>
         {/* Notice we added 'flex md:grid' so it swipes on phones but stays a grid on laptops! */}
         <div className="flex md:grid md:grid-cols-4 gap-4 md:gap-6 overflow-x-auto pb-4 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -295,13 +311,14 @@ export default function Home() {
         </button>
 
         {CATEGORIES_DATA.map((cat) => (
-          <Link
-            key={cat.name}
-            href={buildCategoryUrl(cat.name)}
-            className="cursor-pointer hover:text-[#0077ff] transition-colors whitespace-nowrap"
-          >
-            {cat.name}
-          </Link>
+         <Link
+    key={cat.name}
+    href={`/search?category=${cat.name}`}
+    onClick={(e) => handleCategoryClick(e, cat.name)} // <--- THIS IS REQUIRED
+    className="cursor-pointer hover:text-[#0077ff] transition-colors whitespace-nowrap"
+  >
+    {cat.name}
+  </Link>
         ))}
       </div>
 
@@ -323,8 +340,11 @@ export default function Home() {
                 >
                   <div className="flex justify-between items-center px-3 py-3 hover:bg-gray-50 rounded-md transition-colors">
                     <Link
-                      href={buildCategoryUrl(mainCat.name)}
-                      onClick={() => setIsOpen(false)}
+  href={`/search?category=${mainCat.name}`}
+  onClick={(e) => { 
+      setIsOpen(false); 
+      handleCategoryClick(e, mainCat.name); // <--- THIS IS REQUIRED
+  }}
                       className="font-semibold text-gray-800 hover:text-[#0077ff] flex-grow"
                     >
                       {mainCat.name}
@@ -349,8 +369,11 @@ export default function Home() {
                       {mainCat.subcategories.map((subCat) => (
                         <li key={subCat}>
                           <Link
-                            href={buildCategoryUrl(subCat)}
-                            onClick={() => setIsOpen(false)}
+  href={`/search?category=${subCat}`}
+  onClick={(e) => {
+    setIsOpen(false); // 1. Close the menu
+    handleCategoryClick(e, subCat); // 2. Grab location and navigate!
+  }}
                             className="block text-sm text-gray-600 hover:text-[#0077ff] py-1.5 px-2 rounded-md hover:bg-blue-50/50"
                           >
                             {subCat}
@@ -370,9 +393,10 @@ export default function Home() {
       <section className="px-4 md:px-10 py-6 bg-gray-50">
         <div className="grid grid-rows-2 grid-flow-col auto-cols-[110px] md:grid-rows-none md:grid-flow-row md:grid-cols-6 gap-3 md:gap-6 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 snap-x [&::-webkit-scrollbar]:hidden">
           {CATEGORIES_DATA.map((cat) => (
-            <Link
-              key={cat.name}
-              href={buildCategoryUrl(cat.name)}
+           <Link
+    key={cat.name}
+    href={`/search?category=${cat.name}`}
+    onClick={(e) => handleCategoryClick(e, cat.name)}
               className="snap-start h-full"
             >
               <div className="flex flex-col items-center justify-center bg-white p-3 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 transition-all duration-300 cursor-pointer h-full">
