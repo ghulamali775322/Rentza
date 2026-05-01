@@ -86,15 +86,43 @@ export default function Navbar() {
 
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams?.toString() || "");
+    
+    // 1. Set the search text
     if (searchQuery && searchQuery.trim() !== "") {
       params.set("query", searchQuery.trim());
     } else {
       params.delete("query");
     }
+
+    // 2. Check for Location / GPS Data
+    const currentLoc = searchParams?.get("location");
+    const currentLat = searchParams?.get("lat");
+    const currentLng = searchParams?.get("lng");
+
+    if (currentLoc && currentLoc !== "Pakistan") {
+      params.set("location", currentLoc);
+      if (currentLat) params.set("lat", currentLat);
+      if (currentLng) params.set("lng", currentLng);
+    } 
+    // 🚀 3. THE FIX: If URL is clean (like on the Home page), grab the saved GPS from memory!
+    else if (typeof window !== "undefined") {
+      const savedLoc = localStorage.getItem("savedLocation");
+      const savedLat = localStorage.getItem("savedLat");
+      const savedLng = localStorage.getItem("savedLng");
+
+      if (savedLoc && savedLoc !== "Pakistan") {
+        params.set("location", savedLoc);
+        if (savedLat) params.set("lat", savedLat);
+        if (savedLng) params.set("lng", savedLng);
+      }
+    }
+
+    // Navigate with all the data intact!
     router.push(`/search?${params.toString()}`);
   };
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       handleSearch();
     }
   };
