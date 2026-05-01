@@ -96,11 +96,23 @@ export const createConversationService = async (senderId, receiverId, listingId)
   });
 
   if (!conversation) {
+    // A. Chat doesn't exist, create a brand new one
     conversation = await Conversation.create({
-      participants: [senderId, receiverId], listingId: listingId,
+      participants: [senderId, receiverId], 
+      listingId: listingId,
       lastMessage: { text: "", senderId: senderId, isRead: true }
     });
+  } else {
+    
+    if (conversation.deletedBy && conversation.deletedBy.includes(senderId)) {
+      conversation = await Conversation.findByIdAndUpdate(
+        conversation._id,
+        { $pull: { deletedBy: senderId } }, // Removes the user from the deleted list
+        { new: true }
+      );
+    }
   }
+  
   return conversation;
 };
 
