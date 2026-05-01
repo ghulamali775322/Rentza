@@ -25,13 +25,13 @@ const CATEGORIES = [
   { id: "vehicles", name: "Vehicles", image: "/categories/car.png", icon: <FaCarSide />, color: "#23e5db", subcategories: ["Cars", "Spare Parts"] },
   { id: "property", name: "Property for Rent", image: "/categories/rent.png", icon: <FiHome />, color: "#3d96ff", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
   { id: "electronics", name: "Electronics & Home Appliances", image: "/categories/electronic.png", icon: <MdOutlineDevices />, color: "#ffce32", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
-  { id: "bikes", name: "Bikes", image: "/categories/bike.png", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Bicycles", "Bike Acessories"] },
+  { id: "bikes", name: "Bikes", image: "/categories/bike.png", icon: <TbBike />, color: "#23e5db", subcategories: ["Motorcycles", "Scooters", "Bicycles"] },
   { id: "business", name: "Business, Industrial & Agriculture", image: "/categories/tractor.png", icon: <GiHammerNails />, color: "#3d96ff", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
   { id: "furniture", name: "Furniture & Home Decor", image: "/categories/furniture.png", icon: <FaCouch />, color: "#ff563f", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
   { id: "fashion", name: "Fashion & Beauty", image: "/categories/fashion.png", icon: <GiClothes />, color: "#23e5db", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
-  { id: "sports", name: "Books, Sports & Hobbies", image: "/categories/book.png", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Books", "Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
+  { id: "sports", name: "Books, Sports & Hobbies", image: "/categories/book.png", icon: <FaFootballBall />, color: "#ffce32", subcategories: ["Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
   { id: "outdoor", name: "Outdoor Equipment", image: "/categories/outdoor.png", icon: <FiHome />, color: "#ff563f", subcategories: ["Camping", "Hiking", "Fishing", "Skiing"] },
-  { id: "other", name: "Other", image: "/categories/other.png", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous", "Events"] },
+  { id: "other", name: "Other", image: "/categories/other.png", icon: <FaEllipsisH />, color: "#3d96ff", subcategories: ["Miscellaneous"] },
 ];
 
 export default function CreateListingPage() {

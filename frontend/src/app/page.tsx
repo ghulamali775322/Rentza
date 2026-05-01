@@ -62,7 +62,6 @@ const CATEGORIES_DATA = [
       "Motorcycles",
       "Scooters",
       "Bicycles",
-      "Bike Acessories",
     ],
   },
   {
@@ -106,7 +105,6 @@ const CATEGORIES_DATA = [
     image: "/categories/book.png",
     icon: <FaFootballBall className="text-blue-600 text-3xl" />,
     subcategories: [
-      "Books",
       "Musical Instruments",
       "Sports Equipment",
       "Gym & Fitness",
@@ -122,7 +120,7 @@ const CATEGORIES_DATA = [
     name: "Other",
     image: "/categories/other.png",
     icon: <FaEllipsisH className="text-blue-600 text-3xl" />,
-    subcategories: ["Miscellaneous", "Events"],
+    subcategories: ["Miscellaneous"],
   },
 ];
 
