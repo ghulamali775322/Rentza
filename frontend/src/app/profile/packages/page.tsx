@@ -142,7 +142,7 @@ export default function PackagesPage() {
             if (statusData.status === "SUCCESS") {
               clearInterval(checkInterval); // Stop asking
               setIsProcessing(false);
-              alert("✅ Payment Successful! Your account has been upgraded.");
+              toast.success("✅ Payment Successful! Your account has been upgraded.");
               window.location.href = "/?payment=success"; // Send them to the Home Page
             }
           } catch (e) {
