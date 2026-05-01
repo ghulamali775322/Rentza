@@ -24,6 +24,7 @@ import { updateReportStatusService } from "../services/reportService.js";
 import { deleteReportService } from "../services/reportService.js";
 import { getListingsGrowthService } from "../services/analyticsService.js";
 import { getUserGrowthService } from "../services/analyticsService.js";
+import fs from "fs";
 
 export const getDashboardStats = async (req, res) => {
   try {
@@ -171,6 +172,20 @@ export const deleteAdminListing = async (req, res) => {
       return res.status(404).json({ success: false, message: "Listing not found." });
     }
 
+    // --- NEW: DELETE PHYSICAL IMAGES ---
+    if (deletedListing.images && deletedListing.images.length > 0) {
+      deletedListing.images.forEach((img) => {
+        try {
+          const filePath = `.${img.url}`;
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (fileError) {
+          console.log("Could not delete physical file:", fileError);
+        }
+      });
+    }
+
     await createNotificationService({
       recipientId: deletedListing.lenderId,
       type: "listing_status", 
@@ -303,10 +318,23 @@ export const executeAdminReportAction = async (req, res) => {
     const ownerId = resolvedReport.reportedUserId._id;
 
     
-    if (actionType === "delete_listing") {
+   if (actionType === "delete_listing") {
   
-      await deleteListingService(resolvedReport.reportedListingId._id);
+      const deletedListing = await deleteListingService(resolvedReport.reportedListingId._id);
 
+      // --- NEW: DELETE PHYSICAL IMAGES ---
+      if (deletedListing && deletedListing.images && deletedListing.images.length > 0) {
+        deletedListing.images.forEach((img) => {
+          try {
+            const filePath = `.${img.url}`;
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          } catch (fileError) {
+            console.log("Could not delete physical file:", fileError);
+          }
+        });
+      }
 
       await createNotificationService({
         recipientId: ownerId,
