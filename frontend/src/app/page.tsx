@@ -65,13 +65,12 @@ const CATEGORIES_DATA = [
     ],
   },
   {
-    name: "Business, Industrial & Agriculture",
+    name: "Agriculture Machinery & Tools",
     image: "/categories/tractor.png",
     icon: <GiHammerNails className="text-blue-600 text-3xl" />,
     subcategories: [
       "Machinery",
       "Tractors",
-      "Medical & Lab Equipment",
       "Agriculture Tools",
     ],
   },

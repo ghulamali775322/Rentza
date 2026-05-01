@@ -17,7 +17,7 @@ const CATEGORIES_DATA = [
   { name: "Property for Rent", subcategories: ["Houses", "Apartments", "Rooms", "Shop", "Office"] },
   { name: "Electronics & Home Appliances", subcategories: ["Computers", "TVs", "Kitchen Appliances", "Cameras", "AC & Coolers", "Smart Home Device", "Genrator & Ups"] },
   { name: "Bikes", subcategories: ["Motorcycles", "Scooters", "Bicycles"] },
-  { name: "Business, Industrial & Agriculture", subcategories: ["Machinery", "Tractors", "Medical & Lab Equipment", "Agriculture Tools"] },
+  { name: "Agriculture Machinery & Tools", subcategories: ["Machinery", "Tractors", "Agriculture Tools"] },
   { name: "Furniture & Home Decor", subcategories: ["Sofa & Chairs", "Beds & Wardrobes", "Tables", "Office Furniture", "Decor"] },
   { name: "Fashion & Beauty", subcategories: ["Men", "Women", "Kids Clothing", "Accessories", "Watches", "Beauty Products"] },
   { name: "Books, Sports & Hobbies", subcategories: ["Musical Instruments", "Sports Equipment", "Gym & Fitness"] },
