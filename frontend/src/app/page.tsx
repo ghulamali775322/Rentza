@@ -94,8 +94,6 @@ const CATEGORIES_DATA = [
       "Men",
       "Women",
       "Kids Clothing",
-      "Accessories",
-      "Watches",
       "Beauty Products",
     ],
   },
@@ -292,7 +290,7 @@ export default function Home() {
   return (
     <div className="relative border-t border-gray-200 bg-white z-10">
       {/* ======= CATEGORY BAR ======= */}
-      <div className="flex items-center gap-3 md:gap-6 px-4 md:px-10 py-3 text-gray-800 text-[15px] font-medium overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="flex items-center justify-between gap-3 px-4 md:px-10 py-3 text-gray-800 text-[15px] font-medium overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <button
           ref={buttonRef}
           onClick={() => setIsOpen((prev) => !prev)}
@@ -307,7 +305,7 @@ export default function Home() {
           />
         </button>
 
-        {CATEGORIES_DATA.map((cat) => (
+      {CATEGORIES_DATA.slice(0, 6).map((cat) => (
          <Link
     key={cat.name}
     href={`/search?category=${cat.name}`}
