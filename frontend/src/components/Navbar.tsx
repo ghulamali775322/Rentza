@@ -104,19 +104,6 @@ export default function Navbar() {
       if (currentLat) params.set("lat", currentLat);
       if (currentLng) params.set("lng", currentLng);
     } 
-    // 🚀 3. THE FIX: If URL is clean (like on the Home page), grab the saved GPS from memory!
-    else if (typeof window !== "undefined") {
-      const savedLoc = localStorage.getItem("savedLocation");
-      const savedLat = localStorage.getItem("savedLat");
-      const savedLng = localStorage.getItem("savedLng");
-
-      if (savedLoc && savedLoc !== "Pakistan") {
-        params.set("location", savedLoc);
-        if (savedLat) params.set("lat", savedLat);
-        if (savedLng) params.set("lng", savedLng);
-      }
-    }
-
     // Navigate with all the data intact!
     router.push(`/search?${params.toString()}`);
   };
