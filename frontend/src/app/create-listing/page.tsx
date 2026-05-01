@@ -96,14 +96,35 @@ export default function CreateListingPage() {
     const files = e.target.files;
     if (files && files.length > 0) {
       const newFiles = Array.from(files);
+      
+      // --- NEW FRONTEND VALIDATION ---
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+      const validFiles: File[] = [];
+      let hasInvalidFiles = false;
+
+      newFiles.forEach((file) => {
+        if (allowedTypes.includes(file.type)) {
+          validFiles.push(file);
+        } else {
+          hasInvalidFiles = true;
+        }
+      });
+
+      // Show toast if they selected something wrong like a PDF or GIF
+      if (hasInvalidFiles) {
+        toast.error("Only images (jpeg, jpg, png, webp) are allowed!");
+      }
+      // --------------------------------
+
       const newPreviews: string[] = [];
       const filesToKeep: File[] = [];
       
       const remainingSlots = 5 - imageFiles.length; 
 
-      for (let i = 0; i < newFiles.length; i++) {
+      // Loop over the validFiles array instead of the raw newFiles
+      for (let i = 0; i < validFiles.length; i++) {
         if (i >= remainingSlots) break;
-        const file = newFiles[i];
+        const file = validFiles[i];
         filesToKeep.push(file);
         newPreviews.push(URL.createObjectURL(file));
       }
@@ -111,7 +132,7 @@ export default function CreateListingPage() {
       setImageFiles((prev) => [...prev, ...filesToKeep]);
       setImagePreviews((prev) => [...prev, ...newPreviews]);
     }
-    e.target.value = "";
+    e.target.value = ""; // Reset input so they can select the same file again if needed
   };
 
   // --- GPS: USE CURRENT LOCATION ---
