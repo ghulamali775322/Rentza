@@ -254,11 +254,9 @@ export default function CreateListingPage() {
       // REPLACED ALERT WITH TOAST (Duration increased slightly so they can read AI results)
       toast.success(moderationMessage, { duration: 5000 });
       
-      // REPLACED WINDOW.LOCATION WITH NEXT.JS ROUTER (Keeps the toast alive!)
       router.push("/"); 
 
     } catch (error: any) {
-      //console.error("Integration Error:", error);
       // REPLACED ALERT WITH TOAST
       toast.error(error.message);
     } finally {
