@@ -30,6 +30,13 @@ const LocationDropdown = () => {
   const urlLocation = searchParams.get("location");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(urlLocation || "Pakistan");
+  useEffect(() => {
+    if (urlLocation) {
+      setSelectedLocation(urlLocation);
+    } else {
+      setSelectedLocation("Pakistan");
+    }
+  }, [urlLocation]);
   
   // --- State for Google Maps suggestions ---
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -62,7 +69,7 @@ const LocationDropdown = () => {
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser."); // REPLACED ALERT
+      toast.error("Geolocation is not supported by your browser."); 
       return;
     }
 
@@ -77,24 +84,21 @@ const LocationDropdown = () => {
       async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        
-        // Grab the Google key you are already using!
         const googleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
         
+        // 🚀 THE FIX: Declare this variable UP HERE so the URL code at the bottom can see it!
+        let locationNameToSave = "Current Location";
+
         try {
           if (googleKey) {
-            // CALLING THE GOOGLE MAPS GEOCODING API
             const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleKey}`);
             const data = await res.json();
             
             if (data.results && data.results.length > 0) {
-              // Google returns an array of "address_components"
               const components = data.results[0].address_components;
-
               let exactArea = "";
               let city = "";
 
-              // 1. Look for the neighborhood, street, or specific sub-area
               const areaObj = components.find((c: any) => 
                 c.types.includes("sublocality") || 
                 c.types.includes("neighborhood") || 
@@ -102,44 +106,36 @@ const LocationDropdown = () => {
               );
               if (areaObj) exactArea = areaObj.long_name;
 
-              // 2. Look for the main city
               const cityObj = components.find((c: any) => c.types.includes("locality"));
               if (cityObj) city = cityObj.long_name;
 
-              // 3. Combine them beautifully (e.g., "Model Town, Gujrat")
-              let displayName = "Current Location";
               if (exactArea && city && exactArea !== city) {
-                displayName = `${exactArea}, ${city}`;
+                locationNameToSave = `${exactArea}, ${city}`;
               } else if (exactArea || city) {
-                displayName = exactArea || city;
+                locationNameToSave = exactArea || city;
               } else {
-                // If all else fails, just use Google's formatted address
-                displayName = data.results[0].formatted_address;
+                locationNameToSave = data.results[0].formatted_address;
               }
-              
-              setSelectedLocation(displayName); 
-            } else {
-              setSelectedLocation("Current Location"); 
             }
-          } else {
-            console.error("Missing Google Maps API Key");
-            setSelectedLocation("Current Location"); 
           }
         } catch (error) {
           console.error("Google Geocoding failed:", error);
-          setSelectedLocation("Current Location");
         }
 
+        // Update the UI
+        setSelectedLocation(locationNameToSave); 
         setIsOpen(false);
+        
+        // Update the URL using the variable!
         const params = new URLSearchParams(window.location.search);
-        params.delete("location"); // Clear text location
+        params.set("location", locationNameToSave); 
         params.set("lat", lat.toString());
         params.set("lng", lng.toString());
         router.push(`${pathname}?${params.toString()}`);
       },
       (error) => {
         if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Please allow location access in your browser to use this feature."); // REPLACED ALERT
+          toast.error("Please allow location access in your browser to use this feature."); 
           setSelectedLocation("Pakistan"); 
         }
       },

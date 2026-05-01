@@ -155,19 +155,6 @@ export default function Home() {
       if (currentLat) params.set("lat", currentLat);
       if (currentLng) params.set("lng", currentLng);
     } 
-    // Fallback: ALWAYS read fresh memory right when clicked
-    else if (typeof window !== "undefined") {
-      const savedLoc = localStorage.getItem("savedLocation");
-      const savedLat = localStorage.getItem("savedLat");
-      const savedLng = localStorage.getItem("savedLng");
-
-      if (savedLoc && savedLoc !== "Pakistan") {
-        params.set("location", savedLoc);
-        if (savedLat) params.set("lat", savedLat);
-        if (savedLng) params.set("lng", savedLng);
-      }
-    }
-
     // Navigate instantly!
     router.push(`/search?${params.toString()}`);
   };
