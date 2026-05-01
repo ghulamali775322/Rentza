@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, X, MoreVertical, User, Phone, Check,} from 'lucide-react'; 
 import Pusher from 'pusher-js';
 import ReportModal from "@/components/modals/ReportModal"; 
+import ConfirmModal from "@/components/modals/ConfirmModal";
 import { useSession } from "next-auth/react"; //  NEW: Added session
 import { notFound, useRouter, useSearchParams } from "next/navigation";  // NEW: Added router for redirects
 
@@ -25,6 +26,7 @@ export default function InboxPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [showNumber, setShowNumber] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Dynamic States for Real Data
   const [chats, setChats] = useState<any[]>([]); 
@@ -238,7 +240,6 @@ export default function InboxPage() {
   const handleDeleteChat = async () => {
     if (!activeChat || !currentUserId) return;
 
-    if (!window.confirm("Are you sure you want to delete this chat?")) return;
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/chat/${activeChat}/${currentUserId}`, {
@@ -459,7 +460,10 @@ export default function InboxPage() {
                     <MoreVertical size={22} className="cursor-pointer" onClick={() => setShowOptionsMenu(!showOptionsMenu)} />
                     {showOptionsMenu && (
                         <div className="absolute top-10 right-1 bg-white border border-[#ddd] rounded-md shadow-lg z-[200] min-w-[150px] py-[5px]">
-                           <div className="px-[15px] py-[10px] text-sm cursor-pointer hover:bg-red-50 text-red-600 font-medium" onClick={handleDeleteChat}>Delete Chat</div>
+                           <div className="px-[15px] py-[10px] text-sm cursor-pointer hover:bg-red-50 text-red-600 font-medium" onClick={() => {
+                         setShowOptionsMenu(false); // Close the little dropdown menu
+                         setShowDeleteModal(true);  // Open the big confirmation modal
+                         }}>Delete Chat</div>
                         </div>
                     )}
                 </div>
@@ -554,6 +558,17 @@ export default function InboxPage() {
           id={activeChatData._id} 
         />
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteChat} // Fires the delete function ONLY if they click Confirm!
+        title="Delete Chat"
+        message="Are you sure you want to permanently delete this chat? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true} // This makes the button red automatically!
+      />
     </div>
   );
 }
