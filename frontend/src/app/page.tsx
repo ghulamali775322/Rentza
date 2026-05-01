@@ -61,7 +61,6 @@ const CATEGORIES_DATA = [
     subcategories: [
       "Motorcycles",
       "Scooters",
-      "Spare Parts",
       "Bicycles",
       "Bike Acessories",
     ],
