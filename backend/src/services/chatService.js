@@ -4,13 +4,19 @@ import Message from "../models/message.js";
 import { pusher } from "../config/pusher.js";
 
 // 1. Fetch Inbox Logic (Updated to check unread messages)
+// 1. Fetch Inbox Logic (Updated to hide ghost chats from sellers)
 export const getInboxService = async (userId) => {
   const conversations = await Conversation.find({ 
     participants: userId,
-    deletedBy: { $ne: userId }
+    deletedBy: { $ne: userId },
+    // 🚀 THE FIX: Hide empty chats from the seller!
+    $or: [
+      { "lastMessage.text": { $ne: "" } }, // Show it if a message has actually been typed
+      { "lastMessage.senderId": userId }   // OR show it if THIS user is the one who clicked the "Chat" button
+    ]
   })
     .populate("participants", "name email profilePhotoPath phone lastActive") 
-    .populate("listingId", "title price images")           
+    .populate("listingId", "title price images")          
     .sort({ updatedAt: -1 })
     .lean(); 
 

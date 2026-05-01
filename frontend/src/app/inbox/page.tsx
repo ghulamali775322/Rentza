@@ -317,7 +317,9 @@ export default function InboxPage() {
     )
   );
 };
-
+const visibleChats = chats.filter(
+    (chat) => (chat.lastMessage?.text && chat.lastMessage.text.trim() !== "") || chat._id === activeChat
+  );
   
   if (!currentUserId) {
     return (
@@ -340,7 +342,7 @@ export default function InboxPage() {
         
         {/*  FIX 3: ONLY the chat list scrolls! (flex-1 takes remaining space) */}
         <div className="flex-1 overflow-y-auto bg-white [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-[#ccc] [&::-webkit-scrollbar-thumb]:rounded-[3px]">
-          {chats.length > 0 ? chats.map(chat => {
+          {visibleChats.length > 0 ? visibleChats.map(chat => {
             const otherUser = chat.participants.find((p: any) => String(p._id) !== currentUserId);
             const isUnread = chat.unreadCount > 0; 
             return (
