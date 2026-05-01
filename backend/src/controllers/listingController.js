@@ -206,6 +206,20 @@ export const deleteListing = async (req, res) => {
       });
     }
 
+    // --- NEW: DELETE PHYSICAL IMAGES ---
+    if (deletedListing.images && deletedListing.images.length > 0) {
+      deletedListing.images.forEach((img) => {
+        try {
+          const filePath = `.${img.url}`; // Same logic used in deleteListingImage
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (fileError) {
+          console.log("Could not delete physical file:", fileError);
+        }
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Listing deleted successfully.",

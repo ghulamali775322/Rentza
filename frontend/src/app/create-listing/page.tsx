@@ -258,7 +258,7 @@ export default function CreateListingPage() {
       router.push("/"); 
 
     } catch (error: any) {
-      console.error("Integration Error:", error);
+      //console.error("Integration Error:", error);
       // REPLACED ALERT WITH TOAST
       toast.error(error.message);
     } finally {
