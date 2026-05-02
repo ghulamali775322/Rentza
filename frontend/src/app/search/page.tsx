@@ -203,11 +203,15 @@ if (lngParam) params.append("lng", lngParam);
   };
   const getCategoryUrl = (catName: string) => {
     const params = new URLSearchParams();
+    
     if (catName) params.set("category", catName);
-    if (queryParam) params.set("query", queryParam);
+    
+    // Notice how the query line is completely gone! 
+    
     if (locationParam) params.set("location", locationParam);
     if (latParam) params.set("lat", latParam);
     if (lngParam) params.set("lng", lngParam);
+    
     return `/search?${params.toString()}`;
   };
 

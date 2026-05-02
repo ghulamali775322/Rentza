@@ -87,6 +87,9 @@ export default function Navbar() {
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams?.toString() || "");
     
+    // 🚀 THE FIX: Always clear the category when typing a new search!
+    params.delete("category");
+
     // 1. Set the search text
     if (searchQuery && searchQuery.trim() !== "") {
       params.set("query", searchQuery.trim());
@@ -94,7 +97,7 @@ export default function Navbar() {
       params.delete("query");
     }
 
-    // 2. Check for Location / GPS Data
+    // 2. Check for Location / GPS Data ONLY from the URL
     const currentLoc = searchParams?.get("location");
     const currentLat = searchParams?.get("lat");
     const currentLng = searchParams?.get("lng");
@@ -104,6 +107,7 @@ export default function Navbar() {
       if (currentLat) params.set("lat", currentLat);
       if (currentLng) params.set("lng", currentLng);
     } 
+
     // Navigate with all the data intact!
     router.push(`/search?${params.toString()}`);
   };
