@@ -55,7 +55,7 @@ The objective of Rentza is to simplify the rental experience by providing a secu
 * Google Authentication
 * Protected Routes
 * Session Management
-
+---
 **🏷 Item Management**
 * Create Listings
 * Edit Listings
@@ -64,29 +64,29 @@ The objective of Rentza is to simplify the rental experience by providing a secu
 * Manage Availability
 * Rental Information
 * Categories
-
+---
 **🔍 Smart Search**
 * Category Filtering
 * Keyword Search
 * Nearby Item Discovery
 * Geolocation Support
 * Fast Browsing Experience
-
+---
 **💬 Communication**
 * Real-Time Chat
 * Direct Owner Contact
 * Phone Number Sharing
 * Easy Communication Between Renters & Owners
-
+---
 **🛡 Administration**
 * Admin Dashboard
 * User Management
 * Report Management
 * Platform Monitoring
-
+---
 **🤖 AI Integration**
 The platform integrates AI-based content moderation to help detect inappropriate images before they become publicly visible, improving trust and community safety.
-
+---
 **📱 Responsive Design**
 Optimized for:
 * Desktop
@@ -111,7 +111,7 @@ Optimized for:
            │
            ▼
   Cloudinary (Images)
-
+---
 🛠 Technology Stack
 Frontend
 
