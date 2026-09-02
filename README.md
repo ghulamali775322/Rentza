@@ -5,11 +5,9 @@
 ### Peer-to-Peer Rental Platform
 
 A modern full-stack web application that connects individuals and local businesses, enabling them to rent, discover, and manage items within their communities.<br>
-
 Designed as a Final Year Software Engineering Project.
 
 <br>
----
 
 <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -21,7 +19,6 @@ Designed as a Final Year Software Engineering Project.
 </div>
 
 ---
-
 
 ### 📖 Overview
 
@@ -115,53 +112,68 @@ Optimized for:
            ▼
   Cloudinary (Images)
 
-### 🛠 Technology Stack
+🛠 Technology Stack
+Frontend
 
-**Frontend**
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
+Next.js
 
-**Backend**
-* Node.js
-* Express.js
+React
 
-**Database**
-* MongoDB Atlas
+TypeScript
 
-**Authentication**
-* JWT
-* NextAuth
+Tailwind CSS
 
-**Cloud**
-* Cloudinary
+Backend
 
-**Version Control**
-* Git
-* GitHub
+Node.js
 
----
+Express.js
 
-### 🧩 Core Modules
+Database
 
-* Authentication
-* User Profiles
-* Item Listings
-* Listing Management
-* Search & Discovery
-* Categories
-* Chat System
-* Location Services
-* AI Content Moderation
-* Reporting System
-* Admin Dashboard
+MongoDB Atlas
 
----
+Authentication
 
-### 📂 Project Structure
+JWT
 
-```text
+NextAuth
+
+Cloud
+
+Cloudinary
+
+Version Control
+
+Git
+
+GitHub
+
+🧩 Core Modules
+Authentication
+
+User Profiles
+
+Item Listings
+
+Listing Management
+
+Search & Discovery
+
+Categories
+
+Chat System
+
+Location Services
+
+AI Content Moderation
+
+Reporting System
+
+Admin Dashboard
+
+
+📂 Project Structure
 Frontend
 │
 ├── Components
