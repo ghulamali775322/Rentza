@@ -20,10 +20,9 @@ Designed as a Final Year Software Engineering Project.
 
 ---
 
-### 📖 Overview
+## 📖 Overview
 
-Rentza is a community-driven rental platform that enables individuals and small businesses to share underutilized resources with people who need them temporarily.
-Instead of purchasing expensive products that may only be used occasionally, users can browse nearby rental listings, communicate directly with owners, and arrange rentals through an intuitive digital platform.
+Rentza is a community-driven rental platform that enables individuals and small businesses to share underutilized resources with people who need them temporarily. Instead of purchasing expensive products that may only be used occasionally, users can browse nearby rental listings, communicate directly with owners, and arrange rentals through an intuitive digital platform.
 
 The platform promotes:
 * Sustainable resource sharing
@@ -33,7 +32,7 @@ The platform promotes:
 
 ---
 
-### 🎯 Project Goals
+## 🎯 Project Goals
 
 The objective of Rentza is to simplify the rental experience by providing a secure, modern and user-friendly platform where users can:
 * Register securely
@@ -46,17 +45,17 @@ The objective of Rentza is to simplify the rental experience by providing a secu
 
 ---
 
-### ✨ Features
+## ✨ Features
 
-**👤 Authentication**
+### 👤 Authentication
 * User Registration
 * Secure Login
 * JWT Authentication
 * Google Authentication
 * Protected Routes
 * Session Management
----
-**🏷 Item Management**
+
+### 🏷 Item Management
 * Create Listings
 * Edit Listings
 * Delete Listings
@@ -64,30 +63,30 @@ The objective of Rentza is to simplify the rental experience by providing a secu
 * Manage Availability
 * Rental Information
 * Categories
----
-**🔍 Smart Search**
+
+### 🔍 Smart Search
 * Category Filtering
 * Keyword Search
 * Nearby Item Discovery
 * Geolocation Support
 * Fast Browsing Experience
----
-**💬 Communication**
+
+### 💬 Communication
 * Real-Time Chat
 * Direct Owner Contact
 * Phone Number Sharing
 * Easy Communication Between Renters & Owners
----
-**🛡 Administration**
+
+### 🛡 Administration
 * Admin Dashboard
 * User Management
 * Report Management
 * Platform Monitoring
----
-**🤖 AI Integration**
+
+### 🤖 AI Integration
 The platform integrates AI-based content moderation to help detect inappropriate images before they become publicly visible, improving trust and community safety.
----
-**📱 Responsive Design**
+
+### 📱 Responsive Design
 Optimized for:
 * Desktop
 * Tablet
@@ -95,7 +94,7 @@ Optimized for:
 
 ---
 
-### 🏗 System Architecture
+## 🏗 System Architecture
 
 ```text
     Client (Next.js)
@@ -111,204 +110,3 @@ Optimized for:
            │
            ▼
   Cloudinary (Images)
----
-🛠 Technology Stack
-Frontend
-
-Next.js
-
-React
-
-TypeScript
-
-Tailwind CSS
-
-Backend
-
-Node.js
-
-Express.js
-
-Database
-
-MongoDB Atlas
-
-Authentication
-
-JWT
-
-NextAuth
-
-Cloud
-
-Cloudinary
-
-Version Control
-
-Git
-
-GitHub
-
-🧩 Core Modules
-Authentication
-
-User Profiles
-
-Item Listings
-
-Listing Management
-
-Search & Discovery
-
-Categories
-
-Chat System
-
-Location Services
-
-AI Content Moderation
-
-Reporting System
-
-Admin Dashboard
-
-
-📂 Project Structure
-Frontend
-│
-├── Components
-├── Pages
-├── Hooks
-├── Context
-├── Services
-└── Utilities
-
-Backend
-│
-├── Controllers
-├── Models
-├── Routes
-├── Middleware
-├── Services
-└── Configuration
-
-🎯 Software Engineering Concepts Applied
-This project was developed by applying software engineering principles throughout the development process.
-
-Software Development Life Cycle (SDLC)
-
-Requirement Analysis
-
-Planning
-
-Design
-
-Implementation
-
-Testing
-
-Maintenance
-
-Object-Oriented Programming
-
-Encapsulation
-
-Abstraction
-
-Inheritance
-
-Polymorphism
-
-Software Engineering Practices
-
-Modular Development
-
-Separation of Concerns
-
-Reusable Components
-
-MVC Concepts
-
-RESTful API Design
-
-Error Handling
-
-Authentication & Authorization
-
-Version Control
-
-Team Collaboration
-
-👥 Team Collaboration
-Rentza was developed as a team-based Final Year Software Engineering project alongside Muhammad Awais Chatha and Muhammad Rahat.
-During development, team members collaborated through:
-
-Requirement discussions
-
-System design
-
-Feature planning
-
-Git version control
-
-Task distribution
-
-Debugging sessions
-
-Testing
-
-Documentation
-
-This project strengthened practical experience in collaborative software development and agile teamwork.
-
-📚 Learning Outcomes
-Working on Rentza provided practical experience with:
-
-Full-Stack Web Development
-
-REST API Development
-
-Authentication Systems
-
-Database Design
-
-Team Collaboration
-
-Git & GitHub Workflow
-
-Modern JavaScript Ecosystem
-
-Frontend & Backend Integration
-
-Responsive UI Development
-
-Software Architecture
-
-🚀 Future Improvements
-Potential future enhancements include:
-
-Online Payments
-
-Booking Workflow
-
-Push Notifications
-
-Ratings & Reviews
-
-Recommendation System
-
-Progressive Web App (PWA)
-
-Docker Deployment
-
-Microservices Architecture
-
-CI/CD Pipeline
-
-Cloud Deployment
-
-👨‍💻 My Contribution
-As a member of the development team, I contributed to the design and implementation of various parts of the application, collaborating with teammates throughout the software development lifecycle. My work included full-stack development tasks, feature implementation, debugging, testing, and Git-based collaboration.
-
-🤝 Acknowledgements
-This project was developed as part of the Bachelor of Science in Software Engineering program under the supervision of Mr. Tauqeer-ul-Amin.
