@@ -5,9 +5,11 @@
 ### Peer-to-Peer Rental Platform
 
 A modern full-stack web application that connects individuals and local businesses, enabling them to rent, discover, and manage items within their communities.<br>
+
 Designed as a Final Year Software Engineering Project.
 
 <br>
+---
 
 <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
