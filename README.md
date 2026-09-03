@@ -110,7 +110,7 @@ Optimized for:
            │
            ▼
   Cloudinary (Images)
-```text
+```
 ---
 ## 🛠 Technology Stack
 
