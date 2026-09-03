@@ -104,54 +104,62 @@ Optimized for:
            │
            ▼
    Node.js + Express
+🛠 Technology Stack
+Frontend
+Next.js
 
-## 🛠 Technology Stack
+React
 
-### Frontend
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
+TypeScript
 
-### Backend
-* Node.js
-* Express.js
+Tailwind CSS
 
-### Database
-* MongoDB Atlas
+Backend
+Node.js
 
-### Authentication
-* JWT
-* NextAuth
+Express.js
 
-### Cloud
-* Cloudinary
+Database
+MongoDB Atlas
 
-### Version Control
-* Git
-* GitHub
+Authentication
+JWT
 
----
+NextAuth
 
-## 🧩 Core Modules
+Cloud
+Cloudinary
 
-* Authentication
-* User Profiles
-* Item Listings
-* Listing Management
-* Search & Discovery
-* Categories
-* Chat System
-* Location Services
-* AI Content Moderation
-* Reporting System
-* Admin Dashboard
+Version Control
+Git
 
----
+GitHub
 
-## 📂 Project Structure
+🧩 Core Modules
+Authentication
 
-```text
+User Profiles
+
+Item Listings
+
+Listing Management
+
+Search & Discovery
+
+Categories
+
+Chat System
+
+Location Services
+
+AI Content Moderation
+
+Reporting System
+
+Admin Dashboard
+
+📂 Project Structure
+Plaintext
 Frontend
 │
 ├── Components
@@ -169,9 +177,122 @@ Backend
 ├── Middleware
 ├── Services
 └── Configuration
-           │
-           ▼
-        MongoDB 
-           │
-           ▼
-  Cloudinary (Images)
+🎯 Software Engineering Concepts Applied
+This project was developed by applying software engineering principles throughout the development process.
+
+Software Development Life Cycle (SDLC)
+Requirement Analysis
+
+Planning
+
+Design
+
+Implementation
+
+Testing
+
+Maintenance
+
+Object-Oriented Programming
+Encapsulation
+
+Abstraction
+
+Inheritance
+
+Polymorphism
+
+Software Engineering Practices
+Modular Development
+
+Separation of Concerns
+
+Reusable Components
+
+MVC Concepts
+
+RESTful API Design
+
+Error Handling
+
+Authentication & Authorization
+
+Version Control
+
+Team Collaboration
+
+👥 Team Collaboration
+Rentza was developed as a team-based Final Year Software Engineering project alongside Muhammad Awais Chatha and Muhammad Rahat.
+During development, team members collaborated through:
+
+Requirement discussions
+
+System design
+
+Feature planning
+
+Git version control
+
+Task distribution
+
+Debugging sessions
+
+Testing
+
+Documentation
+
+This project strengthened practical experience in collaborative software development and agile teamwork.
+
+📚 Learning Outcomes
+Working on Rentza provided practical experience with:
+
+Full-Stack Web Development
+
+REST API Development
+
+Authentication Systems
+
+Database Design
+
+Team Collaboration
+
+Git & GitHub Workflow
+
+Modern JavaScript Ecosystem
+
+Frontend & Backend Integration
+
+Responsive UI Development
+
+Software Architecture
+
+🚀 Future Improvements
+Potential future enhancements include:
+
+Online Payments
+
+Booking Workflow
+
+Push Notifications
+
+Ratings & Reviews
+
+Recommendation System
+
+Progressive Web App (PWA)
+
+Docker Deployment
+
+Microservices Architecture
+
+CI/CD Pipeline
+
+Cloud Deployment
+
+👨‍💻 My Contribution
+As a member of the development team, I contributed to the design and implementation of various parts of the application, collaborating with teammates throughout the software development lifecycle. My work included full-stack development tasks, feature implementation, debugging, testing, and Git-based collaboration.
+
+🤝 Acknowledgements
+This project was developed as part of the Bachelor of Science in Software Engineering program under the supervision of Mr. Tauqeer-ul-Amin.
+
+
