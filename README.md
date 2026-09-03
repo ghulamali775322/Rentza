@@ -100,7 +100,90 @@ Optimized for:
     Client (Next.js)
            │
            ▼
-       REST APIs
+      REST APIs
            │
+           ▼
+   Node.js + Express
+           │
+           ▼
+        MongoDB 
+           │
+           ▼
+  Cloudinary (Images)
+
+---
+## 🛠 Technology Stack
+
+### Frontend
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+
+### Backend
+* Node.js
+* Express.js
+
+### Database
+* MongoDB Atlas
+
+### Authentication
+* JWT
+* NextAuth
+
+### Cloud
+* Cloudinary
+
+### Version Control
+* Git
+* GitHub
+
+---
+
+## 🧩 Core Modules
+
+* Authentication
+* User Profiles
+* Item Listings
+* Listing Management
+* Search & Discovery
+* Categories
+* Chat System
+* Location Services
+* AI Content Moderation
+* Reporting System
+* Admin Dashboard
+
+---
+
+## 📂 Project Structure
+
+```text
+Frontend
+│
+├── Components
+├── Pages
+├── Hooks
+├── Context
+├── Services
+└── Utilities
+
+Backend
+│
+├── Controllers
+├── Models
+├── Routes
+├── Middleware
+├── Services
+└── Configuration
+
+
+
+
+
+
+
+
+
            ▼
    Node.js + Express
